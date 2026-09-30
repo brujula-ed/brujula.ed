@@ -1,24 +1,18 @@
-import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { subject } from "@/lib/data";
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
 
-export default function Home() {
-  return (
-    <main className="max-w-2xl mx-auto p-8">
-      <h1 className="text-xl font-medium mb-1">Tus asignaturas</h1>
-      <p className="text-sm text-muted-foreground mb-6">
-        Elige un tema para diagnosticar tus brechas
-      </p>
-      <Link href="/diagnostico">
-        <Card className="hover:border-foreground/30 transition-colors cursor-pointer">
-          <CardHeader>
-            <CardTitle className="text-base">{subject.name}</CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm text-muted-foreground">
-            {subject.topic}
-          </CardContent>
-        </Card>
-      </Link>
-    </main>
-  );
+export default async function Home() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) redirect("/login");
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (profile?.role === "docente") redirect("/docente");
+  redirect("/estudiante");
 }
