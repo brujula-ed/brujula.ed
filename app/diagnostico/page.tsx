@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { questions, levelingContent, subject } from "@/lib/data";
+import { useState, useEffect } from "react";
+import { createClient } from "@/lib/supabase/client";
 
 type Stage = "quiz" | "gaps" | "leveling" | "microeval" | "comparison";
 
@@ -16,6 +17,22 @@ export default function Diagnostico() {
   const [answers, setAnswers] = useState<number[]>([]);
   const [microAnswers, setMicroAnswers] = useState<number[]>([]);
   const [microCurrent, setMicroCurrent] = useState(0);
+  const supabase = createClient();
+  const [attemptId, setAttemptId] = useState<string | null>(null);
+
+  useEffect(() => {
+  async function createAttempt() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { data, error } = await supabase
+      .from("diagnostic_attempts")
+      .insert({ user_id: user.id, subject: subject.name, topic: subject.topic })
+      .select()
+      .single();
+    if (!error && data) setAttemptId(data.id);
+  }
+  createAttempt();
+}, []);
 
   function scoreByConcept(answerList: number[]) {
     const byConcept: Record<string, { correct: number; total: number }> = {};
@@ -27,26 +44,50 @@ export default function Diagnostico() {
     return byConcept;
   }
 
-  function handleAnswer(optionIndex: number) {
-    const next = [...answers, optionIndex];
-    setAnswers(next);
-    if (current + 1 < questions.length) {
-      setCurrent(current + 1);
-    } else {
-      setStage("gaps");
-    }
+  async function handleAnswer(optionIndex: number) {
+  const q = questions[current];
+  if (attemptId) {
+    await supabase.from("diagnostic_answers").insert({
+      attempt_id: attemptId,
+      stage: "diagnostico",
+      question_id: q.id,
+      concept: q.concept,
+      selected_index: optionIndex,
+      correct_index: q.correctIndex,
+      is_correct: optionIndex === q.correctIndex,
+    });
   }
+  const next = [...answers, optionIndex];
+  setAnswers(next);
+  if (current + 1 < questions.length) {
+    setCurrent(current + 1);
+  } else {
+    setStage("gaps");
+  }
+}
 
-  function handleMicroAnswer(optionIndex: number) {
-    const next = [...microAnswers, optionIndex];
-    setMicroAnswers(next);
-    const gapQuestions = questions.filter((q) => gaps.includes(q.concept));
-    if (microCurrent + 1 < gapQuestions.length) {
-      setMicroCurrent(microCurrent + 1);
-    } else {
-      setStage("comparison");
-    }
+  async function handleMicroAnswer(optionIndex: number) {
+  const gapQuestions = questions.filter((q) => gaps.includes(q.concept));
+  const q = gapQuestions[microCurrent];
+  if (attemptId) {
+    await supabase.from("diagnostic_answers").insert({
+      attempt_id: attemptId,
+      stage: "microevaluacion",
+      question_id: q.id,
+      concept: q.concept,
+      selected_index: optionIndex,
+      correct_index: q.correctIndex,
+      is_correct: optionIndex === q.correctIndex,
+    });
   }
+  const next = [...microAnswers, optionIndex];
+  setMicroAnswers(next);
+  if (microCurrent + 1 < gapQuestions.length) {
+    setMicroCurrent(microCurrent + 1);
+  } else {
+    setStage("comparison");
+  }
+}
 
   const initialScores = scoreByConcept(answers);
   const gaps = Object.entries(initialScores)
