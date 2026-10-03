@@ -4,7 +4,8 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { questions, levelingContent, subject } from "@/lib/data";
+import { questions, levelingContent } from "@/lib/data";
+import { useParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 
@@ -19,6 +20,17 @@ export default function Diagnostico() {
   const [microCurrent, setMicroCurrent] = useState(0);
   const supabase = createClient();
   const [attemptId, setAttemptId] = useState<string | null>(null);
+  const params = useParams();
+  const subjectId = params.subjectId as string;
+  const [subjectInfo, setSubjectInfo] = useState<{ name: string; topic: string } | null>(null);
+  
+  useEffect(() => {
+    async function loadSubject() {
+      const { data } = await supabase.from("subjects").select("name, topic").eq("id", subjectId).single();
+      if (data) setSubjectInfo(data);
+    }
+    loadSubject();
+  }, [subjectId]);
 
   useEffect(() => {
   async function createAttempt() {
@@ -26,7 +38,7 @@ export default function Diagnostico() {
     if (!user) return;
     const { data, error } = await supabase
       .from("diagnostic_attempts")
-      .insert({ user_id: user.id, subject: subject.name, topic: subject.topic })
+      .insert({ user_id: user.id, subject: subjectInfo?.name ?? "", topic: subjectInfo?.topic ?? "", subject_id: subjectId })
       .select()
       .single();
     if (!error && data) setAttemptId(data.id);
@@ -99,7 +111,7 @@ export default function Diagnostico() {
     return (
       <main className="max-w-xl mx-auto p-8">
         <p className="text-xs text-muted-foreground mb-2">
-          Diagnóstico — {subject.name} · pregunta {current + 1} de {questions.length}
+          Diagnóstico — {subjectInfo?.name} · pregunta {current + 1} de {questions.length}
         </p>
         <Progress value={((current) / questions.length) * 100} className="mb-6" />
         <Card>
