@@ -3,6 +3,9 @@ import { createClient } from "@/lib/supabase/server";
 import { extractText } from "@/lib/extract-text";
 import { chunkText } from "@/lib/chunk-text";
 import OpenAI from "openai";
+import { GoogleGenAI } from "@google/genai";
+
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -40,16 +43,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No se pudo extraer texto del documento" }, { status: 400 });
     }
 
-    const embeddingResponse = await openai.embeddings.create({
-      model: "text-embedding-3-small",
-      input: chunks,
+        const embeddingResponse = await ai.models.embedContent({
+      model: "gemini-embedding-001",
+      contents: chunks,
     });
 
     const rows = chunks.map((content, i) => ({
       document_id: doc.id,
       subject_id: doc.subject_id,
       content,
-      embedding: embeddingResponse.data[i].embedding,
+      embedding: embeddingResponse.embeddings![i].values,
     }));
 
     const { error: insertError } = await supabase.from("document_chunks").insert(rows);
