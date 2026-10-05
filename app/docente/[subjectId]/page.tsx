@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { UploadDocumentForm } from "@/components/upload-document-form";
 import { Card, CardContent } from "@/components/ui/card";
 import { ProcessDocumentButton } from "@/components/process-document-button";
+import {GenerateConceptsButton } from "@/components/generate-concepts-button";
+import { Link } from "lucide-react";
 
 export default async function SubjectDetail({ params }: { params: Promise<{ subjectId: string }> }) {
   const { subjectId } = await params;
@@ -43,6 +45,15 @@ export default async function SubjectDetail({ params }: { params: Promise<{ subj
         {documents?.length === 0 && (
           <p className="text-sm text-muted-foreground">Aún no subiste ningún documento.</p>
         )}
+      </div>
+      <div className="mt-8 pt-6 border-t">
+        <h2 className="text-sm font-medium mb-3">Estructura de conceptos</h2>
+        <div className="flex items-center gap-3">
+          <GenerateConceptsButton subjectId={subjectId} />
+          <Link href={`/docente/${subjectId}/conceptos`} className="text-sm text-muted-foreground hover:underline">
+          Ver / validar conceptos →
+          </Link>
+        </div>
       </div>
     </main>
   );
