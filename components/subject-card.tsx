@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import Link from "next/link";
 
 type Subject = { id: string; name: string; topic: string; class_code: string };
 
@@ -69,7 +70,9 @@ export function SubjectCard({ subject }: { subject: Subject }) {
     <Card>
       <CardHeader>
         <CardTitle className="text-base flex items-center justify-between">
-          <span>{subject.name}</span>
+          <Link href={`/docente/${subject.id}`} className="hover:underline">
+          {subject.name}
+          </Link>
           <button
             onClick={handleCopy}
             title="Clic para copiar"
