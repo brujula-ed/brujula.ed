@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import Link from "next/link";
 import { Progress } from "@/components/ui/progress";
 import { createClient } from "@/lib/supabase/client";
 import { questions as fallbackQuestions, levelingContent as fallbackLeveling, subject as fallbackSubject } from "@/lib/data";
@@ -159,6 +160,11 @@ export default function Diagnostico() {
     const q = questions[current];
     return (
       <main className="max-w-xl mx-auto p-8">
+         <Link href={`/estudiante`} className="text-sm text-muted-foreground hover:underline">
+          ← Vovler a mis asignaturas
+        </Link>
+        <div className="mt-6 pt-6 border-t">
+      </div>
         {fallbackBanner}
         <p className="text-xs text-muted-foreground mb-2">
           Diagnóstico — {subjectInfo.name} · pregunta {current + 1} de {questions.length}

@@ -75,6 +75,11 @@ export default async function SubjectDetail({ params }: { params: Promise<{ subj
         </div>
       </div>
 
+      <div className="mt-6 pt-6 border-t">
+        <Link href={`/docente/${subjectId}/estudiantes`} className="text-sm text-muted-foreground hover:underline">
+          Ver progreso de mis estudiantes →
+        </Link>
+      </div>
     </main>
   );
 }
