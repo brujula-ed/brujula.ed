@@ -1,6 +1,7 @@
 import { redirect, notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ConceptCard } from "@/components/concept-card";
+import Link from "next/link";
 
 export default async function Conceptos({ params }: { params: Promise<{ subjectId: string }> }) {
   const { subjectId } = await params;
@@ -26,6 +27,9 @@ export default async function Conceptos({ params }: { params: Promise<{ subjectI
 
   return (
     <main className="max-w-2xl mx-auto p-8">
+        <Link href={`/docente/${subjectId}`} className="text-sm text-muted-foreground hover:underline mb-4 inline-block">
+            ← Volver a la asignatura
+        </Link>
       <h1 className="text-xl font-medium mb-1">Estructura de conceptos</h1>
       <p className="text-sm text-muted-foreground mb-6">
         {subject.name} — revisa, edita o descarta lo que propuso la IA antes de publicarlo

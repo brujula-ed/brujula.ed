@@ -1,10 +1,13 @@
 import { redirect, notFound } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { UploadDocumentForm } from "@/components/upload-document-form";
-import { Card, CardContent } from "@/components/ui/card";
 import { ProcessDocumentButton } from "@/components/process-document-button";
-import {GenerateConceptsButton } from "@/components/generate-concepts-button";
-import { Link } from "lucide-react";
+import { GenerateConceptsButton } from "@/components/generate-concepts-button";
+import { Card, CardContent } from "@/components/ui/card";
+//import { ArrowLeft } from "lucide-react";
+import { GenerateQuestionsButton } from "@/components/generate-questions-button";
+
 
 export default async function SubjectDetail({ params }: { params: Promise<{ subjectId: string }> }) {
   const { subjectId } = await params;
@@ -28,6 +31,11 @@ export default async function SubjectDetail({ params }: { params: Promise<{ subj
 
   return (
     <main className="max-w-2xl mx-auto p-8">
+      
+      <Link href="/docente" className="text-sm text-muted-foreground hover:underline mb-4 inline-block">
+        ← Volver a mis asignaturas
+      </Link>
+      
       <h1 className="text-xl font-medium mb-1">{subject.name}</h1>
       <p className="text-sm text-muted-foreground mb-6">{subject.topic}</p>
 
@@ -37,8 +45,8 @@ export default async function SubjectDetail({ params }: { params: Promise<{ subj
         {documents?.map((d) => (
           <Card key={d.id}>
             <CardContent className="pt-4 text-sm flex items-center justify-between">
-                <span>{d.file_name}</span>
-                <ProcessDocumentButton documentId={d.id} />
+              <span>{d.file_name}</span>
+              <ProcessDocumentButton documentId={d.id} />
             </CardContent>
           </Card>
         ))}
@@ -46,15 +54,27 @@ export default async function SubjectDetail({ params }: { params: Promise<{ subj
           <p className="text-sm text-muted-foreground">Aún no subiste ningún documento.</p>
         )}
       </div>
+
       <div className="mt-8 pt-6 border-t">
         <h2 className="text-sm font-medium mb-3">Estructura de conceptos</h2>
         <div className="flex items-center gap-3">
           <GenerateConceptsButton subjectId={subjectId} />
           <Link href={`/docente/${subjectId}/conceptos`} className="text-sm text-muted-foreground hover:underline">
-          Ver / validar conceptos →
+            Ver / validar conceptos →
           </Link>
         </div>
       </div>
+
+      <div className="mt-6 pt-6 border-t">
+        <h2 className="text-sm font-medium mb-3">Preguntas de diagnóstico</h2>
+        <div className="flex items-center gap-3">
+          <GenerateQuestionsButton subjectId={subjectId} />
+          <Link href={`/docente/${subjectId}/preguntas`} className="text-sm text-muted-foreground hover:underline">
+            Ver / validar preguntas →
+          </Link>
+        </div>
+      </div>
+
     </main>
   );
 }
