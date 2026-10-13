@@ -46,6 +46,14 @@ export async function POST(req: NextRequest) {
 
     const parsed = JSON.parse(raw) as { concepts: { name: string; description: string; prerequisites: string[] }[] };
 
+        if (!Array.isArray(parsed.concepts) || parsed.concepts.length === 0) {
+      console.error("generate-concepts: la IA devolvió 0 conceptos. Respuesta:", raw);
+      return NextResponse.json(
+        { error: "No se encontraron conceptos en el material. Revisa que el documento tenga contenido temático y texto legible." },
+        { status: 422 }
+      );
+    }
+
     // Primera pasada: insertar los conceptos sin prerrequisitos todavía
     const { data: inserted, error: insertError } = await supabase
       .from("concepts")

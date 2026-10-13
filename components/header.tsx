@@ -28,6 +28,11 @@ export async function Header() {
               Panel docente
             </Link>
           )}
+          {role === "estudiante" && (
+            <Link href="/estudiante" className="text-muted-foreground hover:text-foreground">
+              Mis asignaturas
+            </Link>
+          )}
           {user ? (
             <LogoutButton />
           ) : (

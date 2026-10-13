@@ -31,6 +31,7 @@ export default async function Estudiantes({ params }: { params: Promise<{ subjec
     ? await supabase
         .from("diagnostic_attempts")
         .select("id, user_id, created_at")
+        .not("completed_at", "is", null)
         .eq("subject_id", subjectId)
         .in("user_id", studentIds)
     : { data: [] };

@@ -27,7 +27,7 @@ export default async function Conceptos({ params }: { params: Promise<{ subjectI
   const allConcepts = concepts ?? [];
 
   return (
-    <main className="max-w-2xl mx-auto p-8">
+    <main className="max-w-5xl mx-auto p-8">
         <Link href={`/docente/${subjectId}`} className="text-sm text-muted-foreground hover:underline mb-4 inline-block">
             ← Volver a la asignatura
         </Link>

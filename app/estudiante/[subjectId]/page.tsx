@@ -2,6 +2,9 @@ import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { KnowledgeMap } from "@/components/knowledge-map";
+import { computeConceptStates } from "@/lib/concept-state";
+import { computePriorityGap, computeNextChallenge } from "@/lib/knowledge-graph";
+import { NextSteps } from "@/components/next-steps";
 
 export default async function MiBrujula({ params }: { params: Promise<{ subjectId: string }> }) {
   const { subjectId } = await params;
@@ -22,8 +25,43 @@ export default async function MiBrujula({ params }: { params: Promise<{ subjectI
     .eq("subject_id", subjectId)
     .eq("status", "validado");
 
+   const { data: attempts } = await supabase
+    .from("diagnostic_attempts")
+    .select("id, created_at")
+    .not("completed_at", "is", null)
+    .eq("subject_id", subjectId)
+    .eq("user_id", user.id);
+
+  const attemptIds = attempts?.map((a) => a.id) ?? [];
+
+  const { data: answers } = attemptIds.length
+    ? await supabase
+        .from("diagnostic_answers")
+        .select("attempt_id, stage, concept, is_correct")
+        .in("attempt_id", attemptIds)
+    : { data: [] };
+
+  const states = computeConceptStates(concepts ?? [], attempts ?? [], answers ?? []);
+
+    const { data: validQuestions } = await supabase
+    .from("questions")
+    .select("concept_id")
+    .eq("subject_id", subjectId)
+    .eq("status", "validado");
+  const conceptsWithQuestions = new Set((validQuestions ?? []).map((q) => q.concept_id));
+
+  const graphConcepts = concepts ?? [];
+  const gap = computePriorityGap(graphConcepts, states);
+  const challenge = computeNextChallenge(graphConcepts, states);
+  const challengeHasQuestions =
+    challenge.kind === "ubicarse"
+      ? true
+      : challenge.kind === "completo"
+        ? false
+        : conceptsWithQuestions.has(challenge.concept.id);
+
   return (
-    <main className="max-w-4xl mx-auto p-8">
+    <main className="max-w-5xl mx-auto p-8">
       <Link href="/estudiante" className="text-sm text-muted-foreground hover:underline mb-4 inline-block">
         ← Volver a mis asignaturas
       </Link>
@@ -37,9 +75,18 @@ export default async function MiBrujula({ params }: { params: Promise<{ subjectI
         Hacer diagnóstico
       </Link>
 
+            {graphConcepts.length > 0 && (
+        <NextSteps
+          subjectId={subjectId}
+          gap={gap}
+          challenge={challenge}
+          challengeHasQuestions={challengeHasQuestions}
+        />
+      )}
+
       <h2 className="text-sm font-medium mb-3">Mapa de conocimiento</h2>
       {concepts && concepts.length > 0 ? (
-        <KnowledgeMap concepts={concepts} />
+        <KnowledgeMap concepts={concepts} states={states} />
       ) : (
         <p className="text-sm text-muted-foreground">
           Tu docente aún no publicó conceptos validados para esta asignatura.

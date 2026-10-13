@@ -29,6 +29,7 @@ export default function Diagnostico() {
   const [answers, setAnswers] = useState<number[]>([]);
   const [microAnswers, setMicroAnswers] = useState<number[]>([]);
   const [microCurrent, setMicroCurrent] = useState(0);
+  const [focusConcept, setFocusConcept] = useState<string | null>(null);
   const MAX_QUESTIONS = 10;
 
   function pickQuestions<T>(all: T[]): T[] {
@@ -42,6 +43,7 @@ export default function Diagnostico() {
 
   useEffect(() => {
     async function loadData() {
+      const focus = new URLSearchParams(window.location.search).get("concepto");
       const { data: subjectData } = await supabase.from("subjects").select("name, topic").eq("id", subjectId).single();
 
       const { data: validQuestions } = await supabase
@@ -66,7 +68,9 @@ export default function Diagnostico() {
           const concept = Array.isArray(q.concepts) ? q.concepts[0] : q.concepts;
           if (concept) levelingMap[concept.name] = concept.description ?? "";
         });
-        setQuestions(pickQuestions(mapped));
+        const focused = focus ? mapped.filter((q) => q.concept === focus) : [];
+        setQuestions(pickQuestions(focused.length > 0 ? focused : mapped));
+        setFocusConcept(focused.length > 0 ? focus : null);
         setLevelingContent(levelingMap);
         setSubjectInfo(subjectData ?? { name: "", topic: "" });
         setUsingFallback(false);
@@ -120,6 +124,12 @@ export default function Diagnostico() {
     if (current + 1 < questions.length) {
       setCurrent(current + 1);
     } else {
+      if (attemptId) {
+        await supabase
+          .from("diagnostic_attempts")
+          .update({ completed_at: new Date().toISOString() })
+          .eq("id", attemptId);
+      }
       setStage("gaps");
     }
   }
@@ -147,6 +157,23 @@ export default function Diagnostico() {
     }
   }
 
+    function handleExit() {
+    const inProgress = stage === "quiz" || stage === "microeval";
+    if (
+      inProgress &&
+      !confirm("Si sales ahora, este diagnóstico quedará incompleto y tendrás que empezar de nuevo. ¿Salir?")
+    ) {
+      return;
+    }
+    router.push(`/estudiante/${subjectId}`);
+  }
+
+  const exitButton = (
+    <button onClick={handleExit} className="text-sm text-muted-foreground hover:underline mb-4 inline-block">
+      ← Salir del diagnóstico
+    </button>
+  );
+
   if (stage === "loading") {
     return (
       <main className="max-w-xl mx-auto p-8">
@@ -170,14 +197,12 @@ export default function Diagnostico() {
     const q = questions[current];
     return (
       <main className="max-w-xl mx-auto p-8">
-         <Link href={`/estudiante`} className="text-sm text-muted-foreground hover:underline">
-          ← Vovler a mis asignaturas
-        </Link>
+        {exitButton}
         <div className="mt-6 pt-6 border-t">
       </div>
         {fallbackBanner}
         <p className="text-xs text-muted-foreground mb-2">
-          Diagnóstico — {subjectInfo.name} · pregunta {current + 1} de {questions.length}
+                  {focusConcept ? `Práctica — ${focusConcept}` : `Diagnóstico — ${subjectInfo.name}`} · pregunta {current + 1} de {questions.length}
         </p>
         <Progress value={(current / questions.length) * 100} className="mb-6" />
         <Card>
@@ -199,6 +224,7 @@ export default function Diagnostico() {
   if (stage === "gaps") {
     return (
       <main className="max-w-xl mx-auto p-8">
+        {exitButton}
         {fallbackBanner}
         <h1 className="text-lg font-medium mb-4">Tus resultados</h1>
         <div className="flex flex-col gap-3 mb-6">
@@ -224,6 +250,7 @@ export default function Diagnostico() {
   if (stage === "leveling") {
     return (
       <main className="max-w-xl mx-auto p-8">
+        {exitButton}
         {fallbackBanner}
         <h1 className="text-lg font-medium mb-4">Ruta de nivelación</h1>
         <div className="flex flex-col gap-4 mb-6">
@@ -246,6 +273,7 @@ export default function Diagnostico() {
     const q = gapQuestions[microCurrent];
     return (
       <main className="max-w-xl mx-auto p-8">
+        {exitButton}
         {fallbackBanner}
         <p className="text-xs text-muted-foreground mb-2">
           Microevaluación · pregunta {microCurrent + 1} de {gapQuestions.length}
