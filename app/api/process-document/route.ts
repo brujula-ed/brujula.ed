@@ -4,10 +4,11 @@ import { extractText } from "@/lib/extract-text";
 import { chunkText } from "@/lib/chunk-text";
 import OpenAI from "openai";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+//const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export async function POST(req: NextRequest) {
   try {
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const { documentId } = await req.json();
     const supabase = await createClient();
 
