@@ -28,7 +28,7 @@ export default async function Estudiante() {
           const s = Array.isArray(e.subjects) ? e.subjects[0] : e.subjects;
           if (!s) return null;
           return (
-            <Link key={s.id} href={`/diagnostico/${s.id}`}>
+            <Link key={s.id} href={`/estudiante/${s.id}`}>
               <Card className="hover:border-foreground/30 transition-colors cursor-pointer">
                 <CardHeader>
                   <CardTitle className="text-base">{s.name}</CardTitle>

@@ -2,6 +2,7 @@ import { redirect, notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ConceptCard } from "@/components/concept-card";
 import Link from "next/link";
+import { KnowledgeMap } from "@/components/knowledge-map";
 
 export default async function Conceptos({ params }: { params: Promise<{ subjectId: string }> }) {
   const { subjectId } = await params;
@@ -34,6 +35,12 @@ export default async function Conceptos({ params }: { params: Promise<{ subjectI
       <p className="text-sm text-muted-foreground mb-6">
         {subject.name} — revisa, edita o descarta lo que propuso la IA antes de publicarlo
       </p>
+
+      {allConcepts.length > 0 && (
+        <div className="mb-8">
+          <KnowledgeMap concepts={allConcepts} />
+        </div>
+    )}
 
       <div className="flex flex-col gap-3">
         {allConcepts.map((c) => (
