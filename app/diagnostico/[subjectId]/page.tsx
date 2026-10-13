@@ -29,6 +29,16 @@ export default function Diagnostico() {
   const [answers, setAnswers] = useState<number[]>([]);
   const [microAnswers, setMicroAnswers] = useState<number[]>([]);
   const [microCurrent, setMicroCurrent] = useState(0);
+  const MAX_QUESTIONS = 10;
+
+  function pickQuestions<T>(all: T[]): T[] {
+    const shuffled = [...all];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled.slice(0, MAX_QUESTIONS);
+  }
 
   useEffect(() => {
     async function loadData() {
@@ -56,12 +66,12 @@ export default function Diagnostico() {
           const concept = Array.isArray(q.concepts) ? q.concepts[0] : q.concepts;
           if (concept) levelingMap[concept.name] = concept.description ?? "";
         });
-        setQuestions(mapped);
+        setQuestions(pickQuestions(mapped));
         setLevelingContent(levelingMap);
         setSubjectInfo(subjectData ?? { name: "", topic: "" });
         setUsingFallback(false);
       } else {
-        setQuestions(fallbackQuestions);
+        setQuestions(pickQuestions(fallbackQuestions));
         setLevelingContent(fallbackLeveling);
         setSubjectInfo(subjectData ?? fallbackSubject);
         setUsingFallback(true);

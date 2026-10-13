@@ -85,6 +85,9 @@ export function SubjectCard({ subject }: { subject: Subject }) {
       <CardContent className="text-sm text-muted-foreground flex items-center justify-between">
         <span>{subject.topic}</span>
         <div className="flex gap-2">
+          <Button size="sm" onClick={() => router.push(`/docente/${subject.id}`)}>
+            Gestionar
+          </Button>
           <Button variant="ghost" size="sm" onClick={() => setEditing(true)}>
             Editar
           </Button>
