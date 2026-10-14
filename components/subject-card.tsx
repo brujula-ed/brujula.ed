@@ -88,6 +88,9 @@ export function SubjectCard({ subject }: { subject: Subject }) {
           <Button size="sm" onClick={() => router.push(`/docente/${subject.id}`)}>
             Gestionar
           </Button>
+          <Button size="sm" variant="outline" onClick={() => router.push(`/docente/${subject.id}/reporte`)}>
+            Resultados
+          </Button>
           <Button variant="ghost" size="sm" onClick={() => setEditing(true)}>
             Editar
           </Button>

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
+import Link from "next/link";
 
 export default function Login() {
   const router = useRouter();
@@ -51,6 +52,13 @@ export default function Login() {
           </form>
         </CardContent>
       </Card>
+      <p className="text-sm text-muted-foreground mt-4">
+        ¿No tienes cuenta?{" "}
+        <Link href="/registro" className="text-blue-600 hover:underline">
+          Regístrate aquí
+        </Link>
+      
+      </p>
     </main>
   );
 }
