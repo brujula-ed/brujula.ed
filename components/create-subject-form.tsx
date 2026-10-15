@@ -50,11 +50,11 @@ export function CreateSubjectForm() {
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="name">Nombre de la asignatura</Label>
-            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Programación I" />
+            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ingrese el nombre de la asignatura" />
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="topic">Tema</Label>
-            <Input id="topic" value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="Estructuras de control" />
+            <Input id="topic" value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="Ingrese el nombre del tema" />
           </div>
           {error && <p className="text-sm text-red-500">{error}</p>}
           <Button type="submit" disabled={loading}>

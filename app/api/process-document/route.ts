@@ -53,13 +53,32 @@ export async function POST(req: NextRequest) {
       embedding: embeddingResponse.data[i].embedding,
     }));
 
-    const { error: insertError } = await supabase.from("document_chunks").insert(rows);
+        const { data: inserted, error: insertError } = await supabase
+      .from("document_chunks")
+      .insert(rows)
+      .select("id");
 
-    if (insertError) {
-      return NextResponse.json({ error: insertError.message }, { status: 500 });
+    if (insertError || !inserted) {
+      return NextResponse.json({ error: insertError?.message ?? "No se pudieron guardar los fragmentos" }, { status: 500 });
+    }
+
+    // Se borran los fragmentos de procesamientos anteriores, ya con los nuevos guardados
+    const newIds = inserted.map((r) => r.id);
+    const { error: cleanupError } = await supabase
+      .from("document_chunks")
+      .delete()
+      .eq("document_id", doc.id)
+      .not("id", "in", `(${newIds.join(",")})`);
+
+    if (cleanupError) {
+      return NextResponse.json(
+        { error: `Se procesó, pero no se pudieron limpiar los fragmentos anteriores: ${cleanupError.message}` },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({ success: true, chunksCreated: rows.length });
+
   } catch (err) {
     console.error("Error en process-document:", err);
     const message = err instanceof Error ? err.message : "Error desconocido";

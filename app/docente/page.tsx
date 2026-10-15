@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { CreateSubjectForm } from "@/components/create-subject-form";
 import { SubjectCard } from "@/components/subject-card";
 
+
 export default async function Docente() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
