@@ -5,6 +5,8 @@ import { KnowledgeMap } from "@/components/knowledge-map";
 import { computeConceptStates } from "@/lib/concept-state";
 import { computePriorityGap, computeNextChallenge } from "@/lib/knowledge-graph";
 import { NextSteps } from "@/components/next-steps";
+import { computeLRR } from "@/lib/lrr";
+import { LRRCard } from "@/components/lrr-card";
 
 export default async function MiBrujula({ params }: { params: Promise<{ subjectId: string }> }) {
   const { subjectId } = await params;
@@ -42,6 +44,7 @@ export default async function MiBrujula({ params }: { params: Promise<{ subjectI
     : { data: [] };
 
   const states = computeConceptStates(concepts ?? [], attempts ?? [], answers ?? []);
+  const lrr = computeLRR((concepts ?? []).map((c) => c.name), attempts ?? [], answers ?? []);
 
     const { data: validQuestions } = await supabase
     .from("questions")
@@ -82,6 +85,12 @@ export default async function MiBrujula({ params }: { params: Promise<{ subjectI
           challenge={challenge}
           challengeHasQuestions={challengeHasQuestions}
         />
+      )}
+
+      {(attempts ?? []).length > 0 && (
+        <div className="mb-8">
+          <LRRCard lrr={lrr} title="Tu avance en cerrar brechas" />
+        </div>
       )}
 
       <h2 className="text-sm font-medium mb-3">Mapa de conocimiento</h2>

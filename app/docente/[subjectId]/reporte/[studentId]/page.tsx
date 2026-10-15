@@ -5,6 +5,8 @@ import { computeConceptStates, STATE_LABEL, type ConceptState } from "@/lib/conc
 import { computePriorityGap } from "@/lib/knowledge-graph";
 import { KnowledgeMap } from "@/components/knowledge-map";
 import { Card, CardContent } from "@/components/ui/card";
+import { computeLRR } from "@/lib/lrr";
+import { LRRCard } from "@/components/lrr-card";
 
 const ORDER: ConceptState[] = ["brecha", "en_desarrollo", "dominado", "sin_evidencia"];
 
@@ -64,6 +66,8 @@ export default async function EstudianteDetalle({
   const states = computeConceptStates(concepts, attempts ?? [], answers ?? []);
   const gap = computePriorityGap(concepts, states);
 
+  const lrr = computeLRR(concepts.map((c) => c.name), attempts ?? [], answers ?? []);
+
   const counts: Record<ConceptState, number> = {
     sin_evidencia: 0,
     brecha: 0,
@@ -108,6 +112,10 @@ export default async function EstudianteDetalle({
           {gap.blocked.length > 0 && ` (bloquea ${gap.blocked.length} concepto(s) posteriores)`}.
         </div>
       )}
+
+      <div className="mb-6">
+        <LRRCard lrr={lrr} title="Tasa de recuperación del estudiante" />
+      </div>
 
       {concepts.length > 0 ? (
         <KnowledgeMap concepts={concepts} states={states} />

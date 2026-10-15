@@ -4,6 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { computeConceptStates, STATE_LABEL, type ConceptState } from "@/lib/concept-state";
 import { computeDependents } from "@/lib/knowledge-graph";
 import { Card, CardContent } from "@/components/ui/card";
+import { computeClassLRR } from "@/lib/lrr";
+import { LRRCard } from "@/components/lrr-card";
 
 const COLORS: Record<ConceptState, string> = {
   sin_evidencia: "#d1d5db",
@@ -113,6 +115,18 @@ export default async function Reporte({ params }: { params: Promise<{ subjectId:
     return b.gaps - a.gaps || a.name.localeCompare(b.name);
   });
 
+    const lrr = computeClassLRR(
+    concepts.map((c) => c.name),
+    activeIds.map((sid) => {
+      const myAttempts = (attempts ?? []).filter((a) => a.user_id === sid);
+      const myIds = new Set(myAttempts.map((a) => a.id));
+      return {
+        attempts: myAttempts,
+        answers: (answers ?? []).filter((a) => myIds.has(a.attempt_id)),
+      };
+    })
+  );
+
   const dependents = computeDependents(concepts);
   const rows = concepts
     .map((c) => {
@@ -187,7 +201,18 @@ export default async function Reporte({ params }: { params: Promise<{ subjectId:
           Esta asignatura aún no tiene conceptos validados. Valídalos para ver el reporte.
         </p>
       ) : (
-        <>
+          <>
+          <div className="mb-8">
+            <LRRCard
+              lrr={lrr}
+              title="Tasa de recuperación de la clase"
+              extra={{
+                studentsWithGaps: lrr.studentsWithGaps,
+                studentsWithRecovery: lrr.studentsWithRecovery,
+              }}
+            />
+          </div>
+
           <h2 className="text-sm font-medium mb-3">Acciones sugeridas</h2>
           <ul className="flex flex-col gap-2 mb-8 text-sm">
             {suggestions.map((s, i) => (
