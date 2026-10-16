@@ -62,7 +62,6 @@ export function LRRCard({
                     />
                   <span>{s.label}</span>
                   <span>{lrr[s.key]}</span>
-                  <span className="inline-block w-3"></span>
                 </span>
               ))}
             </div>
