@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -30,6 +30,11 @@ export default function Diagnostico() {
   const [microAnswers, setMicroAnswers] = useState<number[]>([]);
   const [microCurrent, setMicroCurrent] = useState(0);
   const [focusConcept, setFocusConcept] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  // El estado tarda un render en llegar a los botones; la ref bloquea el segundo clic de inmediato
+  const savingRef = useRef(false);
   const MAX_QUESTIONS = 10;
 
   function pickQuestions<T>(all: T[]): T[] {
@@ -46,13 +51,20 @@ export default function Diagnostico() {
       const focus = new URLSearchParams(window.location.search).get("concepto");
       const { data: subjectData } = await supabase.from("subjects").select("name, topic").eq("id", subjectId).single();
 
-      const { data: validQuestions } = await supabase
+      const { data: validQuestions, error: questionsError } = await supabase
         .from("questions")
         .select("id, prompt, options, correct_index, concepts(id, name, description)")
         .eq("subject_id", subjectId)
         .eq("status", "validado");
 
-      if (validQuestions && validQuestions.length > 0) {
+      // Un error no es lo mismo que "no hay preguntas": no mostrar la demostración en ese caso
+      if (questionsError) {
+        setLoadError("No pudimos cargar el diagnóstico. Recarga la página para intentarlo de nuevo.");
+        return;
+      }
+
+      const isFallback = !validQuestions || validQuestions.length === 0;
+      if (!isFallback) {
         const mapped: Question[] = validQuestions.map((q) => {
           const concept = Array.isArray(q.concepts) ? q.concepts[0] : q.concepts;
           return {
@@ -81,14 +93,20 @@ export default function Diagnostico() {
         setUsingFallback(true);
       }
 
+      // La demostración no se guarda: no es evidencia real del estudiante y no debe contar en los reportes
       const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: attempt } = await supabase
+      if (user && !isFallback) {
+        const { data: attempt, error: attemptError } = await supabase
           .from("diagnostic_attempts")
           .insert({ user_id: user.id, subject: subjectData?.name ?? fallbackSubject.name, topic: subjectData?.topic ?? fallbackSubject.topic, subject_id: subjectId })
           .select()
           .single();
-        if (attempt) setAttemptId(attempt.id);
+        // Sin intento no se guardaría ninguna respuesta: mejor no empezar
+        if (attemptError || !attempt) {
+          setLoadError("No pudimos iniciar el diagnóstico. Recarga la página para intentarlo de nuevo.");
+          return;
+        }
+        setAttemptId(attempt.id);
       }
 
       setStage("quiz");
@@ -106,10 +124,37 @@ export default function Diagnostico() {
     return byConcept;
   }
 
+  async function withSaving(action: () => Promise<void>) {
+    if (savingRef.current) return;
+    savingRef.current = true;
+    setSaving(true);
+    try {
+      await action();
+    } finally {
+      savingRef.current = false;
+      setSaving(false);
+    }
+  }
+
+  async function finishDiagnostic() {
+    if (attemptId) {
+      const { error } = await supabase
+        .from("diagnostic_attempts")
+        .update({ completed_at: new Date().toISOString() })
+        .eq("id", attemptId);
+      if (error) {
+        setSaveError("No pudimos cerrar el diagnóstico. Revisa tu conexión y vuelve a intentarlo.");
+        return;
+      }
+    }
+    setSaveError(null);
+    setStage("gaps");
+  }
+
   async function handleAnswer(optionIndex: number) {
     const q = questions[current];
     if (attemptId) {
-      await supabase.from("diagnostic_answers").insert({
+      const { error } = await supabase.from("diagnostic_answers").insert({
         attempt_id: attemptId,
         stage: "diagnostico",
         question_id: q.id,
@@ -118,19 +163,19 @@ export default function Diagnostico() {
         correct_index: q.correctIndex,
         is_correct: optionIndex === q.correctIndex,
       });
+      // 23505 = ya estaba guardada (un reintento tras perder la respuesta de red): se sigue como si nada
+      if (error && error.code !== "23505") {
+        setSaveError("No pudimos guardar tu respuesta. Revisa tu conexión y vuelve a elegir una opción.");
+        return;
+      }
     }
+    setSaveError(null);
     const next = [...answers, optionIndex];
     setAnswers(next);
     if (current + 1 < questions.length) {
       setCurrent(current + 1);
     } else {
-      if (attemptId) {
-        await supabase
-          .from("diagnostic_attempts")
-          .update({ completed_at: new Date().toISOString() })
-          .eq("id", attemptId);
-      }
-      setStage("gaps");
+      await finishDiagnostic();
     }
   }
 
@@ -138,7 +183,7 @@ export default function Diagnostico() {
     const gapQuestions = questions.filter((q) => gaps.includes(q.concept));
     const q = gapQuestions[microCurrent];
     if (attemptId) {
-      await supabase.from("diagnostic_answers").insert({
+      const { error } = await supabase.from("diagnostic_answers").insert({
         attempt_id: attemptId,
         stage: "microevaluacion",
         question_id: q.id,
@@ -147,7 +192,13 @@ export default function Diagnostico() {
         correct_index: q.correctIndex,
         is_correct: optionIndex === q.correctIndex,
       });
+      // 23505 = ya estaba guardada (un reintento tras perder la respuesta de red): se sigue como si nada
+      if (error && error.code !== "23505") {
+        setSaveError("No pudimos guardar tu respuesta. Revisa tu conexión y vuelve a elegir una opción.");
+        return;
+      }
     }
+    setSaveError(null);
     const next = [...microAnswers, optionIndex];
     setMicroAnswers(next);
     if (microCurrent + 1 < gapQuestions.length) {
@@ -177,7 +228,11 @@ export default function Diagnostico() {
   if (stage === "loading") {
     return (
       <main className="max-w-xl mx-auto p-8">
-        <p className="text-sm text-muted-foreground">Cargando diagnóstico...</p>
+        {loadError ? (
+          <p role="alert" className="text-sm text-red-500">{loadError}</p>
+        ) : (
+          <p className="text-sm text-muted-foreground">Cargando diagnóstico...</p>
+        )}
       </main>
     );
   }
@@ -193,8 +248,14 @@ export default function Diagnostico() {
     </div>
   );
 
+  const saveErrorMessage = saveError && (
+    <p role="alert" className="text-sm text-red-500 mb-4">{saveError}</p>
+  );
+
   if (stage === "quiz") {
     const q = questions[current];
+    // Todas respondidas pero sin cerrar: solo falta reintentar el cierre, no volver a responder
+    const allAnswered = answers.length === questions.length;
     return (
       <main className="max-w-xl mx-auto p-8">
         {exitButton}
@@ -205,16 +266,27 @@ export default function Diagnostico() {
                   {focusConcept ? `Práctica — ${focusConcept}` : `Diagnóstico — ${subjectInfo.name}`} · pregunta {current + 1} de {questions.length}
         </p>
         <Progress value={(current / questions.length) * 100} className="mb-6" />
+        {saveErrorMessage}
         <Card>
           <CardContent className="pt-6">
             <p className="text-base font-medium mb-4">{q.prompt}</p>
-            <div className="flex flex-col gap-2">
-              {q.options.map((opt, i) => (
-                <Button key={i} variant="outline" className="justify-start" onClick={() => handleAnswer(i)}>
-                  {opt}
-                </Button>
-              ))}
-            </div>
+            {allAnswered ? (
+              <Button onClick={() => withSaving(finishDiagnostic)} disabled={saving}>Reintentar</Button>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {q.options.map((opt, i) => (
+                  <Button
+                    key={i}
+                    variant="outline"
+                    className="justify-start"
+                    onClick={() => withSaving(() => handleAnswer(i))}
+                    disabled={saving}
+                  >
+                    {opt}
+                  </Button>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </main>
@@ -278,12 +350,19 @@ export default function Diagnostico() {
         <p className="text-xs text-muted-foreground mb-2">
           Microevaluación · pregunta {microCurrent + 1} de {gapQuestions.length}
         </p>
+        {saveErrorMessage}
         <Card>
           <CardContent className="pt-6">
             <p className="text-base font-medium mb-4">{q.prompt}</p>
             <div className="flex flex-col gap-2">
               {q.options.map((opt, i) => (
-                <Button key={i} variant="outline" className="justify-start" onClick={() => handleMicroAnswer(i)}>
+                <Button
+                  key={i}
+                  variant="outline"
+                  className="justify-start"
+                  onClick={() => withSaving(() => handleMicroAnswer(i))}
+                  disabled={saving}
+                >
                   {opt}
                 </Button>
               ))}
