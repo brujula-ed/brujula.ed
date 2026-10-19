@@ -23,6 +23,16 @@ export async function POST(req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
+    // Los estudiantes inscritos también leen conceptos validados: sin esto podrían disparar la llamada a OpenAI
+    const { data: subject } = await supabase
+      .from("subjects")
+      .select("teacher_id")
+      .eq("id", subjectId)
+      .maybeSingle();
+    if (!subject || subject.teacher_id !== user.id) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+    }
+
     const { data: concepts, error: conceptsError } = await supabase
       .from("concepts")
       .select("id, name, description")
@@ -31,6 +41,18 @@ export async function POST(req: NextRequest) {
 
     if (conceptsError || !concepts || concepts.length === 0) {
       return NextResponse.json({ error: "No hay conceptos validados todavía" }, { status: 400 });
+    }
+
+    const { data: allowed, error: quotaError } = await supabase.rpc("consume_ai_quota", { p_route: "generate-questions" });
+    if (quotaError) {
+      console.error("generate-questions: no se pudo verificar el límite de uso:", quotaError);
+      return NextResponse.json({ error: "No se pudo verificar el límite de uso de IA" }, { status: 500 });
+    }
+    if (!allowed) {
+      return NextResponse.json(
+        { error: "Alcanzaste el límite de 30 usos de IA en 24 horas. Inténtalo más tarde." },
+        { status: 429 }
+      );
     }
 
     const completion = await openai.chat.completions.create({

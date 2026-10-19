@@ -24,6 +24,9 @@ detecta brechas de conocimiento, ve un mapa de conocimiento y recibe un siguient
 - Antes de dar algo por terminado, corre `npm run build` y `npm run lint`. Un push con build roto deja
   viva la versión anterior en Vercel sin avisar.
 - Si algo es una suposición, dilo. No inventes nombres de tablas ni columnas: léelos del código o de `supabase/migrations/`.
+- Cambios de esquema: migración nueva con `npx supabase migration new <nombre>`, ensayo con
+  `npx supabase db push --dry-run` y push real **solo con confirmación explícita** (no hay entorno de
+  desarrollo: cada push cambia producción).
 - Idioma: español. Textos de la interfaz en español claro, tuteo.
 
 ## Stack
