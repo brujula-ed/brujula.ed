@@ -14,6 +14,11 @@ const COLORS: Record<ConceptState, string> = {
   dominado: "#16a34a",
 };
 const ORDER: ConceptState[] = ["brecha", "en_desarrollo", "dominado", "sin_evidencia"];
+// Supabase devuelve como máximo "Max rows" filas por consulta (Data API, hoy 1000) sin avisar si corta.
+// Las respuestas de toda la clase pueden superarlo, así que se leen por páginas de este tamaño.
+const PAGE_SIZE = 1000;
+
+type AnswerRow = { attempt_id: string; stage: string; concept_id: string | null; is_correct: boolean };
 
 export default async function Reporte({ params }: { params: Promise<{ subjectId: string }> }) {
   const { subjectId } = await params;
@@ -52,12 +57,20 @@ export default async function Reporte({ params }: { params: Promise<{ subjectId:
 
   const attemptIds = attempts?.map((a) => a.id) ?? [];
 
-  const { data: answers } = attemptIds.length
-    ? await supabase
-        .from("diagnostic_answers")
-        .select("attempt_id, stage, concept_id, is_correct")
-        .in("attempt_id", attemptIds)
-    : { data: [] };
+  // Ordenadas por id para que ninguna página se salte ni repita filas. Si una página falla, mejor mostrar
+  // el error que un reporte con datos incompletos.
+  const answers: AnswerRow[] = [];
+  for (let from = 0; attemptIds.length > 0; from += PAGE_SIZE) {
+    const { data: page, error } = await supabase
+      .from("diagnostic_answers")
+      .select("attempt_id, stage, concept_id, is_correct")
+      .in("attempt_id", attemptIds)
+      .order("id")
+      .range(from, from + PAGE_SIZE - 1);
+    if (error) throw new Error(`No se pudieron leer las respuestas del reporte: ${error.message}`);
+    answers.push(...(page ?? []));
+    if (!page || page.length < PAGE_SIZE) break;
+  }
 
   const activeIds = studentIds.filter((id) => (attempts ?? []).some((a) => a.user_id === id));
   const inactiveCount = studentIds.length - activeIds.length;
