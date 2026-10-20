@@ -27,6 +27,9 @@ detecta brechas de conocimiento, ve un mapa de conocimiento y recibe un siguient
 - Cambios de esquema: migración nueva con `npx supabase migration new <nombre>`, ensayo con
   `npx supabase db push --dry-run` y push real **solo con confirmación explícita** (no hay entorno de
   desarrollo: cada push cambia producción).
+- La integración de GitHub de Supabase aplica las migraciones que llegan a `main`. Por eso, cada migración se
+  aplica con `db push` (con confirmación) **antes** de subir su archivo; las que deben ir después del despliegue
+  esperan a que Vercel termine.
 - Idioma: español. Textos de la interfaz en español claro, tuteo.
 
 ## Stack

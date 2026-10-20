@@ -20,6 +20,9 @@ const AiQuestion = z
 
 const AiResponse = z.object({ questions: z.array(z.unknown()) });
 
+// Banco objetivo por concepto: alcanza para 2 en el diagnóstico y 2 en la microevaluación (lib/question-selection.ts)
+const QUESTIONS_PER_CONCEPT = 4;
+
 function shuffleOptions(options: string[], correctIndex: number) {
   const correctText = options[correctIndex];
   const shuffled = [...options];
@@ -59,6 +62,30 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No hay conceptos validados todavía" }, { status: 400 });
     }
 
+    // Regenerar solo completa el banco: cuenta las preguntas que ya tiene cada concepto (sugeridas y validadas)
+    const { data: existing, error: existingError } = await supabase
+      .from("questions")
+      .select("concept_id")
+      .eq("subject_id", subjectId);
+    if (existingError) {
+      console.error("generate-questions: no se pudieron contar las preguntas existentes:", existingError);
+      return NextResponse.json({ error: "No se pudieron revisar las preguntas existentes" }, { status: 500 });
+    }
+    const existingCount = new Map<string, number>();
+    for (const q of existing ?? []) existingCount.set(q.concept_id, (existingCount.get(q.concept_id) ?? 0) + 1);
+    const missing = new Map(
+      concepts
+        .map((c) => [c.id, QUESTIONS_PER_CONCEPT - (existingCount.get(c.id) ?? 0)] as const)
+        .filter(([, n]) => n > 0)
+    );
+    const pending = concepts.filter((c) => missing.has(c.id));
+    if (pending.length === 0) {
+      return NextResponse.json(
+        { error: `Todos los conceptos validados ya tienen ${QUESTIONS_PER_CONCEPT} preguntas. Descarta alguna si quieres generar otras.` },
+        { status: 400 }
+      );
+    }
+
     const { data: allowed, error: quotaError } = await supabase.rpc("consume_ai_quota", { p_route: "generate-questions" });
     if (quotaError) {
       console.error("generate-questions: no se pudo verificar el límite de uso:", quotaError);
@@ -79,13 +106,16 @@ export async function POST(req: NextRequest) {
           role: "system",
           content:
             "Eres un asistente que ayuda a un docente a crear preguntas de diagnóstico de opción múltiple. " +
-            "Para cada concepto que te paso, genera 4 preguntas de opción múltiple distintas entre sí (4 opciones cada una, solo una correcta). " +
+            "Para cada concepto que te paso, genera exactamente la cantidad de preguntas indicada en \"cantidad\": " +
+            "preguntas de opción múltiple distintas entre sí (4 opciones cada una, solo una correcta). " +
             'Responde solo JSON con este formato exacto: {"questions": [{"conceptName": "...", "prompt": "...", ' +
             '"options": ["...", "...", "...", "..."], "correctIndex": 0}]}',
         },
         {
           role: "user",
-          content: JSON.stringify(concepts.map((c) => ({ name: c.name, description: c.description }))),
+          content: JSON.stringify(
+            pending.map((c) => ({ name: c.name, description: c.description, cantidad: missing.get(c.id) }))
+          ),
         },
       ],
     });
@@ -108,17 +138,24 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Cada pregunta se valida por separado: una mala no tumba a las buenas
-    const nameToId = new Map(concepts.map((c) => [c.name, c.id]));
+    // Cada pregunta se valida por separado: una mala no tumba a las buenas.
+    // Solo se aceptan conceptos pendientes y como máximo las que le faltan a cada uno.
+    const nameToId = new Map(pending.map((c) => [c.name, c.id]));
+    const remaining = new Map(missing);
     const valid: z.infer<typeof AiQuestion>[] = [];
     let discarded = 0;
     for (const item of envelope.data.questions) {
       const result = AiQuestion.safeParse(item);
-      if (result.success && nameToId.has(result.data.conceptName)) valid.push(result.data);
-      else discarded += 1;
+      const conceptId = result.success ? nameToId.get(result.data.conceptName) : undefined;
+      if (result.success && conceptId && (remaining.get(conceptId) ?? 0) > 0) {
+        valid.push(result.data);
+        remaining.set(conceptId, remaining.get(conceptId)! - 1);
+      } else {
+        discarded += 1;
+      }
     }
     if (discarded > 0) {
-      console.warn(`generate-questions: ${discarded} pregunta(s) descartada(s) por formato inválido`);
+      console.warn(`generate-questions: ${discarded} pregunta(s) descartada(s) por formato inválido o sobrantes`);
     }
     if (valid.length === 0) {
       return NextResponse.json(

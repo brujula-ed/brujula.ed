@@ -1,7 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import OpenAI from "openai";
+import { z } from "zod";
 
+// Forma mínima de cada concepto de la IA; se valida ANTES de insertar para no dejar conceptos a medias.
+// Sin descripción o sin prerrequisitos válidos el concepto se conserva: el docente lo completa al validar.
+const AiConcept = z.object({
+  name: z.string().trim().min(1),
+  description: z.string().trim().catch(""),
+  prerequisites: z.array(z.string().trim()).catch([]),
+});
+
+const AiResponse = z.object({ concepts: z.array(z.unknown()) });
 
 export async function POST(req: NextRequest) {
   try {
@@ -56,10 +66,41 @@ export async function POST(req: NextRequest) {
     const raw = completion.choices[0].message.content;
     if (!raw) return NextResponse.json({ error: "La IA no devolvió contenido" }, { status: 500 });
 
-    const parsed = JSON.parse(raw) as { concepts: { name: string; description: string; prerequisites: string[] }[] };
+    let json: unknown;
+    try {
+      json = JSON.parse(raw);
+    } catch {
+      json = null;
+    }
+    const envelope = AiResponse.safeParse(json);
+    if (!envelope.success) {
+      console.error("generate-concepts: la IA devolvió un formato inválido:", raw);
+      return NextResponse.json(
+        { error: "La IA devolvió una respuesta con formato inválido. Vuelve a intentarlo." },
+        { status: 502 }
+      );
+    }
 
-        if (!Array.isArray(parsed.concepts) || parsed.concepts.length === 0) {
-      console.error("generate-concepts: la IA devolvió 0 conceptos. Respuesta:", raw);
+    // Cada concepto se valida por separado; los nombres repetidos en el lote se descartan (sin distinguir mayúsculas)
+    const concepts: z.infer<typeof AiConcept>[] = [];
+    const seenNames = new Set<string>();
+    let discarded = 0;
+    for (const item of envelope.data.concepts) {
+      const result = AiConcept.safeParse(item);
+      const key = result.success ? result.data.name.toLowerCase() : "";
+      if (result.success && !seenNames.has(key)) {
+        seenNames.add(key);
+        concepts.push(result.data);
+      } else {
+        discarded += 1;
+      }
+    }
+    if (discarded > 0) {
+      console.warn(`generate-concepts: ${discarded} concepto(s) descartado(s) por formato inválido o nombre repetido`);
+    }
+
+    if (concepts.length === 0) {
+      console.error("generate-concepts: la IA devolvió 0 conceptos válidos. Respuesta:", raw);
       return NextResponse.json(
         { error: "No se encontraron conceptos en el material. Revisa que el documento tenga contenido temático y texto legible." },
         { status: 422 }
@@ -70,7 +111,7 @@ export async function POST(req: NextRequest) {
     const { data: inserted, error: insertError } = await supabase
       .from("concepts")
       .insert(
-        parsed.concepts.map((c) => ({
+        concepts.map((c) => ({
           subject_id: subjectId,
           name: c.name,
           description: c.description,
@@ -83,12 +124,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: insertError?.message ?? "Error al guardar" }, { status: 500 });
     }
 
-    // Segunda pasada: resolver nombres de prerrequisitos a ids reales
-    const nameToId = new Map(inserted.map((c) => [c.name, c.id]));
-    for (const c of parsed.concepts) {
-      const prereqIds = c.prerequisites.map((p) => nameToId.get(p)).filter(Boolean) as string[];
-      if (prereqIds.length > 0) {
-        await supabase.from("concepts").update({ prerequisite_ids: prereqIds }).eq("id", nameToId.get(c.name));
+    // Segunda pasada: resolver nombres de prerrequisitos a ids reales (sin distinguir mayúsculas, sin autorreferencias)
+    const nameToId = new Map(inserted.map((c) => [c.name.toLowerCase(), c.id]));
+    for (const c of concepts) {
+      const ownId = nameToId.get(c.name.toLowerCase());
+      const prereqIds = c.prerequisites
+        .map((p) => nameToId.get(p.toLowerCase()))
+        .filter((id): id is string => !!id && id !== ownId);
+      if (ownId && prereqIds.length > 0) {
+        await supabase.from("concepts").update({ prerequisite_ids: prereqIds }).eq("id", ownId);
       }
     }
 
