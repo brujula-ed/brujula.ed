@@ -46,12 +46,11 @@ export default async function MiBrujula({ params }: { params: Promise<{ subjectI
   const states = computeConceptStates(concepts ?? [], attempts ?? [], answers ?? []);
   const lrr = computeLRR(concepts ?? [], attempts ?? [], answers ?? []);
 
-    const { data: validQuestions } = await supabase
-    .from("questions")
-    .select("concept_id")
-    .eq("subject_id", subjectId)
-    .eq("status", "validado");
-  const conceptsWithQuestions = new Set((validQuestions ?? []).map((q) => q.concept_id));
+  // Los estudiantes no leen "questions" directamente: la función devuelve las validadas sin la respuesta correcta
+  const { data: validQuestions } = await supabase.rpc("get_diagnostic_questions", { p_subject_id: subjectId });
+  const conceptsWithQuestions = new Set(
+    ((validQuestions ?? []) as { concept_id: string }[]).map((q) => q.concept_id)
+  );
 
   const graphConcepts = concepts ?? [];
   const gap = computePriorityGap(graphConcepts, states);

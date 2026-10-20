@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
           role: "system",
           content:
             "Eres un asistente que ayuda a un docente a crear preguntas de diagnóstico de opción múltiple. " +
-            "Para cada concepto que te paso, genera 2 preguntas de opción múltiple (4 opciones cada una, solo una correcta). " +
+            "Para cada concepto que te paso, genera 4 preguntas de opción múltiple distintas entre sí (4 opciones cada una, solo una correcta). " +
             'Responde solo JSON con este formato exacto: {"questions": [{"conceptName": "...", "prompt": "...", ' +
             '"options": ["...", "...", "...", "..."], "correctIndex": 0}]}',
         },
