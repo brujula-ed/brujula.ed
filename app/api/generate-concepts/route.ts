@@ -34,6 +34,22 @@ export async function POST(req: NextRequest) {
 
     const context = chunks.map((c) => c.content).join("\n\n").slice(0, 12000);
 
+    // Regenerar solo añade conceptos nuevos: los existentes (validados o no) no se tocan
+    const { data: existing, error: existingError } = await supabase
+      .from("concepts")
+      .select("id, name")
+      .eq("subject_id", subjectId);
+    if (existingError) {
+      console.error("generate-concepts: no se pudieron leer los conceptos existentes:", existingError);
+      return NextResponse.json({ error: "No se pudieron revisar los conceptos existentes" }, { status: 500 });
+    }
+    const existingNames = (existing ?? []).map((c) => c.name);
+    const existingHint =
+      existingNames.length > 0
+        ? "Ya existen estos conceptos; NO los repitas, pero puedes usarlos como prerrequisitos: " +
+          JSON.stringify(existingNames) + ". "
+        : "";
+
     const { data: allowed, error: quotaError } = await supabase.rpc("consume_ai_quota", { p_route: "generate-concepts" });
     if (quotaError) {
       console.error("generate-concepts: no se pudo verificar el límite de uso:", quotaError);
@@ -56,7 +72,9 @@ export async function POST(req: NextRequest) {
             "Eres un asistente que ayuda a un docente a estructurar el contenido de su materia. " +
             "A partir del siguiente material, propone entre 4 y 10 conceptos clave, cada uno con una " +
             "breve descripción (1-2 oraciones) y una lista de nombres de otros conceptos de la misma " +
-            "lista que sean prerrequisito (pueden ser ninguno). Responde solo JSON, con este formato exacto: " +
+            "lista que sean prerrequisito (pueden ser ninguno). " +
+            existingHint +
+            "Responde solo JSON, con este formato exacto: " +
             '{"concepts": [{"name": "...", "description": "...", "prerequisites": ["nombre de otro concepto", ...]}]}',
         },
         { role: "user", content: context },
@@ -81,9 +99,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Cada concepto se valida por separado; los nombres repetidos en el lote se descartan (sin distinguir mayúsculas)
+    // Cada concepto se valida por separado. Se descartan los nombres repetidos en el lote y los que ya existen
+    // (misma comparación que el índice único: sin mayúsculas ni espacios en los extremos)
     const concepts: z.infer<typeof AiConcept>[] = [];
-    const seenNames = new Set<string>();
+    const seenNames = new Set(existingNames.map((n) => n.trim().toLowerCase()));
     let discarded = 0;
     for (const item of envelope.data.concepts) {
       const result = AiConcept.safeParse(item);
@@ -99,6 +118,12 @@ export async function POST(req: NextRequest) {
       console.warn(`generate-concepts: ${discarded} concepto(s) descartado(s) por formato inválido o nombre repetido`);
     }
 
+    if (concepts.length === 0 && existingNames.length > 0) {
+      return NextResponse.json(
+        { error: "La IA no propuso conceptos nuevos: todo lo que encontró en el material ya está en la asignatura." },
+        { status: 422 }
+      );
+    }
     if (concepts.length === 0) {
       console.error("generate-concepts: la IA devolvió 0 conceptos válidos. Respuesta:", raw);
       return NextResponse.json(
@@ -124,8 +149,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: insertError?.message ?? "Error al guardar" }, { status: 500 });
     }
 
-    // Segunda pasada: resolver nombres de prerrequisitos a ids reales (sin distinguir mayúsculas, sin autorreferencias)
-    const nameToId = new Map(inserted.map((c) => [c.name.toLowerCase(), c.id]));
+    // Segunda pasada: resolver nombres de prerrequisitos a ids reales (sin distinguir mayúsculas, sin autorreferencias).
+    // Un concepto nuevo puede depender de uno nuevo o de uno que ya existía.
+    const nameToId = new Map(
+      [...(existing ?? []), ...inserted].map((c) => [c.name.trim().toLowerCase(), c.id])
+    );
     for (const c of concepts) {
       const ownId = nameToId.get(c.name.toLowerCase());
       const prereqIds = c.prerequisites
