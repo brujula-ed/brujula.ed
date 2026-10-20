@@ -70,8 +70,14 @@ Tablas principales: `profiles` (rol), `subjects` (con código de clase), `enroll
 
 ## Reglas de negocio ya implementadas
 - Estados: `sin_evidencia`, `brecha`, `en_desarrollo`, `dominado`. Dominado si exactitud ≥ 0.7.
-- LRR: brecha = concepto < 0.7 en el **primer** diagnóstico; recuperada = microevaluación ≥ 0.7;
-  las pendientes cuentan en el denominador. Los criterios se afinarán en el piloto.
+- LRR: brecha = concepto < 0.7 en el **primer** diagnóstico; recuperada = la evidencia **más reciente**
+  posterior (microevaluación, o diagnóstico de un intento posterior) ≥ 0.7; las pendientes cuentan en el
+  denominador. Los criterios se afinarán en el piloto.
+- Selección de preguntas (`lib/question-selection.ts`, provisional): diagnóstico con la mitad de las validadas
+  de cada concepto (máx. 2; 1 si solo hay una); microevaluación con hasta 2 no vistas en el intento; se
+  prefieren las nunca respondidas. Sin preguntas nuevas, la brecha queda pendiente. La IA genera 4 por concepto.
+- Los estudiantes no leen `questions` ni insertan respuestas directamente: usan las RPC
+  `get_diagnostic_questions` (sin `correct_index`) y `submit_answer` (corrige en la base de datos).
 - Las opciones de las preguntas se mezclan en código (la IA tendía a poner la correcta primera).
 
 ## Trampas conocidas
@@ -95,3 +101,5 @@ curados → ludificación del cierre de brechas → campo de capacidades, prueba
 - Antes de cada commit revisar que `.env.local` no esté incluido (el repositorio es público).
 
    Estado y plan del proyecto: @docs/ROADMAP.md
+
+No asumas nada, siempre pregunta si te falta información

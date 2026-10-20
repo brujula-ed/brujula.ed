@@ -3,10 +3,12 @@
 //
 // Criterios operativos (a validar con Adri para el piloto):
 //  - Brecha identificada: concepto bajo el umbral en el PRIMER diagnóstico.
-//  - Recuperada: la microevaluación posterior llega al umbral.
+//  - Evidencia posterior: la más reciente después de la línea base, sea microevaluación o un diagnóstico
+//    de un intento posterior (desde la rotación de preguntas, los diagnósticos posteriores usan preguntas nuevas).
+//  - Recuperada: la evidencia posterior llega al umbral.
 //  - En proceso: mejoró respecto a la línea base pero sigue bajo el umbral.
-//  - Sin mejora: la microevaluación no supera la línea base.
-//  - Pendiente: aún no hay microevaluación.
+//  - Sin mejora: la evidencia posterior no supera la línea base.
+//  - Pendiente: aún no hay evidencia posterior.
 //  - LRR = recuperadas / identificadas (las pendientes SÍ cuentan en el denominador).
 
 export const LRR_THRESHOLD = 0.7;
@@ -67,20 +69,30 @@ export function computeStudentGaps(
     const mine = answers.filter((a) => a.concept_id === c.id);
 
     let baseline: number | null = null;
+    let baselineAttempt: string | null = null;
     for (const id of order) {
       const diag = mine.filter((a) => a.attempt_id === id && a.stage === "diagnostico");
       if (diag.length > 0) {
         baseline = accuracy(diag);
+        baselineAttempt = id;
         break;
       }
     }
     if (baseline === null || baseline >= LRR_THRESHOLD) continue;
 
+    // Evidencia posterior más reciente. En cada intento manda la microevaluación si la hubo; si no, su
+    // diagnóstico. En el intento de la línea base solo cuenta la microevaluación (su diagnóstico ES la línea base).
     let post: number | null = null;
     for (const id of [...order].reverse()) {
       const micro = mine.filter((a) => a.attempt_id === id && a.stage === "microevaluacion");
       if (micro.length > 0) {
         post = accuracy(micro);
+        break;
+      }
+      if (id === baselineAttempt) break;
+      const diag = mine.filter((a) => a.attempt_id === id && a.stage === "diagnostico");
+      if (diag.length > 0) {
+        post = accuracy(diag);
         break;
       }
     }

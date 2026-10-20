@@ -76,8 +76,9 @@ export function LRRCard({
         )}
 
         <p className="text-xs text-center text-muted-foreground">
-          Brecha = concepto bajo 70 % en el primer diagnóstico. Cerrada = la microevaluación llega a 70 %
-          o más. Criterios sujetos a ajuste en el piloto (Anexo I, sec. 12).
+          Brecha = concepto bajo 70 % en el primer diagnóstico. Cerrada = la evaluación más reciente
+          (microevaluación o un diagnóstico posterior) llega a 70 % o más. Criterios sujetos a ajuste en el piloto
+          (Anexo I, sec. 12).
         </p>
       </CardContent>
     </Card>
