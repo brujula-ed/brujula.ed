@@ -24,6 +24,18 @@ export async function POST(req: NextRequest) {
 
     const context = chunks.map((c) => c.content).join("\n\n").slice(0, 12000);
 
+    const { data: allowed, error: quotaError } = await supabase.rpc("consume_ai_quota", { p_route: "generate-concepts" });
+    if (quotaError) {
+      console.error("generate-concepts: no se pudo verificar el límite de uso:", quotaError);
+      return NextResponse.json({ error: "No se pudo verificar el límite de uso de IA" }, { status: 500 });
+    }
+    if (!allowed) {
+      return NextResponse.json(
+        { error: "Alcanzaste el límite de 30 usos de IA en 24 horas. Inténtalo más tarde." },
+        { status: 429 }
+      );
+    }
+
     const completion = await openai.chat.completions.create({
       model: "gpt-6-luna",
       response_format: { type: "json_object" },

@@ -55,7 +55,7 @@ export default async function Reporte({ params }: { params: Promise<{ subjectId:
   const { data: answers } = attemptIds.length
     ? await supabase
         .from("diagnostic_answers")
-        .select("attempt_id, stage, concept, is_correct")
+        .select("attempt_id, stage, concept_id, is_correct")
         .in("attempt_id", attemptIds)
     : { data: [] };
 
@@ -116,7 +116,7 @@ export default async function Reporte({ params }: { params: Promise<{ subjectId:
   });
 
     const lrr = computeClassLRR(
-    concepts.map((c) => c.name),
+    concepts,
     activeIds.map((sid) => {
       const myAttempts = (attempts ?? []).filter((a) => a.user_id === sid);
       const myIds = new Set(myAttempts.map((a) => a.id));

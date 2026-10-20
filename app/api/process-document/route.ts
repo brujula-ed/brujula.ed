@@ -41,6 +41,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No se pudo extraer texto del documento" }, { status: 400 });
     }
 
+    const { data: allowed, error: quotaError } = await supabase.rpc("consume_ai_quota", { p_route: "process-document" });
+    if (quotaError) {
+      console.error("process-document: no se pudo verificar el límite de uso:", quotaError);
+      return NextResponse.json({ error: "No se pudo verificar el límite de uso de IA" }, { status: 500 });
+    }
+    if (!allowed) {
+      return NextResponse.json(
+        { error: "Alcanzaste el límite de 30 usos de IA en 24 horas. Inténtalo más tarde." },
+        { status: 429 }
+      );
+    }
+
     const embeddingResponse = await openai.embeddings.create({
       model: "text-embedding-3-small",
       input: chunks,

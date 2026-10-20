@@ -23,7 +23,10 @@ detecta brechas de conocimiento, ve un mapa de conocimiento y recibe un siguient
 - **No tomes decisiones de arquitectura sin consultar.** Propón alternativas con su costo.
 - Antes de dar algo por terminado, corre `npm run build` y `npm run lint`. Un push con build roto deja
   viva la versión anterior en Vercel sin avisar.
-- Si algo es una suposición, dilo. No inventes nombres de tablas ni columnas: léelos del código o del SQL.
+- Si algo es una suposición, dilo. No inventes nombres de tablas ni columnas: léelos del código o de `supabase/migrations/`.
+- Cambios de esquema: migración nueva con `npx supabase migration new <nombre>`, ensayo con
+  `npx supabase db push --dry-run` y push real **solo con confirmación explícita** (no hay entorno de
+  desarrollo: cada push cambia producción).
 - Idioma: español. Textos de la interfaz en español claro, tuteo.
 
 ## Stack
@@ -35,23 +38,35 @@ detecta brechas de conocimiento, ve un mapa de conocimiento y recibe un siguient
 - Extracción de texto: `pdf-parse` v2 (imports perezosos + `serverExternalPackages` en `next.config.ts`) y `mammoth` para .docx.
 
 ## Estructura (verificar contra el repo)
-- `app/docente/...` panel del docente: asignaturas, documentos, conceptos, preguntas, reporte y reporte por estudiante.
+- `app/page.tsx` redirige según el rol; `app/login` y `app/registro` para la autenticación.
+- `app/docente/page.tsx` lista y creación de asignaturas.
+- `app/docente/[subjectId]/page.tsx` documentos de la asignatura (subir, procesar, eliminar) y accesos a lo demás.
+- `app/docente/[subjectId]/conceptos`, `/preguntas`, `/reporte` y `/reporte/[studentId]`: validación y reportes.
+- `app/estudiante/page.tsx` asignaturas del estudiante (unirse con código de clase).
 - `app/estudiante/[subjectId]` "Mi Brújula": mapa, brecha prioritaria, próximo desafío, LRR.
-- `app/diagnostico/[subjectId]` diagnóstico y microevaluación.
-- `app/api/...` procesamiento de documentos y generación de conceptos y preguntas (server-side).
+- `app/diagnostico/[subjectId]/page.tsx` diagnóstico, nivelación y microevaluación en una sola página (por etapas).
+- `app/api/` `process-document`, `generate-concepts`, `generate-questions` (server-side).
+- `components/` componentes propios; `components/ui/` los de shadcn.
 - `lib/concept-state.ts` estados por concepto (umbral de dominio 0.7).
 - `lib/knowledge-graph.ts` dependientes, brecha prioritaria, próximo desafío.
 - `lib/lrr.ts` cálculo del LRR (por estudiante, concepto y clase).
+- `lib/extract-text.ts`, `lib/chunk-text.ts` extracción y fragmentación de documentos.
+- `lib/data.ts` banco de preguntas de demostración; `lib/class-code.ts` códigos de clase.
 - `lib/supabase/` clientes de servidor y cliente.
+- `middleware.ts` refresca la sesión de Supabase (en Next 16 la convención se llama `proxy`).
+- `supabase/migrations/` esquema y políticas RLS (fuente de verdad); `supabase/snippets/` historial de consultas.
 
 ## Datos
-Tablas principales: `profiles` (rol), `subjects` (con código de clase), `enrollments`, `documents`,
+Esquema completo en `supabase/migrations/` (cada cambio de esquema va como migración nueva).
+Tablas principales: `profiles` (rol), `subjects` (con código de clase), `enrollments`, `subject_documents`,
 `document_chunks` (con embedding), `concepts` (`prerequisite_ids`, `status`), `questions` (`status`),
 `diagnostic_attempts` (`completed_at`), `diagnostic_answers` (`stage`: `diagnostico` | `microevaluacion`,
 `concept`, `is_correct`).
 - Solo se usan conceptos y preguntas con `status = 'validado'`.
 - Seguridad: RLS en todas las tablas. Para evitar recursión usar funciones `security definer` con `set search_path = public`.
-- Las respuestas guardan el concepto por **nombre** (no por id). Es una deuda conocida.
+- Las respuestas se vinculan al concepto por **`concept_id`**, que un trigger rellena desde la pregunta (no lo
+  manda el navegador). La columna `concept` guarda el nombre que tenía al responder, solo como historial.
+  Estados y LRR emparejan siempre por id, así que renombrar un concepto no rompe su historial.
 
 ## Reglas de negocio ya implementadas
 - Estados: `sin_evidencia`, `brecha`, `en_desarrollo`, `dominado`. Dominado si exactitud ≥ 0.7.
@@ -78,3 +93,5 @@ curados → ludificación del cierre de brechas → campo de capacidades, prueba
 ## Seguridad
 - Nunca escribir claves en el código ni en este archivo. `OPENAI_API_KEY` solo en servidor.
 - Antes de cada commit revisar que `.env.local` no esté incluido (el repositorio es público).
+
+   Estado y plan del proyecto: @docs/ROADMAP.md

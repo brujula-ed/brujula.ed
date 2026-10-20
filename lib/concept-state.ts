@@ -10,7 +10,7 @@ export const STATE_LABEL: Record<ConceptState, string> = {
 };
 
 type Attempt = { id: string; created_at: string };
-type Answer = { attempt_id: string; stage: string; concept: string; is_correct: boolean };
+type Answer = { attempt_id: string; stage: string; concept_id: string | null; is_correct: boolean };
 
 function accuracy(list: Answer[]): number | null {
   if (list.length === 0) return null;
@@ -26,7 +26,8 @@ export function computeConceptStates(
   const result: Record<string, ConceptState> = {};
 
   for (const c of concepts) {
-    const mine = answers.filter((a) => a.concept === c.name);
+    // Por id: renombrar un concepto no debe desconectar su historial
+    const mine = answers.filter((a) => a.concept_id === c.id);
     if (mine.length === 0) {
       result[c.id] = "sin_evidencia";
       continue;

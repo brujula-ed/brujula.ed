@@ -12,12 +12,14 @@
 export const LRR_THRESHOLD = 0.7;
 
 type Attempt = { id: string; created_at: string };
-type Answer = { attempt_id: string; stage: string; concept: string; is_correct: boolean };
+type Answer = { attempt_id: string; stage: string; concept_id: string | null; is_correct: boolean };
+type Concept = { id: string; name: string };
 
 export type GapStatus = "pendiente" | "sin_mejora" | "en_proceso" | "recuperada";
 
 export type GapRecord = {
-  concept: string;
+  conceptId: string;
+  concept: string; // nombre actual, solo para mostrar
   baseline: number;
   post: number | null;
   status: GapStatus;
@@ -37,7 +39,7 @@ export type LRRResult = {
 export type ClassLRRResult = LRRResult & {
   studentsWithGaps: number;
   studentsWithRecovery: number;
-  byConcept: Record<string, LRRResult>;
+  byConcept: Record<string, LRRResult>; // por id de concepto
 };
 
 function accuracy(list: Answer[]): number | null {
@@ -53,15 +55,16 @@ function orderAttempts(attempts: Attempt[]): string[] {
 
 // Brechas de UN estudiante: attempts y answers deben ser solo suyos.
 export function computeStudentGaps(
-  conceptNames: string[],
+  concepts: Concept[],
   attempts: Attempt[],
   answers: Answer[]
 ): GapRecord[] {
   const order = orderAttempts(attempts); // antiguo -> reciente
   const gaps: GapRecord[] = [];
 
-  for (const name of conceptNames) {
-    const mine = answers.filter((a) => a.concept === name);
+  for (const c of concepts) {
+    // Por id: renombrar un concepto no debe desconectar su historial
+    const mine = answers.filter((a) => a.concept_id === c.id);
 
     let baseline: number | null = null;
     for (const id of order) {
@@ -88,7 +91,7 @@ export function computeStudentGaps(
       else if (post > baseline) status = "en_proceso";
       else status = "sin_mejora";
     }
-    gaps.push({ concept: name, baseline, post, status });
+    gaps.push({ conceptId: c.id, concept: c.name, baseline, post, status });
   }
   return gaps;
 }
@@ -113,30 +116,30 @@ export function summarizeGaps(gaps: GapRecord[]): LRRResult {
 }
 
 export function computeLRR(
-  conceptNames: string[],
+  concepts: Concept[],
   attempts: Attempt[],
   answers: Answer[]
 ): LRRResult {
-  return summarizeGaps(computeStudentGaps(conceptNames, attempts, answers));
+  return summarizeGaps(computeStudentGaps(concepts, attempts, answers));
 }
 
 // Clase: junta las brechas de todos los estudiantes (la unidad es la brecha).
 export function computeClassLRR(
-  conceptNames: string[],
+  concepts: Concept[],
   students: { attempts: Attempt[]; answers: Answer[] }[]
 ): ClassLRRResult {
   const all: GapRecord[] = [];
   let studentsWithGaps = 0;
   let studentsWithRecovery = 0;
   for (const s of students) {
-    const g = computeStudentGaps(conceptNames, s.attempts, s.answers);
+    const g = computeStudentGaps(concepts, s.attempts, s.answers);
     if (g.length > 0) studentsWithGaps += 1;
     if (g.some((x) => x.status === "recuperada")) studentsWithRecovery += 1;
     all.push(...g);
   }
   const byConcept: Record<string, LRRResult> = {};
-  for (const name of conceptNames) {
-    byConcept[name] = summarizeGaps(all.filter((g) => g.concept === name));
+  for (const c of concepts) {
+    byConcept[c.id] = summarizeGaps(all.filter((g) => g.conceptId === c.id));
   }
   return { ...summarizeGaps(all), studentsWithGaps, studentsWithRecovery, byConcept };
 }
