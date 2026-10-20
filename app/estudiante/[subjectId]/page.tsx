@@ -39,12 +39,12 @@ export default async function MiBrujula({ params }: { params: Promise<{ subjectI
   const { data: answers } = attemptIds.length
     ? await supabase
         .from("diagnostic_answers")
-        .select("attempt_id, stage, concept, is_correct")
+        .select("attempt_id, stage, concept_id, is_correct")
         .in("attempt_id", attemptIds)
     : { data: [] };
 
   const states = computeConceptStates(concepts ?? [], attempts ?? [], answers ?? []);
-  const lrr = computeLRR((concepts ?? []).map((c) => c.name), attempts ?? [], answers ?? []);
+  const lrr = computeLRR(concepts ?? [], attempts ?? [], answers ?? []);
 
     const { data: validQuestions } = await supabase
     .from("questions")

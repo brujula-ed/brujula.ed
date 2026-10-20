@@ -64,7 +64,9 @@ Tablas principales: `profiles` (rol), `subjects` (con código de clase), `enroll
 `concept`, `is_correct`).
 - Solo se usan conceptos y preguntas con `status = 'validado'`.
 - Seguridad: RLS en todas las tablas. Para evitar recursión usar funciones `security definer` con `set search_path = public`.
-- Las respuestas guardan el concepto por **nombre** (no por id). Es una deuda conocida.
+- Las respuestas se vinculan al concepto por **`concept_id`**, que un trigger rellena desde la pregunta (no lo
+  manda el navegador). La columna `concept` guarda el nombre que tenía al responder, solo como historial.
+  Estados y LRR emparejan siempre por id, así que renombrar un concepto no rompe su historial.
 
 ## Reglas de negocio ya implementadas
 - Estados: `sin_evidencia`, `brecha`, `en_desarrollo`, `dominado`. Dominado si exactitud ≥ 0.7.
