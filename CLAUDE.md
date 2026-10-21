@@ -106,5 +106,6 @@ curados → ludificación del cierre de brechas → campo de capacidades, prueba
 - Antes de cada commit revisar que `.env.local` no esté incluido (el repositorio es público).
 
    Estado y plan del proyecto: @docs/ROADMAP.md
+   Pendientes de la auditoría de deuda técnica (oct. 2026) y verificaciones tras el último despliegue: @docs/PENDIENTES.md
 
 No asumas nada, siempre pregunta si te falta información
