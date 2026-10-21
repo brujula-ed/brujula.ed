@@ -6,6 +6,24 @@ import OpenAI from "openai";
 
 //const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
+// Máximo del plan Hobby con Fluid Compute (300 s). En Pro se puede subir hasta 800 s.
+export const maxDuration = 300;
+
+const MAX_FILE_BYTES = 10 * 1024 * 1024; // 10 MB, mismo límite que el formulario y el bucket
+// OpenAI acepta hasta 2048 textos y 300 000 tokens por llamada; 100 fragmentos de ~400 tokens quedan muy por debajo
+const EMBEDDING_BATCH = 100;
+
+type SupabaseServer = Awaited<ReturnType<typeof createClient>>;
+
+// Borra fragmentos por id en tandas: una lista larga de ids no cabe en una sola URL
+async function deleteChunks(supabase: SupabaseServer, ids: string[]) {
+  for (let i = 0; i < ids.length; i += EMBEDDING_BATCH) {
+    const { error } = await supabase.from("document_chunks").delete().in("id", ids.slice(i, i + EMBEDDING_BATCH));
+    if (error) return error;
+  }
+  return null;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -33,6 +51,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No se pudo descargar el archivo" }, { status: 500 });
     }
 
+    if (fileData.size > MAX_FILE_BYTES) {
+      return NextResponse.json({ error: "El archivo supera el límite de 10 MB." }, { status: 413 });
+    }
+
     const buffer = Buffer.from(await fileData.arrayBuffer());
     const text = await extractText(buffer, doc.file_name);
     const chunks = chunkText(text);
@@ -53,35 +75,44 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const embeddingResponse = await openai.embeddings.create({
-      model: "text-embedding-3-small",
-      input: chunks,
-    });
-
-    const rows = chunks.map((content, i) => ({
-      document_id: doc.id,
-      subject_id: doc.subject_id,
-      content,
-      embedding: embeddingResponse.data[i].embedding,
-    }));
-
+    // Embeddings e inserción por tandas. Si una tanda falla, se deshace lo nuevo y el documento queda como estaba.
+    const newIds: string[] = [];
+    let firstNewAt: string | null = null; // hora (de la base de datos) de la primera tanda nueva
+    for (let i = 0; i < chunks.length; i += EMBEDDING_BATCH) {
+      const batch = chunks.slice(i, i + EMBEDDING_BATCH);
+      try {
+        const embeddingResponse = await openai.embeddings.create({
+          model: "text-embedding-3-small",
+          input: batch,
+        });
         const { data: inserted, error: insertError } = await supabase
-      .from("document_chunks")
-      .insert(rows)
-      .select("id");
-
-    if (insertError || !inserted) {
-      return NextResponse.json({ error: insertError?.message ?? "No se pudieron guardar los fragmentos" }, { status: 500 });
+          .from("document_chunks")
+          .insert(
+            batch.map((content, j) => ({
+              document_id: doc.id,
+              subject_id: doc.subject_id,
+              content,
+              embedding: embeddingResponse.data[j].embedding,
+            }))
+          )
+          .select("id, created_at");
+        if (insertError || !inserted) {
+          throw new Error(insertError?.message ?? "No se pudieron guardar los fragmentos");
+        }
+        newIds.push(...inserted.map((r) => r.id));
+        firstNewAt ??= inserted[0]?.created_at ?? null;
+      } catch (err) {
+        const rollbackError = await deleteChunks(supabase, newIds);
+        if (rollbackError) console.error("process-document: no se pudo deshacer la tanda fallida:", rollbackError);
+        throw err;
+      }
     }
 
-    // Se borran los fragmentos de procesamientos anteriores, ya con los nuevos guardados
-    const newIds = inserted.map((r) => r.id);
-    const { error: cleanupError } = await supabase
-      .from("document_chunks")
-      .delete()
-      .eq("document_id", doc.id)
-      .not("id", "in", `(${newIds.join(",")})`);
-
+    // Fragmentos de procesamientos anteriores: todos los del documento creados antes de la primera tanda nueva.
+    // Una sola sentencia, sin lista de ids (que podría superar las 1000 filas o no caber en la URL).
+    const { error: cleanupError } = firstNewAt
+      ? await supabase.from("document_chunks").delete().eq("document_id", doc.id).lt("created_at", firstNewAt)
+      : { error: null };
     if (cleanupError) {
       return NextResponse.json(
         { error: `Se procesó, pero no se pudieron limpiar los fragmentos anteriores: ${cleanupError.message}` },
@@ -89,7 +120,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    return NextResponse.json({ success: true, chunksCreated: rows.length });
+    return NextResponse.json({ success: true, chunksCreated: newIds.length });
 
   } catch (err) {
     console.error("Error en process-document:", err);
