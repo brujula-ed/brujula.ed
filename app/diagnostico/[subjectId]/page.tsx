@@ -51,6 +51,8 @@ export default function Diagnostico() {
   const [saving, setSaving] = useState(false);
   // El estado tarda un render en llegar a los botones; la ref bloquea el segundo clic de inmediato
   const savingRef = useRef(false);
+  // Enunciado de la pregunta actual: recibe el foco en cada pregunta nueva (ver el useEffect de abajo)
+  const promptRef = useRef<HTMLParagraphElement>(null);
 
   useEffect(() => {
     async function loadData() {
@@ -118,6 +120,12 @@ export default function Diagnostico() {
     }
     loadData();
   }, [subjectId]);
+
+  // Al pasar de pregunta, el botón pulsado desaparece y el foco se perdería: se lleva al nuevo enunciado
+  // para que el teclado siga en su sitio y los lectores de pantalla lean la pregunta nueva.
+  useEffect(() => {
+    if (stage === "quiz" || stage === "microeval") promptRef.current?.focus();
+  }, [stage, current, microCurrent]);
 
   function scoreByConcept(resultList: boolean[]) {
     const byConcept = new Map<string, { name: string; correct: number; total: number }>();
@@ -281,7 +289,9 @@ export default function Diagnostico() {
         {saveErrorMessage}
         <Card>
           <CardContent className="pt-6">
-            <p className="text-base font-medium mb-4">{q.prompt}</p>
+            <p ref={promptRef} tabIndex={-1} className="text-base font-medium mb-4 outline-none">
+              {q.prompt}
+            </p>
             {allAnswered ? (
               <Button onClick={() => withSaving(finishDiagnostic)} disabled={saving}>Reintentar</Button>
             ) : (
@@ -366,7 +376,9 @@ export default function Diagnostico() {
         {saveErrorMessage}
         <Card>
           <CardContent className="pt-6">
-            <p className="text-base font-medium mb-4">{q.prompt}</p>
+            <p ref={promptRef} tabIndex={-1} className="text-base font-medium mb-4 outline-none">
+              {q.prompt}
+            </p>
             <div className="flex flex-col gap-2">
               {q.options.map((opt, i) => (
                 <Button
