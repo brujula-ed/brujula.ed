@@ -83,11 +83,13 @@ export async function POST(req: NextRequest) {
         .filter(([, n]) => n > 0)
     );
     const pending = concepts.filter((c) => missing.has(c.id));
+    // No es un error: el banco ya está completo. Se responde bien, con un aviso que el botón muestra tal cual.
     if (pending.length === 0) {
-      return NextResponse.json(
-        { error: `Todos los conceptos validados ya tienen ${QUESTIONS_PER_CONCEPT} preguntas. Descarta alguna si quieres generar otras.` },
-        { status: 400 }
-      );
+      return NextResponse.json({
+        success: true,
+        count: 0,
+        notice: `Todos los conceptos validados ya tienen ${QUESTIONS_PER_CONCEPT} preguntas. Descarta alguna si quieres generar otras.`,
+      });
     }
 
     const { data: allowed, error: quotaError } = await supabase.rpc("consume_ai_quota", { p_route: "generate-questions" });

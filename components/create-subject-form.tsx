@@ -26,17 +26,28 @@ export function CreateSubjectForm() {
     }
     setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) {
+      setLoading(false);
+      setError("Tu sesión expiró. Vuelve a iniciar sesión.");
+      return;
+    }
 
-    const { error } = await supabase.from("subjects").insert({
-      teacher_id: user.id,
-      name,
-      topic,
-      class_code: generateClassCode(),
-    });
+    // class_code es único: si el código generado ya existe (23505, muy poco probable), se prueba con otro
+    let insertError: { code: string } | null = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const { error } = await supabase.from("subjects").insert({
+        teacher_id: user.id,
+        name,
+        topic,
+        class_code: generateClassCode(),
+      });
+      insertError = error;
+      if (error?.code !== "23505") break;
+    }
     setLoading(false);
-    if (error) {
-      setError(error.message);
+    if (insertError) {
+      console.error("No se pudo crear la asignatura:", insertError);
+      setError("No se pudo crear la asignatura. Inténtalo de nuevo.");
       return;
     }
     setName("");

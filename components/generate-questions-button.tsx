@@ -23,7 +23,7 @@ export function GenerateQuestionsButton({ subjectId }: { subjectId: string }) {
       setStatus(`Error: ${data.error}`);
       return;
     }
-    setStatus(`${data.count} preguntas sugeridas`);
+    setStatus(data.notice ?? `${data.count} preguntas sugeridas`);
     router.refresh();
   }
 
