@@ -70,7 +70,7 @@ export default function Registro() {
                 <option value="docente">Docente</option>
               </select>
             </div>
-            {error && <p className="text-sm text-red-500">{error}</p>}
+            {error && <p role="alert" className="text-sm text-red-500">{error}</p>}
             <Button type="submit" disabled={loading}>
               {loading ? "Creando cuenta..." : "Crear cuenta"}
             </Button>

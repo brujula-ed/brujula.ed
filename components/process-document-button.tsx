@@ -32,7 +32,7 @@ export function ProcessDocumentButton({ documentId }: { documentId: string }) {
       <Button size="sm" variant="outline" onClick={handleProcess} disabled={loading}>
         {loading ? "Procesando..." : "Procesar con IA"}
       </Button>
-      {status && <span className="text-xs text-muted-foreground">{status}</span>}
+      <span role="status" className="text-xs text-muted-foreground">{status}</span>
     </div>
   );
 }

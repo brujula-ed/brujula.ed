@@ -18,20 +18,43 @@ export function SubjectCard({ subject }: { subject: Subject }) {
   const [topic, setTopic] = useState(subject.topic);
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [error, setError] = useState("");
 
+  // Se piden de vuelta las filas modificadas: si la RLS bloquea la operación, Supabase no da error,
+  // simplemente no modifica nada. 0 filas = no se guardó.
   async function handleSave() {
+    setError("");
+    if (!name.trim() || !topic.trim()) {
+      setError("Completa el nombre y el tema.");
+      return;
+    }
     setLoading(true);
-    await supabase.from("subjects").update({ name, topic }).eq("id", subject.id);
+    const { data, error: saveError } = await supabase
+      .from("subjects")
+      .update({ name, topic })
+      .eq("id", subject.id)
+      .select("id");
     setLoading(false);
+    if (saveError || !data?.length) {
+      setError("No se pudieron guardar los cambios. Inténtalo de nuevo.");
+      return;
+    }
     setEditing(false);
     router.refresh();
   }
 
   async function handleDelete() {
     if (!confirm("¿Eliminar esta asignatura? Esto no se puede deshacer.")) return;
-    await supabase.from("subjects").delete().eq("id", subject.id);
+    setError("");
+    const { data, error: deleteError } = await supabase.from("subjects").delete().eq("id", subject.id).select("id");
+    if (deleteError || !data?.length) {
+      setError("No se pudo eliminar la asignatura. Inténtalo de nuevo.");
+      return;
+    }
     router.refresh();
   }
+
+  const errorMessage = error && <p role="alert" className="text-xs text-red-500">{error}</p>;
 
   async function handleCopy() {
     await navigator.clipboard.writeText(subject.class_code);
@@ -50,6 +73,7 @@ export function SubjectCard({ subject }: { subject: Subject }) {
             aria-label="Nombre de la asignatura"
           />
           <Input value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="Tema" aria-label="Tema" />
+          {errorMessage}
           <div className="flex gap-2">
             <Button size="sm" onClick={handleSave} disabled={loading}>
               {loading ? "Guardando..." : "Guardar"}
@@ -104,6 +128,7 @@ export function SubjectCard({ subject }: { subject: Subject }) {
           </Button>
         </div>
       </CardContent>
+      {error && <CardContent className="pt-0">{errorMessage}</CardContent>}
     </Card>
   );
 }

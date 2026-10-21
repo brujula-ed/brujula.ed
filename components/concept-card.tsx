@@ -22,31 +22,63 @@ export function ConceptCard({ concept, allConcepts }: { concept: Concept; allCon
   const [name, setName] = useState(concept.name);
   const [description, setDescription] = useState(concept.description ?? "");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const prereqNames = allConcepts
     .filter((c) => concept.prerequisite_ids.includes(c.id))
     .map((c) => c.name);
 
+  // Se piden de vuelta las filas modificadas: si la RLS bloquea la operación, Supabase no da error,
+  // simplemente no modifica nada. 0 filas = no se guardó.
   async function handleSave() {
     setLoading(true);
-    await supabase.from("concepts").update({ name, description }).eq("id", concept.id);
+    setError("");
+    const { data, error: saveError } = await supabase
+      .from("concepts")
+      .update({ name, description })
+      .eq("id", concept.id)
+      .select("id");
     setLoading(false);
+    if (saveError?.code === "23505") {
+      setError("Ya existe un concepto con ese nombre en esta asignatura.");
+      return;
+    }
+    if (saveError || !data?.length) {
+      setError("No se pudieron guardar los cambios. Inténtalo de nuevo.");
+      return;
+    }
     setEditing(false);
     router.refresh();
   }
 
   async function handleValidate() {
     setLoading(true);
-    await supabase.from("concepts").update({ status: "validado" }).eq("id", concept.id);
+    setError("");
+    const { data, error: validateError } = await supabase
+      .from("concepts")
+      .update({ status: "validado" })
+      .eq("id", concept.id)
+      .select("id");
     setLoading(false);
+    if (validateError || !data?.length) {
+      setError("No se pudo validar el concepto. Inténtalo de nuevo.");
+      return;
+    }
     router.refresh();
   }
 
   async function handleDiscard() {
     if (!confirm("¿Descartar este concepto sugerido?")) return;
-    await supabase.from("concepts").delete().eq("id", concept.id);
+    setError("");
+    const { data, error: deleteError } = await supabase.from("concepts").delete().eq("id", concept.id).select("id");
+    if (deleteError || !data?.length) {
+      setError("No se pudo descartar el concepto. Inténtalo de nuevo.");
+      return;
+    }
     router.refresh();
   }
+
+  const errorMessage = error && <p role="alert" className="text-xs text-red-500">{error}</p>;
 
   if (editing) {
     return (
@@ -64,6 +96,7 @@ export function ConceptCard({ concept, allConcepts }: { concept: Concept; allCon
             placeholder="Descripción breve"
             aria-label="Descripción del concepto"
           />
+          {errorMessage}
           <div className="flex gap-2">
             <Button size="sm" onClick={handleSave} disabled={loading}>Guardar</Button>
             <Button size="sm" variant="ghost" onClick={() => setEditing(false)}>Cancelar</Button>
@@ -99,6 +132,7 @@ export function ConceptCard({ concept, allConcepts }: { concept: Concept; allCon
           <Button size="sm" variant="outline" onClick={() => setEditing(true)}>Editar</Button>
           <Button size="sm" variant="ghost" onClick={handleDiscard}>Descartar</Button>
         </div>
+        {error && <div className="mt-2">{errorMessage}</div>}
       </CardContent>
     </Card>
   );

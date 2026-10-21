@@ -32,7 +32,7 @@ export function GenerateQuestionsButton({ subjectId }: { subjectId: string }) {
       <Button size="sm" onClick={handleGenerate} disabled={loading}>
         {loading ? "Generando..." : "Generar preguntas con IA"}
       </Button>
-      {status && <span className="text-xs text-muted-foreground">{status}</span>}
+      <span role="status" className="text-xs text-muted-foreground">{status}</span>
     </div>
   );
 }

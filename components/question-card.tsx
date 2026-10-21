@@ -24,30 +24,59 @@ export function QuestionCard({ question }: { question: Question }) {
   const [options, setOptions] = useState(question.options);
   const [correctIndex, setCorrectIndex] = useState(question.correct_index);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
+  // Se piden de vuelta las filas modificadas: si la RLS bloquea la operación, Supabase no da error,
+  // simplemente no modifica nada. 0 filas = no se guardó.
   async function handleSave() {
+    setError("");
+    if (!prompt.trim() || options.some((o) => !o.trim())) {
+      setError("Completa el enunciado y todas las opciones.");
+      return;
+    }
     setLoading(true);
-    await supabase
+    const { data, error: saveError } = await supabase
       .from("questions")
       .update({ prompt, options, correct_index: correctIndex })
-      .eq("id", question.id);
+      .eq("id", question.id)
+      .select("id");
     setLoading(false);
+    if (saveError || !data?.length) {
+      setError("No se pudieron guardar los cambios. Inténtalo de nuevo.");
+      return;
+    }
     setEditing(false);
     router.refresh();
   }
 
   async function handleValidate() {
     setLoading(true);
-    await supabase.from("questions").update({ status: "validado" }).eq("id", question.id);
+    setError("");
+    const { data, error: validateError } = await supabase
+      .from("questions")
+      .update({ status: "validado" })
+      .eq("id", question.id)
+      .select("id");
     setLoading(false);
+    if (validateError || !data?.length) {
+      setError("No se pudo validar la pregunta. Inténtalo de nuevo.");
+      return;
+    }
     router.refresh();
   }
 
   async function handleDiscard() {
     if (!confirm("¿Descartar esta pregunta sugerida?")) return;
-    await supabase.from("questions").delete().eq("id", question.id);
+    setError("");
+    const { data, error: deleteError } = await supabase.from("questions").delete().eq("id", question.id).select("id");
+    if (deleteError || !data?.length) {
+      setError("No se pudo descartar la pregunta. Inténtalo de nuevo.");
+      return;
+    }
     router.refresh();
   }
+
+  const errorMessage = error && <p role="alert" className="text-xs text-red-500">{error}</p>;
 
   if (editing) {
     return (
@@ -77,6 +106,7 @@ export function QuestionCard({ question }: { question: Question }) {
               />
             </div>
           ))}
+          {errorMessage}
           <div className="flex gap-2">
             <Button size="sm" onClick={handleSave} disabled={loading}>Guardar</Button>
             <Button size="sm" variant="ghost" onClick={() => setEditing(false)}>Cancelar</Button>
@@ -114,6 +144,7 @@ export function QuestionCard({ question }: { question: Question }) {
           <Button size="sm" variant="outline" onClick={() => setEditing(true)}>Editar</Button>
           <Button size="sm" variant="ghost" onClick={handleDiscard}>Descartar</Button>
         </div>
+        {error && <div className="mt-2">{errorMessage}</div>}
       </CardContent>
     </Card>
   );
