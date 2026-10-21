@@ -20,6 +20,8 @@ const AiQuestion = z
 
 const AiResponse = z.object({ questions: z.array(z.unknown()) });
 
+const RequestBody = z.object({ subjectId: z.uuid() });
+
 // Banco objetivo por concepto: alcanza para 2 en el diagnóstico y 2 en la microevaluación (lib/question-selection.ts)
 const QUESTIONS_PER_CONCEPT = 4;
 
@@ -36,7 +38,9 @@ function shuffleOptions(options: string[], correctIndex: number) {
 export async function POST(req: NextRequest) {
   try {
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-    const { subjectId } = await req.json();
+    const body = RequestBody.safeParse(await req.json().catch(() => null));
+    if (!body.success) return NextResponse.json({ error: "Solicitud inválida" }, { status: 400 });
+    const { subjectId } = body.data;
     const supabase = await createClient();
 
     const { data: { user } } = await supabase.auth.getUser();
@@ -179,13 +183,17 @@ export async function POST(req: NextRequest) {
 
     const { error: insertError } = await supabase.from("questions").insert(rows);
     if (insertError) {
-      return NextResponse.json({ error: insertError.message }, { status: 500 });
+      console.error("generate-questions: no se pudieron guardar las preguntas:", insertError);
+      return NextResponse.json({ error: "No se pudieron guardar las preguntas. Inténtalo de nuevo." }, { status: 500 });
     }
 
     return NextResponse.json({ success: true, count: rows.length });
   } catch (err) {
+    // El detalle técnico (OpenAI, Postgres) queda en el log del servidor; al navegador, un mensaje genérico
     console.error("Error en generate-questions:", err);
-    const message = err instanceof Error ? err.message : "Error desconocido";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json(
+      { error: "Ocurrió un error al generar las preguntas. Inténtalo de nuevo." },
+      { status: 500 }
+    );
   }
 }

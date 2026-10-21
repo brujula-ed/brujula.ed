@@ -3,6 +3,9 @@ import { createClient } from "@/lib/supabase/server";
 import { extractText } from "@/lib/extract-text";
 import { chunkText } from "@/lib/chunk-text";
 import OpenAI from "openai";
+import { z } from "zod";
+
+const RequestBody = z.object({ documentId: z.uuid() });
 
 //const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -27,7 +30,9 @@ async function deleteChunks(supabase: SupabaseServer, ids: string[]) {
 export async function POST(req: NextRequest) {
   try {
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-    const { documentId } = await req.json();
+    const body = RequestBody.safeParse(await req.json().catch(() => null));
+    if (!body.success) return NextResponse.json({ error: "Solicitud inválida" }, { status: 400 });
+    const { documentId } = body.data;
     const supabase = await createClient();
 
     const { data: { user } } = await supabase.auth.getUser();
@@ -56,7 +61,17 @@ export async function POST(req: NextRequest) {
     }
 
     const buffer = Buffer.from(await fileData.arrayBuffer());
-    const text = await extractText(buffer, doc.file_name);
+    // Formato no soportado o archivo dañado: mensaje útil para el docente, detalle técnico solo en el log
+    let text: string;
+    try {
+      text = await extractText(buffer, doc.file_name);
+    } catch (extractError) {
+      console.error("process-document: no se pudo extraer el texto:", extractError);
+      return NextResponse.json(
+        { error: "No se pudo leer el documento. Sube un PDF con texto o un Word (.docx) válido." },
+        { status: 400 }
+      );
+    }
     const chunks = chunkText(text);
 
     if (chunks.length === 0) {
@@ -115,8 +130,9 @@ export async function POST(req: NextRequest) {
       ? await supabase.from("document_chunks").delete().eq("document_id", doc.id).lt("created_at", firstNewAt)
       : { error: null };
     if (cleanupError) {
+      console.error("process-document: no se pudieron limpiar los fragmentos anteriores:", cleanupError);
       return NextResponse.json(
-        { error: `Se procesó, pero no se pudieron limpiar los fragmentos anteriores: ${cleanupError.message}` },
+        { error: "Se procesó, pero no se pudieron limpiar los fragmentos anteriores. Vuelve a procesarlo." },
         { status: 500 }
       );
     }
@@ -124,8 +140,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, chunksCreated: newIds.length });
 
   } catch (err) {
+    // El detalle técnico (OpenAI, Postgres) queda en el log del servidor; al navegador, un mensaje genérico
     console.error("Error en process-document:", err);
-    const message = err instanceof Error ? err.message : "Error desconocido";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json(
+      { error: "Ocurrió un error al procesar el documento. Inténtalo de nuevo." },
+      { status: 500 }
+    );
   }
 }

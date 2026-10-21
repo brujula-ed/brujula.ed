@@ -13,10 +13,14 @@ const AiConcept = z.object({
 
 const AiResponse = z.object({ concepts: z.array(z.unknown()) });
 
+const RequestBody = z.object({ subjectId: z.uuid() });
+
 export async function POST(req: NextRequest) {
   try {
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-    const { subjectId } = await req.json();
+    const body = RequestBody.safeParse(await req.json().catch(() => null));
+    if (!body.success) return NextResponse.json({ error: "Solicitud inválida" }, { status: 400 });
+    const { subjectId } = body.data;
     const supabase = await createClient();
 
     const { data: { user } } = await supabase.auth.getUser();
@@ -146,7 +150,8 @@ export async function POST(req: NextRequest) {
       .select("id, name");
 
     if (insertError || !inserted) {
-      return NextResponse.json({ error: insertError?.message ?? "Error al guardar" }, { status: 500 });
+      console.error("generate-concepts: no se pudieron guardar los conceptos:", insertError);
+      return NextResponse.json({ error: "No se pudieron guardar los conceptos. Inténtalo de nuevo." }, { status: 500 });
     }
 
     // Segunda pasada: resolver nombres de prerrequisitos a ids reales (sin distinguir mayúsculas, sin autorreferencias).
@@ -166,8 +171,11 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, count: inserted.length });
   } catch (err) {
+    // El detalle técnico (OpenAI, Postgres) queda en el log del servidor; al navegador, un mensaje genérico
     console.error("Error en generate-concepts:", err);
-    const message = err instanceof Error ? err.message : "Error desconocido";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json(
+      { error: "Ocurrió un error al generar los conceptos. Inténtalo de nuevo." },
+      { status: 500 }
+    );
   }
 }
