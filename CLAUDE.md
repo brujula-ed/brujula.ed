@@ -58,7 +58,7 @@ detecta brechas de conocimiento, ve un mapa de conocimiento y recibe un siguient
 - `lib/extract-text.ts`, `lib/chunk-text.ts` extracción y fragmentación de documentos.
 - `lib/data.ts` banco de preguntas de demostración; `lib/class-code.ts` códigos de clase.
 - `lib/supabase/` clientes de servidor y cliente.
-- `middleware.ts` refresca la sesión de Supabase (en Next 16 la convención se llama `proxy`).
+- `proxy.ts` refresca la sesión de Supabase en cada petición (en Next 16 sustituye a `middleware.ts`; corre en Node.js).
 - `supabase/migrations/` esquema y políticas RLS (fuente de verdad); `supabase/snippets/` historial de consultas.
 
 ## Datos
