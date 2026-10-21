@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ReactFlow,
   Background,
@@ -12,6 +12,7 @@ import {
   type Node,
   type Edge,
   type NodeProps,
+  type OnSelectionChangeParams,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import dagre from "@dagrejs/dagre";
@@ -167,6 +168,12 @@ export function KnowledgeMap({
     setNodes(initialNodes);
   }, [initialNodes, setNodes]);
 
+  // La selección cambia igual con clic que con teclado (Tab hasta el concepto y Enter o Espacio);
+  // onNodeClick solo se dispara con el ratón. React Flow pide que esta función sea estable (useCallback).
+  const onSelectionChange = useCallback(({ nodes: selectedNodes }: OnSelectionChangeParams) => {
+    setSelectedId(selectedNodes[0]?.id ?? null);
+  }, []);
+
   const selected = concepts.find((c) => c.id === selectedId);
   const requires = selected ? concepts.filter((c) => selected.prerequisite_ids.includes(c.id)) : [];
   const unlocks = selected ? concepts.filter((c) => c.prerequisite_ids.includes(selected.id)) : [];
@@ -182,8 +189,7 @@ export function KnowledgeMap({
             edges={edges}
             nodeTypes={nodeTypes}
             onNodesChange={onNodesChange}
-            onNodeClick={(_, node) => setSelectedId(node.id)}
-            onPaneClick={() => setSelectedId(null)}
+            onSelectionChange={onSelectionChange}
             nodesConnectable={false}
             fitView
           >
@@ -233,7 +239,8 @@ export function KnowledgeMap({
           )}
         </div>
 
-        <div className="border-t pt-4">
+        {/* aria-live: los lectores de pantalla leen el detalle al seleccionar un concepto */}
+        <div className="border-t pt-4" aria-live="polite">
           {selected ? (
             <>
               <p className="font-medium">{selected.name}</p>
@@ -256,7 +263,9 @@ export function KnowledgeMap({
               )}
             </>
           ) : (
-            <p className="text-muted-foreground">Haz clic en un círculo para ver su detalle.</p>
+            <p className="text-muted-foreground">
+              Haz clic en un círculo para ver su detalle (con teclado: Tab hasta el círculo y Enter).
+            </p>
           )}
         </div>
       </aside>

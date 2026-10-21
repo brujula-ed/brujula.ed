@@ -150,6 +150,10 @@ export default function Diagnostico() {
     optionIndex: number
   ): Promise<boolean | null> {
     if (usingFallback) return optionIndex === q.correctIndex;
+    if (!attemptId) {
+      setSaveError("No pudimos guardar tu respuesta. Recarga la página para iniciar el diagnóstico de nuevo.");
+      return null;
+    }
     const { data, error } = await supabase.rpc("submit_answer", {
       p_attempt_id: attemptId,
       p_question_id: q.id,

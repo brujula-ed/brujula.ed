@@ -36,7 +36,8 @@ export default async function Preguntas({ params }: { params: Promise<{ subjectI
       <div className="flex flex-col gap-3">
         {questions?.map((q) => {
           const conceptName = Array.isArray(q.concepts) ? q.concepts[0]?.name : (q.concepts as { name: string } | null)?.name;
-          return <QuestionCard key={q.id} question={{ ...q, conceptName: conceptName ?? "" }} />;
+          // options es jsonb; la restricción questions_correct_index_en_rango garantiza que es una lista
+          return <QuestionCard key={q.id} question={{ ...q, options: q.options as string[], conceptName: conceptName ?? "" }} />;
         })}
         {questions?.length === 0 && (
           <p className="text-sm text-muted-foreground">

@@ -30,6 +30,8 @@ detecta brechas de conocimiento, ve un mapa de conocimiento y recibe un siguient
 - La integración de GitHub de Supabase aplica las migraciones que llegan a `main`. Por eso, cada migración se
   aplica con `db push` (con confirmación) **antes** de subir su archivo; las que deben ir después del despliegue
   esperan a que Vercel termine.
+- Tras aplicar una migración, regenerar los tipos:
+  `npx supabase gen types typescript --linked --schema public > lib/supabase/database.types.ts`.
 - Idioma: español. Textos de la interfaz en español claro, tuteo.
 
 ## Stack

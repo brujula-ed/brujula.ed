@@ -52,8 +52,18 @@ export function ConceptCard({ concept, allConcepts }: { concept: Concept; allCon
     return (
       <Card>
         <CardContent className="pt-6 flex flex-col gap-3">
-          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre del concepto" />
-          <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Descripción breve" />
+          <Input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Nombre del concepto"
+            aria-label="Nombre del concepto"
+          />
+          <Input
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Descripción breve"
+            aria-label="Descripción del concepto"
+          />
           <div className="flex gap-2">
             <Button size="sm" onClick={handleSave} disabled={loading}>Guardar</Button>
             <Button size="sm" variant="ghost" onClick={() => setEditing(false)}>Cancelar</Button>

@@ -53,7 +53,7 @@ export function QuestionCard({ question }: { question: Question }) {
     return (
       <Card>
         <CardContent className="pt-6 flex flex-col gap-3">
-          <Input value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="Pregunta" />
+          <Input value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="Pregunta" aria-label="Enunciado" />
           <p className="text-xs text-muted-foreground -mb-1">Marca cuál opción es la correcta:</p>
           {options.map((opt, i) => (
             <div key={i} className="flex items-center gap-2">
@@ -63,6 +63,7 @@ export function QuestionCard({ question }: { question: Question }) {
                 checked={correctIndex === i}
                 onChange={() => setCorrectIndex(i)}
                 className="shrink-0"
+                aria-label={`Marcar la opción ${i + 1} como correcta`}
               />
               <Input
                 value={opt}
@@ -72,6 +73,7 @@ export function QuestionCard({ question }: { question: Question }) {
                   setOptions(next);
                 }}
                 placeholder={`Opción ${i + 1}`}
+                aria-label={`Opción ${i + 1}`}
               />
             </div>
           ))}

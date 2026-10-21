@@ -43,8 +43,13 @@ export function SubjectCard({ subject }: { subject: Subject }) {
     return (
       <Card>
         <CardContent className="pt-6 flex flex-col gap-3">
-          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre de la asignatura" />
-          <Input value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="Tema" />
+          <Input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Nombre de la asignatura"
+            aria-label="Nombre de la asignatura"
+          />
+          <Input value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="Tema" aria-label="Tema" />
           <div className="flex gap-2">
             <Button size="sm" onClick={handleSave} disabled={loading}>
               {loading ? "Guardando..." : "Guardar"}

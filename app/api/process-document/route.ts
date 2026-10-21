@@ -92,7 +92,8 @@ export async function POST(req: NextRequest) {
               document_id: doc.id,
               subject_id: doc.subject_id,
               content,
-              embedding: embeddingResponse.data[j].embedding,
+              // pgvector recibe el vector como texto "[0.1,0.2,...]" (así lo describen los tipos generados)
+              embedding: JSON.stringify(embeddingResponse.data[j].embedding),
             }))
           )
           .select("id, created_at");
