@@ -5,6 +5,14 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 
+const MAX_FILE_BYTES = 10 * 1024 * 1024; // 10 MB, mismo límite que process-document y el bucket
+// Tipos que el sistema sabe leer (lib/extract-text.ts). Se mandan explícitos: algunos navegadores
+// no reconocen .docx y subirían el archivo sin tipo, y el bucket lo rechazaría.
+const CONTENT_TYPES: Record<string, string> = {
+  pdf: "application/pdf",
+  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+};
+
 export function UploadDocumentForm({ subjectId }: { subjectId: string }) {
   const router = useRouter();
   const supabase = createClient();
@@ -17,12 +25,26 @@ export function UploadDocumentForm({ subjectId }: { subjectId: string }) {
     if (!file) return;
 
     setError("");
+    const ext = file.name.toLowerCase().split(".").pop() ?? "";
+    const contentType = CONTENT_TYPES[ext];
+    if (!contentType) {
+      setError("Solo se pueden subir archivos PDF o Word (.docx).");
+      e.target.value = "";
+      return;
+    }
+    if (file.size > MAX_FILE_BYTES) {
+      const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
+      setError(`El archivo pesa ${sizeMb} MB y el límite es 10 MB.`);
+      e.target.value = "";
+      return;
+    }
+
     setUploading(true);
 
     const path = `${subjectId}/${Date.now()}-${file.name}`;
     const { error: uploadError } = await supabase.storage
       .from("course-documents")
-      .upload(path, file);
+      .upload(path, file, { contentType });
 
     if (uploadError) {
       setUploading(false);
