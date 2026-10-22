@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="512" height="512" role="img" aria-label="brújula.ed, marca optimizada para 16 px">
+  <title>brújula.ed, marca optimizada para 16 px</title>
+  <path id="rayo-norte" d="M41.05 54.94 Q44.22 29.17 45.19 8.25 Q50.49 28.51 58.95 53.06 Z" fill="#17757B"/>
+  <path id="rayo-este" d="M50.00 45.50 Q69.80 51.02 86.00 54.00 Q69.80 56.98 50.00 62.50 Z" fill="#17757B"/>
+  <path id="rayo-sur" d="M58.50 54.00 Q52.98 74.90 50.00 92.00 Q47.02 74.90 41.50 54.00 Z" fill="#17757B"/>
+  <path id="rayo-oeste" d="M50.00 62.00 Q31.30 56.80 16.00 54.00 Q31.30 51.20 50.00 46.00 Z" fill="#17757B"/>
+  <path id="rayo-que-falta" d="M53.42 38.24 Q68.33 29.46 79.44 21.30 Q72.49 33.21 65.31 48.95 Z" fill="#FFC93C"/>
+</svg>

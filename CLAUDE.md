@@ -35,7 +35,10 @@ detecta brechas de conocimiento, ve un mapa de conocimiento y recibe un siguient
 - Idioma: español. Textos de la interfaz en español claro, tuteo.
 
 ## Stack
-- Next.js 16 (App Router, Turbopack), TypeScript, Tailwind, shadcn/ui.
+- Next.js 16 (App Router, Turbopack), TypeScript, Tailwind v4, shadcn/ui (`base-nova`).
+- Imagen corporativa (`docs/IMAGEN-CORPORATIVA.md`): colores como tokens en `app/globals.css` (paleta de marca y
+  estados `--state-*`); no escribir colores a mano en los componentes. Tipografías Figtree (texto) y Onest (títulos),
+  cargadas en `app/layout.tsx`. Archivos de la marca en `public/brand/`.
 - Supabase: Auth, Postgres con RLS, Storage (bucket privado), pgvector.
 - OpenAI: embeddings `text-embedding-3-small` (1536); generación con salida `json_object`.
 - React Flow (`@xyflow/react`) + `@dagrejs/dagre` para el mapa de conocimiento.

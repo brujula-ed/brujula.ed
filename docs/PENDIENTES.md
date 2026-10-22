@@ -31,10 +31,15 @@ se lista abajo. El orden de trabajo y las reglas (migraciones, commits) están e
 Cosas que no se pudieron probar desde el código; conviene comprobarlas en producción:
 
 1. **Iniciar sesión, navegar y cerrar sesión** siguen funcionando con `proxy.ts` (ahora corre en Node.js).
+   Verificado por Sergio el 22/10/2026.
 2. **Procesar un documento**: el embedding ahora se envía como texto (`JSON.stringify`) en
-   `app/api/process-document/route.ts`. Debería funcionar igual; confirmar que se crean fragmentos.
+   `app/api/process-document/route.ts`. Verificado el 22/10/2026: el último .docx procesado tiene 2
+   fragmentos, todos con embedding.
 3. **Documento grande** (PDF de 40+ páginas con texto, más de 100 fragmentos): probar el procesamiento por
-   tandas y la limpieza de fragmentos anteriores al reprocesar.
+   tandas y la limpieza de fragmentos anteriores al reprocesar. **Abierto, a investigar:** Sergio procesó un
+   PDF grande (esperaba ~30 fragmentos), no lo borró, y se generaron unos 30 conceptos y sus preguntas. Pero
+   la consulta a producción del 22/10/2026 (`subject_documents` + `document_chunks`) muestra 13 documentos y
+   ninguno con más de 4 fragmentos. Falta averiguar dónde están ese documento y sus fragmentos.
 
 ## Pendientes
 
@@ -83,8 +88,6 @@ Cosas que no se pudieron probar desde el código; conviene comprobarlas en produ
   `MASTERY_THRESHOLD`) y "70 %" en `components/lrr-card.tsx`.
 - Carga de intentos y respuestas repetida en `app/estudiante/[subjectId]/page.tsx`,
   `app/docente/[subjectId]/reporte/page.tsx` y `app/docente/[subjectId]/reporte/[studentId]/page.tsx`.
-- Colores de los estados en `components/knowledge-map.tsx`, `app/docente/[subjectId]/reporte/page.tsx` y
-  `components/lrr-card.tsx`.
 - Bloque del límite de IA (`consume_ai_quota` + respuestas 500/429) repetido en las 3 rutas de `app/api/`.
 
 ### 5. Documentos del proyecto por actualizar — hecho (22/10/2026)
@@ -93,6 +96,33 @@ Cosas que no se pudieron probar desde el código; conviene comprobarlas en produ
   y navegación pasaron a "Terminado"; la guía de uso pasó al Bloque E.
 - **`docs/REGISTRO_TERCEROS.md`:** `middleware.ts` cambiado por `proxy.ts`. (`docs/REGISTRO_PROPIO.md` lo
   sigue mencionando a propósito: ahí se refiere al historial de commits.)
+
+### 6. Imagen corporativa — en curso (22/10/2026)
+
+Guía: `docs/IMAGEN-CORPORATIVA.md` (paleta A, aprobada por Ilse Rivera). Commit "Nueva imagen parte 1" (pasos 1
+a 4 de la guía): paleta y tipografías (Figtree texto, Onest títulos h1–h3, Geist Mono en códigos de clase) en
+`app/globals.css` y `app/layout.tsx`; colores de estado centralizados en tokens `--state-*` (con
+`--state-none-soft` para el gris claro del reporte y del LRR); errores con `text-destructive`; anillo de
+selección del mapa con `--ring`.
+
+Hecho después, **sin commit** al cerrar el día:
+- Paso 5: SVG de la marca en `public/brand/`, favicon `app/icon.svg` (se borró `app/favicon.ico`, el de Next por
+  defecto) y título de pestaña `brújula.ed`.
+- Mapa de conocimiento y su panel lateral con fondo blanco (`bg-card`) en `components/knowledge-map.tsx`.
+- Encabezado (`components/header.tsx`) **a medio decidir**. A Sergio no le convencieron: blanco (logo en color),
+  fondo abeto y fondo verde azulado. Estado actual: fondo `bg-primary`, logo `brujula-ed_marca-sobre-verde.svg`
+  (variante nueva creada aquí: igual a la de abeto pero sin el fondo), "brújula" y enlaces en blanco, ".ed" en
+  amarillo.
+
+Por decidir:
+- Diseño final del encabezado (probar otra opción).
+- ".ed" en amarillo: rompe la regla de marca (amarillo solo en la marca y el cierre de brecha) y sobre verde
+  azulado tiene contraste ≈ 3,4:1 (no cumple AA). Consultar con Ilse.
+- Avisar a Ilse de la variante `brujula-ed_marca-sobre-verde.svg` si se conserva (no está en `svg/`).
+- Carpeta `svg/` de la raíz (originales de la marca, ya en el commit): borrarla o conservarla; está duplicada
+  en `public/brand/`.
+- Si el encabezado queda oscuro, cambiar `bg-foreground`/`bg-primary` por tokens con nombre propio
+  (p. ej. `--header`).
 
 ## Notas de operación (aprendidas en la auditoría)
 

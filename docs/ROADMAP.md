@@ -98,6 +98,7 @@ Esfuerzo: S = días · M = 1–2 semanas · L = 3–6 semanas · XL = meses o in
 | Estilos o canales de aprendizaje | Reemplazado | Hay poca evidencia de que adaptar la enseñanza al estilo mejore el aprendizaje; se usa autorregulación (F-08) y elección de formato (F-12) | — |
 | Indicador «Preparación profesional %» | Pospuesto (F-41) | Un número compuesto necesita validación metodológica antes de mostrarse | Con datos reales del piloto |
 | Tutor de IA avanzado y analítica institucional avanzada | Fuera del MVP (Anexo I, sección 8) | El Anexo los deja para etapas posteriores | Acordar una enmienda con Adri |
+| Imagen corporativa (paleta A, aprobada por Ilse el 22/10/2026) | Aplicada como tokens en `app/globals.css` | Cambiar la estética en un solo lugar; pulido por pantalla, responsive y modo oscuro quedan para después de terminar las funciones | Encabezado aún por decidir (ver `docs/PENDIENTES.md`, pendiente 6) |
 
 ## Ideas nuevas (reunión de mentoría, 16/10/2026) — sin priorizar
 

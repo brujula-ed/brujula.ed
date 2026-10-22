@@ -182,7 +182,7 @@ export function KnowledgeMap({
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_300px]">
       <div>
-        <div className="h-[520px] rounded-lg border">
+        <div className="h-[520px] rounded-lg border bg-card">
           <ReactFlow
             key={resetKey}
             nodes={nodes}
@@ -210,7 +210,7 @@ export function KnowledgeMap({
         </div>
       </div>
 
-      <aside className="rounded-lg border p-4 text-sm flex flex-col gap-4">
+      <aside className="rounded-lg border bg-card p-4 text-sm flex flex-col gap-4">
         <div>
           <p className="font-medium mb-2">Cómo leer el mapa</p>
           <ul className="text-xs text-muted-foreground list-disc list-inside flex flex-col gap-1">
