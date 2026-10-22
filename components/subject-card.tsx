@@ -54,7 +54,7 @@ export function SubjectCard({ subject }: { subject: Subject }) {
     router.refresh();
   }
 
-  const errorMessage = error && <p role="alert" className="text-xs text-red-500">{error}</p>;
+  const errorMessage = error && <p role="alert" className="text-xs text-destructive">{error}</p>;
 
   async function handleCopy() {
     await navigator.clipboard.writeText(subject.class_code);

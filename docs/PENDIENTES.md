@@ -1,6 +1,6 @@
 # BRÚJULA.ED — Pendientes de la auditoría de deuda técnica
 
-Actualizado: 21/10/2026. Para retomar en una conversación nueva: leer este documento y `CLAUDE.md`.
+Actualizado: 22/10/2026. Para retomar en una conversación nueva: leer este documento y `CLAUDE.md`.
 
 ## Contexto
 
@@ -87,13 +87,12 @@ Cosas que no se pudieron probar desde el código; conviene comprobarlas en produ
   `components/lrr-card.tsx`.
 - Bloque del límite de IA (`consume_ai_quota` + respuestas 500/429) repetido en las 3 rutas de `app/api/`.
 
-### 5. Documentos del proyecto por actualizar
+### 5. Documentos del proyecto por actualizar — hecho (22/10/2026)
 
-- **`docs/ROADMAP.md`:** el ajuste "Rotación de preguntas entre intentos" figura como "No iniciado", pero ya
-  está hecho (`lib/question-selection.ts` prefiere las preguntas nunca respondidas). Revisar también el resto
-  de "Ajustes" de la semana 1.
-- **`docs/REGISTRO_TERCEROS.md`:** menciona `middleware.ts`; ahora es `proxy.ts`. (`docs/REGISTRO_PROPIO.md`
-  también lo menciona, pero ahí se refiere al historial de commits.)
+- **`docs/ROADMAP.md`:** "Ajustes" de la semana 1 verificados en el código. «Gestionar», rotación de preguntas
+  y navegación pasaron a "Terminado"; la guía de uso pasó al Bloque E.
+- **`docs/REGISTRO_TERCEROS.md`:** `middleware.ts` cambiado por `proxy.ts`. (`docs/REGISTRO_PROPIO.md` lo
+  sigue mencionando a propósito: ahí se refiere al historial de commits.)
 
 ## Notas de operación (aprendidas en la auditoría)
 

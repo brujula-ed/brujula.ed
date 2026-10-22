@@ -2,10 +2,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import type { LRRResult } from "@/lib/lrr";
 
 const SEGMENTS = [
-  { key: "recovered", label: "Recuperadas", color: "#16a34a" },
-  { key: "inProgress", label: "En proceso", color: "#f59e0b" },
-  { key: "noImprovement", label: "Sin mejora", color: "#ef4444" },
-  { key: "pending", label: "Sin practicar", color: "#d1d5db" },
+  { key: "recovered", label: "Recuperadas", color: "var(--state-mastered)" },
+  { key: "inProgress", label: "En proceso", color: "var(--state-progress)" },
+  { key: "noImprovement", label: "Sin mejora", color: "var(--state-gap)" },
+  { key: "pending", label: "Sin practicar", color: "var(--state-none-soft)" },
 ] as const;
 
 export function LRRCard({

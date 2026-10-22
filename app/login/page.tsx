@@ -45,7 +45,7 @@ export default function Login() {
               <Label htmlFor="password">Contraseña</Label>
               <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
             </div>
-            {error && <p role="alert" className="text-sm text-red-500">{error}</p>}
+            {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
             <Button type="submit" disabled={loading}>
               {loading ? "Entrando..." : "Entrar"}
             </Button>
@@ -54,7 +54,7 @@ export default function Login() {
       </Card>
       <p className="text-sm text-muted-foreground mt-4">
         ¿No tienes cuenta?{" "}
-        <Link href="/registro" className="text-blue-600 hover:underline">
+        <Link href="/registro" className="text-primary hover:underline">
           Regístrate aquí
         </Link>
       

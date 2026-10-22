@@ -67,7 +67,7 @@ export function CreateSubjectForm() {
             <Label htmlFor="topic">Tema</Label>
             <Input id="topic" value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="Ingrese el nombre del tema" />
           </div>
-          {error && <p role="alert" className="text-sm text-red-500">{error}</p>}
+          {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
           <Button type="submit" disabled={loading}>
             {loading ? "Creando..." : "Crear asignatura"}
           </Button>

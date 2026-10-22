@@ -37,10 +37,10 @@ const NODE_W = 128;
 const LABEL_H = 30;
 
 const STATE_STYLE: Record<ConceptState, { border: string; background: string; icon: string }> = {
-  sin_evidencia: { border: "#9ca3af", background: "rgba(156,163,175,0.18)", icon: "?" },
-  brecha: { border: "#ef4444", background: "rgba(239,68,68,0.18)", icon: "!" },
-  en_desarrollo: { border: "#f59e0b", background: "rgba(245,158,11,0.2)", icon: "↑" },
-  dominado: { border: "#16a34a", background: "rgba(22,163,74,0.2)", icon: "✓" },
+  sin_evidencia: { border: "var(--state-none)", background: "color-mix(in srgb, var(--state-none) 18%, transparent)", icon: "?" },
+  brecha: { border: "var(--state-gap)", background: "color-mix(in srgb, var(--state-gap) 18%, transparent)", icon: "!" },
+  en_desarrollo: { border: "var(--state-progress)", background: "color-mix(in srgb, var(--state-progress) 20%, transparent)", icon: "↑" },
+  dominado: { border: "var(--state-mastered)", background: "color-mix(in srgb, var(--state-mastered) 20%, transparent)", icon: "✓" },
 };
 
 // Cuantos más conceptos abre (directa o indirectamente), más grande el círculo.
@@ -66,7 +66,7 @@ function ConceptNode({ data, selected }: NodeProps<ConceptNodeType>) {
           justifyContent: "center",
           fontSize: Math.round(data.diameter * 0.4),
           fontWeight: 600,
-          boxShadow: selected ? "0 0 0 4px rgba(59,130,246,0.35)" : "none",
+          boxShadow: selected ? "0 0 0 4px color-mix(in srgb, var(--ring) 35%, transparent)" : "none",
           cursor: "pointer",
         }}
       >
@@ -124,8 +124,8 @@ function buildLayout(concepts: MapConcept[], states?: Record<string, ConceptStat
           id,
           source: p,
           target: c.id,
-          style: { stroke: "#9ca3af" },
-          markerEnd: { type: MarkerType.ArrowClosed, color: "#9ca3af" },
+          style: { stroke: "var(--state-none)" },
+          markerEnd: { type: MarkerType.ArrowClosed, color: "var(--state-none)" },
         });
       });
   });

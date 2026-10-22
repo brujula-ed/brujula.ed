@@ -76,7 +76,7 @@ export function QuestionCard({ question }: { question: Question }) {
     router.refresh();
   }
 
-  const errorMessage = error && <p role="alert" className="text-xs text-red-500">{error}</p>;
+  const errorMessage = error && <p role="alert" className="text-xs text-destructive">{error}</p>;
 
   if (editing) {
     return (

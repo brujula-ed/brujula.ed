@@ -61,7 +61,7 @@ export function JoinSubjectForm() {
             {loading ? "Uniendo..." : "Unirme"}
           </Button>
         </form>
-        {error && <p role="alert" className="text-sm text-red-500 mt-2">{error}</p>}
+        {error && <p role="alert" className="text-sm text-destructive mt-2">{error}</p>}
       </CardContent>
     </Card>
   );

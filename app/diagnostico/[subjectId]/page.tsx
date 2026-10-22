@@ -249,7 +249,7 @@ export default function Diagnostico() {
     return (
       <main className="max-w-xl mx-auto p-8">
         {loadError ? (
-          <p role="alert" className="text-sm text-red-500">{loadError}</p>
+          <p role="alert" className="text-sm text-destructive">{loadError}</p>
         ) : (
           <p className="text-sm text-muted-foreground">Cargando diagnóstico...</p>
         )}
@@ -269,7 +269,7 @@ export default function Diagnostico() {
   );
 
   const saveErrorMessage = saveError && (
-    <p role="alert" className="text-sm text-red-500 mb-4">{saveError}</p>
+    <p role="alert" className="text-sm text-destructive mb-4">{saveError}</p>
   );
 
   if (stage === "quiz") {
@@ -326,7 +326,7 @@ export default function Diagnostico() {
             <Card key={conceptId}>
               <CardContent className="pt-4 flex items-center justify-between">
                 <span className="text-sm">{v.name}</span>
-                <span className={`text-sm font-medium ${v.correct / v.total < 0.7 ? "text-red-500" : "text-green-600"}`}>
+                <span className={`text-sm font-medium ${v.correct / v.total < 0.7 ? "text-state-gap" : "text-state-mastered"}`}>
                   {Math.round((v.correct / v.total) * 100)}%
                 </span>
               </CardContent>

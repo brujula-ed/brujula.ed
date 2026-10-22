@@ -54,7 +54,7 @@ export function DeleteDocumentButton({
       <Button size="sm" variant="ghost" onClick={handleDelete} disabled={loading}>
         {loading ? "Eliminando..." : "Eliminar"}
       </Button>
-      {error && <span role="alert" className="text-xs text-red-500">{error}</span>}
+      {error && <span role="alert" className="text-xs text-destructive">{error}</span>}
     </div>
   );
 }

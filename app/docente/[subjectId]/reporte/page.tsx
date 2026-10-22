@@ -8,10 +8,10 @@ import { computeClassLRR } from "@/lib/lrr";
 import { LRRCard } from "@/components/lrr-card";
 
 const COLORS: Record<ConceptState, string> = {
-  sin_evidencia: "#d1d5db",
-  brecha: "#ef4444",
-  en_desarrollo: "#f59e0b",
-  dominado: "#16a34a",
+  sin_evidencia: "var(--state-none-soft)",
+  brecha: "var(--state-gap)",
+  en_desarrollo: "var(--state-progress)",
+  dominado: "var(--state-mastered)",
 };
 const ORDER: ConceptState[] = ["brecha", "en_desarrollo", "dominado", "sin_evidencia"];
 // Supabase devuelve como máximo "Max rows" filas por consulta (Data API, hoy 1000) sin avisar si corta.
@@ -291,7 +291,7 @@ export default async function Reporte({ params }: { params: Promise<{ subjectId:
                   </div>
                   {r.lastActivity && (
                     <p className="text-xs text-right text-muted-foreground">
-                      <span className={r.gaps > 0 ? "text-red-500 font-medium" : ""}>{r.gaps} brecha(s)</span>
+                      <span className={r.gaps > 0 ? "text-state-gap font-medium" : ""}>{r.gaps} brecha(s)</span>
                       {" · "}
                       {r.mastered} de {concepts.length} dominado(s)
                     </p>

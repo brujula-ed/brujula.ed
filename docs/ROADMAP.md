@@ -1,6 +1,6 @@
 # BRÚJULA.ED — Cronograma y roadmap
 
-Fuente: `BRUJULA_ED_Cronograma.xlsx`. Estados actualizados al 19/10/2026 según el trabajo hecho; verificar ante dudas.
+Fuente: `BRUJULA_ED_Cronograma.xlsx`. Estados actualizados al 22/10/2026 según el trabajo hecho; verificar ante dudas.
 
 Reglas: la IA propone y el docente valida; estados orientativos (Anexo I, sec. 13); sin contenido pedagógico propio; sin métricas de vanidad.
 
@@ -22,11 +22,10 @@ Reglas: la IA propone y el docente valida; estados orientativos (Anexo I, sec. 1
 
 | Bloque | Semanas | ID | Tarea | Horas | Estado | Notas |
 |---|---|---|---|---|---|---|
-| Ajustes | Semana 1 |  | Botón «Gestionar» visible en cada asignatura | 1 | No iniciado | Surge de las dudas de Adri: la carga estaba escondida |
-| Ajustes | Semana 1 |  | Rotación de preguntas entre intentos | 2 | No iniciado | Balancear por concepto más adelante |
+| Ajustes | Semana 1 |  | Botón «Gestionar» visible en cada asignatura | 1 | Terminado | Surge de las dudas de Adri: la carga estaba escondida |
+| Ajustes | Semana 1 |  | Rotación de preguntas entre intentos | 2 | Terminado | `lib/question-selection.ts` prefiere las nunca respondidas. Balancear por concepto más adelante |
 | Ajustes | Semana 1 |  | Verificación del rol docente (código de invitación o aprobación) | 4 | No iniciado | Hoy cualquiera puede registrarse como docente |
-| Ajustes | Semana 1 |  | Guía de uso para docentes y estudiantes (qué hace cada pantalla) | 4 | No iniciado | Responde registro del docente, dónde se carga el contenido y de dónde salen las preguntas |
-| Ajustes | Semana 1 |  | Navegación: link a «Mis asignaturas» en el header y salida del diagnóstico | 2 | No iniciado |  |
+| Ajustes | Semana 1 |  | Navegación: link a «Mis asignaturas» en el header y salida del diagnóstico | 2 | Terminado |  |
 | Bloque A | Semanas 1–2 | F-01 | Mapa de conocimiento interactivo (conceptos y prerrequisitos) | 14 | Terminado | Librería de grafos (React Flow). Los datos ya existen |
 | Bloque A | Semanas 1–2 | F-02 | Estado del nodo por estudiante (sin evidencia, brecha, en desarrollo, dominado) | 8 | Terminado | Cuatro estados; el «dorado» del Vol. 2 queda fuera |
 | Bloque A | Semanas 1–2 | F-03 | Brecha prioritaria (la que bloquea más conceptos) | 5 | Terminado | Se calcula sobre el grafo, sin IA |
@@ -42,10 +41,11 @@ Reglas: la IA propone y el docente valida; estados orientativos (Anexo I, sec. 1
 | Bloque D | Semanas 8–9 | F-13 | Ludificación del progreso de cierre de brechas | 14 | No iniciado | Sin métricas de vanidad |
 | Bloque E | Semanas 10–11 | F-14 | Preparación del modelo de datos (capacidad opcional por concepto) | 5 | No iniciado | Evita rehacer la estructura cuando lleguen las capacidades |
 | Bloque E | Semanas 10–11 |  | Pruebas de integración, permisos y corrección de errores | 12 | No iniciado |  |
+| Bloque E | Semanas 10–11 |  | Guía de uso para docentes y estudiantes (qué hace cada pantalla) | 4 | No iniciado | Al final, cuando estén todas las funciones. Responde registro del docente, dónde se carga el contenido y de dónde salen las preguntas |
 | Bloque E | Semanas 10–11 | F-15 | Piloto con docentes y estudiantes reales | 12 | No iniciado | Requiere docentes y estudiantes dispuestos a probar |
 | Bloque E | Semanas 10–11 |  | Ajustes de UX según lo observado en el piloto | 10 | No iniciado |  |
 
-F-01 a F-04, F-06, F-07 y F-10 están terminadas. Los «Ajustes» de la semana 1 no se han verificado en este documento: revisar en el código.
+F-01 a F-04, F-06, F-07 y F-10 están terminadas. Ajustes de la semana 1 verificados en el código el 22/10/2026: «Gestionar», rotación de preguntas y navegación están terminados; la verificación del rol docente sigue pendiente y la guía de uso pasó al Bloque E.
 
 ## Roadmap por horizonte
 
