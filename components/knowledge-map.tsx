@@ -158,7 +158,6 @@ export function KnowledgeMap({
   states?: Record<string, ConceptState>;
 }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [resetKey, setResetKey] = useState(0);
 
   const { nodes: initialNodes, edges } = useMemo(() => buildLayout(concepts, states), [concepts, states]);
   const dependents = useMemo(() => computeDependents(concepts), [concepts]);
@@ -184,29 +183,18 @@ export function KnowledgeMap({
       <div>
         <div className="h-[520px] rounded-lg border bg-card">
           <ReactFlow
-            key={resetKey}
             nodes={nodes}
             edges={edges}
             nodeTypes={nodeTypes}
             onNodesChange={onNodesChange}
             onSelectionChange={onSelectionChange}
             nodesConnectable={false}
+            nodesDraggable={false}
             fitView
           >
             <Background />
             <Controls showInteractive={false} />
           </ReactFlow>
-        </div>
-        <div className="flex justify-end mt-2">
-          <button
-            onClick={() => {
-              setNodes(initialNodes);
-              setResetKey((k) => k + 1);
-            }}
-            className="text-xs text-muted-foreground hover:underline"
-          >
-            Reordenar mapa
-          </button>
         </div>
       </div>
 
@@ -216,7 +204,6 @@ export function KnowledgeMap({
           <ul className="text-xs text-muted-foreground list-disc list-inside flex flex-col gap-1">
             <li>Lo de arriba se aprende antes; las flechas apuntan a lo que desbloquea.</li>
             <li>Un círculo más grande abre más conceptos.</li>
-            <li>Puedes mover los círculos para explorar.</li>
           </ul>
           {states && (
             <div className="flex flex-col gap-1.5 mt-3">
