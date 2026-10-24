@@ -40,6 +40,46 @@ export function computeDependents(concepts: GraphConcept[]): Map<string, Set<str
   return result;
 }
 
+// Para cada concepto, el conjunto de sus prerrequisitos, directos o indirectos.
+export function computePrerequisites(concepts: GraphConcept[]): Map<string, Set<string>> {
+  const ids = new Set(concepts.map((c) => c.id));
+  const direct = new Map<string, string[]>();
+  concepts.forEach((c) => direct.set(c.id, c.prerequisite_ids.filter((p) => ids.has(p))));
+
+  const result = new Map<string, Set<string>>();
+  for (const c of concepts) {
+    const seen = new Set<string>();
+    const stack = [...(direct.get(c.id) ?? [])];
+    while (stack.length > 0) {
+      const id = stack.pop()!;
+      if (id === c.id || seen.has(id)) continue; // evita ciclos generados por la IA
+      seen.add(id);
+      stack.push(...(direct.get(id) ?? []));
+    }
+    result.set(c.id, seen);
+  }
+  return result;
+}
+
+// Flechas que dibuja el mapa, sin las redundantes: si A ya llega a C pasando por B, no se dibuja A→C.
+// Los prerrequisitos guardados no cambian; solo se simplifica el dibujo.
+export function computeMapEdges(concepts: GraphConcept[]): { source: string; target: string }[] {
+  const ids = new Set(concepts.map((c) => c.id));
+  const prerequisites = computePrerequisites(concepts);
+  const edges: { source: string; target: string }[] = [];
+  for (const c of concepts) {
+    const direct = [...new Set(c.prerequisite_ids)].filter((p) => ids.has(p) && p !== c.id);
+    for (const p of direct) {
+      // Si p y q son prerrequisito uno del otro (ciclo de la IA), no se oculta ninguna de las dos flechas.
+      const redundant = direct.some(
+        (q) => q !== p && prerequisites.get(q)?.has(p) && !prerequisites.get(p)?.has(q)
+      );
+      if (!redundant) edges.push({ source: p, target: c.id });
+    }
+  }
+  return edges;
+}
+
 export function computePriorityGap(
   concepts: GraphConcept[],
   states: Record<string, ConceptState>
