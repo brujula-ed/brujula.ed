@@ -53,10 +53,11 @@ detecta brechas de conocimiento, ve un mapa de conocimiento y recibe un siguient
 - `app/estudiante/page.tsx` asignaturas del estudiante (unirse con código de clase).
 - `app/estudiante/[subjectId]` "Mi Brújula": mapa, brecha prioritaria, próximo desafío, LRR.
 - `app/diagnostico/[subjectId]/page.tsx` diagnóstico, nivelación y microevaluación en una sola página (por etapas).
-- `app/api/` `process-document`, `generate-concepts`, `generate-questions` (server-side).
+- `app/api/` `process-document`, `generate-concepts`, `generate-questions`, `generate-concept-cards` (server-side).
 - `components/` componentes propios; `components/ui/` los de shadcn.
 - `lib/concept-state.ts` estados por concepto (umbral de dominio 0.7).
-- `lib/knowledge-graph.ts` dependientes, brecha prioritaria, próximo desafío.
+- `lib/knowledge-graph.ts` dependientes, prerrequisitos, flechas del mapa (sin las redundantes), brecha prioritaria, próximo desafío.
+- `components/knowledge-map.tsx` mapa (React Flow + dagre) y su panel; `components/concept-ficha.tsx` validación de fichas.
 - `lib/lrr.ts` cálculo del LRR (por estudiante, concepto y clase).
 - `lib/extract-text.ts`, `lib/chunk-text.ts` extracción y fragmentación de documentos.
 - `lib/data.ts` banco de preguntas de demostración; `lib/class-code.ts` códigos de clase.
@@ -69,7 +70,9 @@ Esquema completo en `supabase/migrations/` (cada cambio de esquema va como migra
 Tablas principales: `profiles` (rol), `subjects` (con código de clase), `enrollments`, `subject_documents`,
 `document_chunks` (con embedding), `concepts` (`prerequisite_ids`, `status`), `questions` (`status`),
 `diagnostic_attempts` (`completed_at`), `diagnostic_answers` (`stage`: `diagnostico` | `microevaluacion`,
-`concept`, `is_correct`).
+`concept`, `is_correct`), `concept_cards` (ficha de concepto: `why_it_matters`, `application`, `source`:
+`material` | `general`, `status`; un trigger pone `subject_id` desde el concepto; el estudiante solo lee fichas
+validadas de conceptos validados).
 - Solo se usan conceptos y preguntas con `status = 'validado'`.
 - Seguridad: RLS en todas las tablas. Para evitar recursión usar funciones `security definer` con `set search_path = public`.
 - Las respuestas se vinculan al concepto por **`concept_id`**, que un trigger rellena desde la pregunta (no lo
@@ -101,8 +104,9 @@ sin rate limiting · autorregistro de docentes sin verificación · sin recupera
 embeddings se guardan pero aún no se consultan) · diseño no responsive para móvil.
 
 ## Pendiente (orden previsto)
-Autodiagnóstico de autorregulación → práctica de recuperación activa → ficha de concepto y recursos
-curados → ludificación del cierre de brechas → campo de capacidades, pruebas, piloto y responsive.
+Autodiagnóstico de autorregulación → práctica de recuperación activa → recursos curados → ludificación del
+cierre de brechas → campo de capacidades, pruebas, piloto y responsive. (La ficha de concepto, F-05, ya está;
+sus ajustes pendientes están en `docs/PENDIENTES.md`, pendiente 7.)
 
 ## Seguridad
 - Nunca escribir claves en el código ni en este archivo. `OPENAI_API_KEY` solo en servidor.

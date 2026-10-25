@@ -1,6 +1,6 @@
 # BRÚJULA.ED — Pendientes de la auditoría de deuda técnica
 
-Actualizado: 22/10/2026. Para retomar en una conversación nueva: leer este documento y `CLAUDE.md`.
+Actualizado: 24/10/2026. Para retomar en una conversación nueva: leer este documento y `CLAUDE.md`.
 
 ## Contexto
 
@@ -105,14 +105,14 @@ a 4 de la guía): paleta y tipografías (Figtree texto, Onest títulos h1–h3, 
 `--state-none-soft` para el gris claro del reporte y del LRR); errores con `text-destructive`; anillo de
 selección del mapa con `--ring`.
 
-Hecho después, **sin commit** al cerrar el día:
+Commit "Cambio de imagen parte 2":
 - Paso 5: SVG de la marca en `public/brand/`, favicon `app/icon.svg` (se borró `app/favicon.ico`, el de Next por
   defecto) y título de pestaña `brújula.ed`.
 - Mapa de conocimiento y su panel lateral con fondo blanco (`bg-card`) en `components/knowledge-map.tsx`.
 - Encabezado (`components/header.tsx`) **a medio decidir**. A Sergio no le convencieron: blanco (logo en color),
-  fondo abeto y fondo verde azulado. Estado actual: fondo `bg-primary`, logo `brujula-ed_marca-sobre-verde.svg`
-  (variante nueva creada aquí: igual a la de abeto pero sin el fondo), "brújula" y enlaces en blanco, ".ed" en
-  amarillo.
+  fondo abeto y fondo verde azulado. Estado actual (publicado): fondo `bg-primary`, logo
+  `brujula-ed_marca-sobre-verde.svg` (variante nueva creada aquí: igual a la de abeto pero sin el fondo),
+  "brújula" y enlaces en blanco, ".ed" en amarillo.
 
 Por decidir:
 - Diseño final del encabezado (probar otra opción).
@@ -123,6 +123,37 @@ Por decidir:
   en `public/brand/`.
 - Si el encabezado queda oscuro, cambiar `bg-foreground`/`bg-primary` por tokens con nombre propio
   (p. ej. `--header`).
+
+### 7. Mapa de conocimiento y ficha de concepto (F-05) — hecho, con ajustes pendientes (24/10/2026)
+
+Hecho:
+- **Mapa** (`components/knowledge-map.tsx`, commits "Interactividad del Mapa eliminado" y "Cambio visual de
+  mapas"): nodos no arrastrables y sin botón "Reordenar" (pedido de la socia); tarjetas de tamaño uniforme con
+  "Abre N"; flechas en ángulo y sin las redundantes (`computeMapEdges` en `lib/knowledge-graph.ts`; el panel sigue
+  listando todos los prerrequisitos); al elegir un concepto se resalta su ruta y se atenúa el resto.
+- **Ficha de concepto (F-05)**: tabla `concept_cards` (migraciones `fichas_de_concepto` y `origen_de_fichas`,
+  aplicadas en producción), ruta `app/api/generate-concept-cards/route.ts`, validación en la página de conceptos
+  (`components/concept-ficha.tsx`, `components/generate-cards-button.tsx`) y fichas validadas en el panel del mapa
+  del estudiante ("Por qué importa" y "Para qué te sirve").
+- La IA usa el material del docente, el mapa de conceptos validados (qué necesita y qué desbloquea cada uno) y,
+  si el material no alcanza, conocimiento general de la disciplina. Cada ficha guarda su origen (`source`:
+  `material` | `general`); el docente lo ve, el estudiante no.
+
+Pendiente:
+- **Ajuste fino del prompt de "Para qué te sirve"** (al final, junto con el resto del pulido): las respuestas
+  mejoraron, pero aún pueden ser más útiles. Hoy pide la aplicación general en la vida cotidiana o en la carrera
+  del estudiante, con un caso reconocible fuera del aula.
+- **Acordar con Adri** que las fichas puedan usar conocimiento general (marcado por origen). Flexibiliza el
+  principio "no crear contenido pedagógico propio"; está registrado en `docs/ROADMAP.md` (Decisiones tomadas).
+- **Prueba de seguridad con una cuenta de estudiante**, si no se hizo: una ficha sugerida no debe aparecer en Mi
+  Brújula; una validada sí.
+- **Contexto de las fichas con embeddings**: hoy reciben los primeros 40 fragmentos del material; con pgvector
+  se podrían dar los más relevantes para cada concepto (los embeddings se guardan pero no se consultan).
+- **Prompt de `app/api/generate-concepts`**: pedir solo prerrequisitos directos, para que el grafo llegue limpio.
+- **Ficha en el reporte por estudiante** (`app/docente/[subjectId]/reporte/[studentId]/page.tsx`).
+- **Relaciones con nombre** entre conceptos ("es un tipo de", "se usa para"): reconsiderar tras usar el mapa y
+  las fichas. Exige cambio de esquema.
+- **Opinión de la socia** sobre el mapa rediseñado.
 
 ## Notas de operación (aprendidas en la auditoría)
 

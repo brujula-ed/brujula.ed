@@ -1,6 +1,6 @@
 # BRÚJULA.ED — Cronograma y roadmap
 
-Fuente: `BRUJULA_ED_Cronograma.xlsx`. Estados actualizados al 22/10/2026 según el trabajo hecho; verificar ante dudas.
+Fuente: `BRUJULA_ED_Cronograma.xlsx`. Estados actualizados al 24/10/2026 según el trabajo hecho; verificar ante dudas.
 
 Reglas: la IA propone y el docente valida; estados orientativos (Anexo I, sec. 13); sin contenido pedagógico propio; sin métricas de vanidad.
 
@@ -35,7 +35,7 @@ Reglas: la IA propone y el docente valida; estados orientativos (Anexo I, sec. 1
 | Bloque B | Semanas 3–5 | F-08 | Diagnóstico de autorregulación | 14 | No iniciado | Revisar el instrumento con alguien con formación pedagógica |
 | Bloque B | Semanas 3–5 | F-09 | Práctica de recuperación activa (explicar con palabras propias) | 6 | No iniciado | Versión 1 sin IA y sin puntaje |
 | Bloque B | Semanas 3–5 | F-10 | LRR formalizado por estudiante, concepto y clase | 8 | Terminado | Fórmula según Anexo I, sección 12 |
-| Bloque C | Semanas 6–7 | F-05 | Ficha de concepto (por qué importa, aplicación, qué desbloquea) | 14 | No iniciado | La IA propone, el docente valida |
+| Bloque C | Semanas 6–7 | F-05 | Ficha de concepto (por qué importa, aplicación, qué desbloquea) | 14 | Terminado | La IA propone, el docente valida. Se ve en el panel del mapa. Ajuste fino del prompt pendiente (`docs/PENDIENTES.md`, pendiente 7) |
 | Bloque C | Semanas 6–7 | F-11 | Recursos abiertos curados por IA | 16 | No iniciado | Verificar que los enlaces existan; el docente aprueba |
 | Bloque C | Semanas 6–7 | F-12 | Elección de formato por el estudiante (lectura, video, ejercicio) | 5 | No iniciado | Se ofrece la opción, no se clasifica al estudiante |
 | Bloque D | Semanas 8–9 | F-13 | Ludificación del progreso de cierre de brechas | 14 | No iniciado | Sin métricas de vanidad |
@@ -57,7 +57,7 @@ Esfuerzo: S = días · M = 1–2 semanas · L = 3–6 semanas · XL = meses o in
 | F-02 | Estado del nodo por estudiante (4 estados) | MVP | S–M | F-01 | Terminado |
 | F-03 | Brecha prioritaria (sin IA) | MVP | S | F-01 | Terminado |
 | F-04 | Próximo desafío | MVP | S | F-03 | Terminado |
-| F-05 | Ficha de concepto (importancia, aplicación, qué desbloquea) | MVP | M | F-01 | No iniciado |
+| F-05 | Ficha de concepto (importancia, aplicación, qué desbloquea) | MVP | M | F-01 | Terminado |
 | F-06 | Pantalla «Mi Brújula» del estudiante | MVP | M | F-01 a F-04 | Terminado |
 | F-07 | Reporte de clase para el docente | MVP | M | F-02 | Terminado |
 | F-08 | Diagnóstico de autorregulación | MVP | M | — | No iniciado |
@@ -99,6 +99,8 @@ Esfuerzo: S = días · M = 1–2 semanas · L = 3–6 semanas · XL = meses o in
 | Indicador «Preparación profesional %» | Pospuesto (F-41) | Un número compuesto necesita validación metodológica antes de mostrarse | Con datos reales del piloto |
 | Tutor de IA avanzado y analítica institucional avanzada | Fuera del MVP (Anexo I, sección 8) | El Anexo los deja para etapas posteriores | Acordar una enmienda con Adri |
 | Imagen corporativa (paleta A, aprobada por Ilse el 22/10/2026) | Aplicada como tokens en `app/globals.css` | Cambiar la estética en un solo lugar; pulido por pantalla, responsive y modo oscuro quedan para después de terminar las funciones | Encabezado aún por decidir (ver `docs/PENDIENTES.md`, pendiente 6) |
+| Mapa de conocimiento (24/10/2026) | Nodos fijos (sin arrastrar), tarjetas uniformes, flechas redundantes ocultas y ruta resaltada al elegir un concepto | A la socia le parecía desordenado; el mapa debe ayudar a entender, no solo a ubicar prioridades | Tras la opinión de la socia y el piloto |
+| Fuente de las fichas de concepto (F-05) | La IA usa el material del docente y el mapa de conceptos validados; si no alcanza, conocimiento general, marcado por origen (`source`) para el docente | Con material tipo programa de curso, "solo el material" daba fichas vacías o pobres. Flexibiliza "no crear contenido pedagógico propio"; lo compensan la validación docente y la etiqueta de origen | Acordar con Adri |
 
 ## Ideas nuevas (reunión de mentoría, 16/10/2026) — sin priorizar
 

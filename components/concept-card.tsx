@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
+import { ConceptFicha, type Ficha } from "@/components/concept-ficha";
 
 type Concept = {
   id: string;
@@ -15,7 +16,15 @@ type Concept = {
   prerequisite_ids: string[];
 };
 
-export function ConceptCard({ concept, allConcepts }: { concept: Concept; allConcepts: Concept[] }) {
+export function ConceptCard({
+  concept,
+  allConcepts,
+  ficha,
+}: {
+  concept: Concept;
+  allConcepts: Concept[];
+  ficha?: Ficha;
+}) {
   const router = useRouter();
   const supabase = createClient();
   const [editing, setEditing] = useState(false);
@@ -133,6 +142,7 @@ export function ConceptCard({ concept, allConcepts }: { concept: Concept; allCon
           <Button size="sm" variant="ghost" onClick={handleDiscard}>Descartar</Button>
         </div>
         {error && <div className="mt-2">{errorMessage}</div>}
+        {ficha && <ConceptFicha ficha={ficha} />}
       </CardContent>
     </Card>
   );

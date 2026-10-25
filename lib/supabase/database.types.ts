@@ -35,6 +35,51 @@ export type Database = {
         }
         Relationships: []
       }
+      concept_cards: {
+        Row: {
+          application: string
+          concept_id: string
+          created_at: string
+          source: string
+          status: string
+          subject_id: string
+          why_it_matters: string
+        }
+        Insert: {
+          application: string
+          concept_id: string
+          created_at?: string
+          source?: string
+          status?: string
+          subject_id: string
+          why_it_matters: string
+        }
+        Update: {
+          application?: string
+          concept_id?: string
+          created_at?: string
+          source?: string
+          status?: string
+          subject_id?: string
+          why_it_matters?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "concept_cards_concept_id_fkey"
+            columns: ["concept_id"]
+            isOneToOne: true
+            referencedRelation: "concepts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "concept_cards_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       concepts: {
         Row: {
           created_at: string | null

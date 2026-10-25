@@ -147,12 +147,17 @@ function buildLayout(concepts: MapConcept[], states?: Record<string, ConceptStat
   return { nodes, edges };
 }
 
+// Ficha validada del concepto (F-05): por qué importa y para qué te sirve.
+export type MapFicha = { whyItMatters: string; application: string };
+
 export function KnowledgeMap({
   concepts,
   states,
+  fichas,
 }: {
   concepts: MapConcept[];
   states?: Record<string, ConceptState>;
+  fichas?: Record<string, MapFicha>;
 }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
@@ -247,6 +252,18 @@ export function KnowledgeMap({
                 </p>
               )}
               {selected.description && <p className="mb-3">{selected.description}</p>}
+              {fichas?.[selected.id] && (
+                <div className="mb-3 flex flex-col gap-2">
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground">Por qué importa</p>
+                    <p>{fichas[selected.id].whyItMatters}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground">Para qué te sirve</p>
+                    <p>{fichas[selected.id].application}</p>
+                  </div>
+                </div>
+              )}
               <p className="mb-1">
                 <span className="font-medium">Necesitas saber antes:</span>{" "}
                 {requires.length ? requires.map((c) => c.name).join(", ") : "nada previo en este mapa"}

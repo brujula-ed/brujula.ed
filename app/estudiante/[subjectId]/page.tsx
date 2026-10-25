@@ -52,6 +52,15 @@ export default async function MiBrujula({ params }: { params: Promise<{ subjectI
     ((validQuestions ?? []) as { concept_id: string }[]).map((q) => q.concept_id)
   );
 
+  // La RLS solo devuelve al estudiante fichas validadas de conceptos validados
+  const { data: fichaRows } = await supabase
+    .from("concept_cards")
+    .select("concept_id, why_it_matters, application")
+    .eq("subject_id", subjectId);
+  const fichas = Object.fromEntries(
+    (fichaRows ?? []).map((f) => [f.concept_id, { whyItMatters: f.why_it_matters, application: f.application }])
+  );
+
   const graphConcepts = concepts ?? [];
   const gap = computePriorityGap(graphConcepts, states);
   const challenge = computeNextChallenge(graphConcepts, states);
@@ -94,7 +103,7 @@ export default async function MiBrujula({ params }: { params: Promise<{ subjectI
 
       <h2 className="text-sm font-medium mb-3">Mapa de conocimiento</h2>
       {concepts && concepts.length > 0 ? (
-        <KnowledgeMap concepts={concepts} states={states} />
+        <KnowledgeMap concepts={concepts} states={states} fichas={fichas} />
       ) : (
         <p className="text-sm text-muted-foreground">
           Tu docente aún no publicó conceptos validados para esta asignatura.
