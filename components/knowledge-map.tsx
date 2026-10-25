@@ -15,6 +15,7 @@ import {
   type OnSelectionChangeParams,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
+import Link from "next/link";
 import dagre from "@dagrejs/dagre";
 import { STATE_LABEL, type ConceptState } from "@/lib/concept-state";
 import { computeDependents, computeMapEdges, computePrerequisites } from "@/lib/knowledge-graph";
@@ -154,10 +155,12 @@ export function KnowledgeMap({
   concepts,
   states,
   fichas,
+  practiceBaseHref,
 }: {
   concepts: MapConcept[];
   states?: Record<string, ConceptState>;
   fichas?: Record<string, MapFicha>;
+  practiceBaseHref?: string; // solo en Mi Brújula: enlace a la práctica "Explica con tus palabras" (F-09)
 }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
@@ -274,6 +277,14 @@ export function KnowledgeMap({
               </p>
               {totalOpened > unlocks.length && (
                 <p className="text-xs text-muted-foreground">Abre {totalOpened} conceptos en total.</p>
+              )}
+              {practiceBaseHref && (
+                <Link
+                  href={`${practiceBaseHref}/${selected.id}`}
+                  className="inline-block mt-3 rounded-md bg-primary text-primary-foreground px-3 py-1.5 text-sm font-medium"
+                >
+                  Explica con tus palabras
+                </Link>
               )}
             </>
           ) : (

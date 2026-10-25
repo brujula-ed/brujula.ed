@@ -52,6 +52,7 @@ detecta brechas de conocimiento, ve un mapa de conocimiento y recibe un siguient
 - `app/docente/[subjectId]/conceptos`, `/preguntas`, `/reporte` y `/reporte/[studentId]`: validación y reportes.
 - `app/estudiante/page.tsx` asignaturas del estudiante (unirse con código de clase).
 - `app/estudiante/[subjectId]` "Mi Brújula": mapa, brecha prioritaria, próximo desafío, LRR.
+- `app/estudiante/[subjectId]/practicar/[conceptId]` práctica "Explica con tus palabras" (F-09, `components/retrieval-practice.tsx`).
 - `app/diagnostico/[subjectId]/page.tsx` diagnóstico, nivelación y microevaluación en una sola página (por etapas).
 - `app/api/` `process-document`, `generate-concepts`, `generate-questions`, `generate-concept-cards` (server-side).
 - `components/` componentes propios; `components/ui/` los de shadcn.
@@ -104,8 +105,9 @@ sin rate limiting · autorregistro de docentes sin verificación · sin recupera
 embeddings se guardan pero aún no se consultan) · diseño no responsive para móvil.
 
 ## Pendiente (orden previsto)
-Autodiagnóstico de autorregulación → práctica de recuperación activa → recursos curados → ludificación del
-cierre de brechas → campo de capacidades, pruebas, piloto y responsive. (La ficha de concepto, F-05, ya está;
+Autodiagnóstico de autorregulación → recursos curados → ludificación del cierre de brechas → campo de
+capacidades, pruebas, piloto y responsive. (La práctica de recuperación activa, F-09 v1, ya está: pendiente 8.
+La ficha de concepto, F-05, ya está;
 sus ajustes pendientes están en `docs/PENDIENTES.md`, pendiente 7.)
 
 ## Seguridad

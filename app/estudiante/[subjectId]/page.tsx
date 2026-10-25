@@ -103,7 +103,12 @@ export default async function MiBrujula({ params }: { params: Promise<{ subjectI
 
       <h2 className="text-sm font-medium mb-3">Mapa de conocimiento</h2>
       {concepts && concepts.length > 0 ? (
-        <KnowledgeMap concepts={concepts} states={states} fichas={fichas} />
+        <KnowledgeMap
+          concepts={concepts}
+          states={states}
+          fichas={fichas}
+          practiceBaseHref={`/estudiante/${subjectId}/practicar`}
+        />
       ) : (
         <p className="text-sm text-muted-foreground">
           Tu docente aún no publicó conceptos validados para esta asignatura.

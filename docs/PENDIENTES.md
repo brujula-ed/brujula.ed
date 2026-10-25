@@ -155,6 +155,23 @@ Pendiente:
   las fichas. Exige cambio de esquema.
 - **Opinión de la socia** sobre el mapa rediseñado.
 
+### 8. Práctica de recuperación activa (F-09) — v1 hecha (24/10/2026)
+
+Hecho: desde el panel del mapa en Mi Brújula, "Explica con tus palabras" abre
+`app/estudiante/[subjectId]/practicar/[conceptId]/page.tsx` (`components/retrieval-practice.tsx`). El estudiante
+escribe de memoria sin ver la referencia, después la compara con la descripción y la ficha validada, y se
+autoevalúa ("Lo expliqué bien" / "A medias" / "Me costó"). Siguiente paso determinista: comprobar con preguntas
+(diagnóstico enfocado, solo si hay preguntas validadas) o practicar otra vez. Sin IA, sin puntaje y sin guardar
+nada; no afecta estados ni LRR.
+
+Pendiente (decisiones tomadas para v1, a revisar):
+- **Corrección con IA de la explicación** → F-24. Hoy no: haría que la IA le hable al estudiante sin validación
+  docente (primer principio) y faltan las protecciones del roadmap (cuota por estudiante, `max_tokens`, límite de
+  gasto, verificación de docentes). Decidir con Adri.
+- **Guardar explicaciones y autoevaluaciones**: permitiría ver el historial propio o mostrarlo al docente, y la
+  autoevaluación podría alimentar F-08 (autorregulación). Requiere tabla nueva y, si lo ve el docente, aviso de
+  privacidad (requisito antes del piloto).
+
 ## Notas de operación (aprendidas en la auditoría)
 
 - **La app Supabase de GitHub aplica sola las migraciones que llegan a `main`.** Por eso cada migración se
