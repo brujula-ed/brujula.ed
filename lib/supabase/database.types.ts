@@ -80,6 +80,63 @@ export type Database = {
           },
         ]
       }
+      concept_resources: {
+        Row: {
+          added_by: string
+          concept_id: string
+          created_at: string
+          id: string
+          kind: string
+          link_check: string
+          source: string
+          status: string
+          subject_id: string
+          title: string
+          url: string
+        }
+        Insert: {
+          added_by: string
+          concept_id: string
+          created_at?: string
+          id?: string
+          kind: string
+          link_check: string
+          source: string
+          status?: string
+          subject_id: string
+          title: string
+          url: string
+        }
+        Update: {
+          added_by?: string
+          concept_id?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          link_check?: string
+          source?: string
+          status?: string
+          subject_id?: string
+          title?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "concept_resources_concept_id_fkey"
+            columns: ["concept_id"]
+            isOneToOne: false
+            referencedRelation: "concepts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "concept_resources_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       concepts: {
         Row: {
           created_at: string | null
@@ -350,6 +407,56 @@ export type Database = {
           },
         ]
       }
+      self_regulation_responses: {
+        Row: {
+          answers: Json
+          created_at: string
+          id: string
+          instrument_version: string
+          user_id: string
+        }
+        Insert: {
+          answers: Json
+          created_at?: string
+          id?: string
+          instrument_version: string
+          user_id?: string
+        }
+        Update: {
+          answers?: Json
+          created_at?: string
+          id?: string
+          instrument_version?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      self_regulation_shares: {
+        Row: {
+          created_at: string
+          student_id: string
+          subject_id: string
+        }
+        Insert: {
+          created_at?: string
+          student_id?: string
+          subject_id: string
+        }
+        Update: {
+          created_at?: string
+          student_id?: string
+          subject_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "self_regulation_shares_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subject_documents: {
         Row: {
           file_name: string
@@ -434,6 +541,32 @@ export type Database = {
         Args: { target_subject_id: string }
         Returns: boolean
       }
+      self_regulation_class_summary: {
+        Args: { p_subject_id: string }
+        Returns: {
+          knowledge_avg: number
+          knowledge_high: number
+          knowledge_low: number
+          knowledge_mid: number
+          regulation_avg: number
+          regulation_high: number
+          regulation_low: number
+          regulation_mid: number
+          respondents: number
+        }[]
+      }
+      self_regulation_scores: {
+        Args: { p_answers: Json }
+        Returns: Record<string, unknown>
+      }
+      self_regulation_shared_result: {
+        Args: { p_student_id: string; p_subject_id: string }
+        Returns: {
+          answered_at: string
+          knowledge_avg: number
+          regulation_avg: number
+        }[]
+      }
       submit_answer: {
         Args: {
           p_attempt_id: string
@@ -442,6 +575,10 @@ export type Database = {
           p_stage: string
         }
         Returns: boolean
+      }
+      submit_self_regulation: {
+        Args: { p_answers: Json; p_version: string }
+        Returns: string
       }
     }
     Enums: {

@@ -7,6 +7,7 @@ import { KnowledgeMap } from "@/components/knowledge-map";
 import { Card, CardContent } from "@/components/ui/card";
 import { computeLRR } from "@/lib/lrr";
 import { LRRCard } from "@/components/lrr-card";
+import { BAND_LABEL, RESPONSE_MAX, SCALE_LABEL, bandFor, type SrlScale } from "@/lib/self-regulation";
 
 const ORDER: ConceptState[] = ["brecha", "en_desarrollo", "dominado", "sin_evidencia"];
 
@@ -68,6 +69,17 @@ export default async function EstudianteDetalle({
 
   const lrr = computeLRR(concepts, attempts ?? [], answers ?? []);
 
+  // Autorregulación (F-08): solo llega si el estudiante compartió su resultado con esta asignatura.
+  // Sin permiso no hay filas, igual que si no respondió: no se distingue un caso del otro.
+  const { data: srlRows } = await supabase.rpc("self_regulation_shared_result", {
+    p_subject_id: subjectId,
+    p_student_id: studentId,
+  });
+  const srl = srlRows?.[0] ?? null;
+  const srlScores: Record<SrlScale, number> | null = srl
+    ? { conocimiento: Number(srl.knowledge_avg), regulacion: Number(srl.regulation_avg) }
+    : null;
+
   const counts: Record<ConceptState, number> = {
     sin_evidencia: 0,
     brecha: 0,
@@ -116,6 +128,32 @@ export default async function EstudianteDetalle({
       <div className="mb-6">
         <LRRCard lrr={lrr} title="Tasa de recuperación del estudiante" />
       </div>
+
+      <Card className="mb-6">
+        <CardContent className="pt-6 text-sm">
+          <p className="font-medium mb-1">Autorregulación (orientativo, versión preliminar)</p>
+          {srl && srlScores ? (
+            <>
+              <p className="text-xs text-muted-foreground mb-3">
+                Compartido por el estudiante · respondido el {new Date(srl.answered_at).toLocaleDateString("es-BO")}
+              </p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {(["conocimiento", "regulacion"] as SrlScale[]).map((scale) => (
+                  <div key={scale} className="rounded-md border p-3">
+                    <p className="font-medium">{SCALE_LABEL[scale]}</p>
+                    <p className="text-muted-foreground">
+                      {BAND_LABEL[bandFor(srlScores[scale])]} · promedio{" "}
+                      {srlScores[scale].toFixed(1).replace(".", ",")} de {RESPONSE_MAX}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <p className="text-muted-foreground">Sin resultado compartido.</p>
+          )}
+        </CardContent>
+      </Card>
 
       {concepts.length > 0 ? (
         <KnowledgeMap concepts={concepts} states={states} />

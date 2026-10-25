@@ -32,7 +32,7 @@ Reglas: la IA propone y el docente valida; estados orientativos (Anexo I, sec. 1
 | Bloque A | Semanas 1–2 | F-04 | Próximo desafío (qué hacer ahora) | 5 | Terminado |  |
 | Bloque A | Semanas 1–2 | F-06 | Pantalla «Mi Brújula» del estudiante | 14 | Terminado | Reúne F-01 a F-04 |
 | Bloque B | Semanas 3–5 | F-07 | Reporte de clase para el docente | 14 | Terminado | Brechas frecuentes, estados y acciones sugeridas |
-| Bloque B | Semanas 3–5 | F-08 | Diagnóstico de autorregulación | 14 | No iniciado | Revisar el instrumento con alguien con formación pedagógica |
+| Bloque B | Semanas 3–5 | F-08 | Diagnóstico de autorregulación | 14 | En curso (preliminar) | Hecho con el MAI en español (52 ítems) y marcado como preliminar. Falta: permiso de los autores, versión breve de 19 ítems y validación del experto (`docs/PENDIENTES.md`, pendiente 9) |
 | Bloque B | Semanas 3–5 | F-09 | Práctica de recuperación activa (explicar con palabras propias) | 6 | Terminado (v1) | Versión 1 sin IA y sin puntaje: desde el mapa, explicar de memoria, comparar con la referencia validada y autoevaluarse (no se guarda). Corrección con IA → F-24 |
 | Bloque B | Semanas 3–5 | F-10 | LRR formalizado por estudiante, concepto y clase | 8 | Terminado | Fórmula según Anexo I, sección 12 |
 | Bloque C | Semanas 6–7 | F-05 | Ficha de concepto (por qué importa, aplicación, qué desbloquea) | 14 | Terminado | La IA propone, el docente valida. Se ve en el panel del mapa. Ajuste fino del prompt pendiente (`docs/PENDIENTES.md`, pendiente 7) |
@@ -60,7 +60,7 @@ Esfuerzo: S = días · M = 1–2 semanas · L = 3–6 semanas · XL = meses o in
 | F-05 | Ficha de concepto (importancia, aplicación, qué desbloquea) | MVP | M | F-01 | Terminado |
 | F-06 | Pantalla «Mi Brújula» del estudiante | MVP | M | F-01 a F-04 | Terminado |
 | F-07 | Reporte de clase para el docente | MVP | M | F-02 | Terminado |
-| F-08 | Diagnóstico de autorregulación | MVP | M | — | No iniciado |
+| F-08 | Diagnóstico de autorregulación | MVP | M | — | En curso (preliminar) |
 | F-09 | Práctica de recuperación activa | MVP | S | — | Terminado (v1) |
 | F-10 | LRR formalizado | MVP | S–M | — | Terminado |
 | F-11 | Recursos abiertos curados por IA | MVP | M | F-05 | No iniciado |

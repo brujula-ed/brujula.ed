@@ -172,6 +172,35 @@ Pendiente (decisiones tomadas para v1, a revisar):
   autoevaluación podría alimentar F-08 (autorregulación). Requiere tabla nueva y, si lo ve el docente, aviso de
   privacidad (requisito antes del piloto).
 
+### 9. Diagnóstico de autorregulación (F-08) — versión preliminar hecha (25/10/2026)
+
+Hecho (construido con información disponible, para validarlo después con un experto):
+- **Instrumento:** Inventario de Conciencia Metacognitiva (MAI; Schraw y Dennison, 1994), ítems adaptados al
+  español por González-Cabañes et al. (*Psicothema*, 2022, 34(3), 454-462; https://osf.io/zthdj). Hoy los **52
+  ítems**, escala 1–5, dos escalas: conocimiento (17 ítems) y regulación de la cognición (35). Todo en
+  `lib/self-regulation.ts`.
+- **Estudiante:** `/estudiante/autorregulacion` ("¿Cómo aprendes?", desde "Mis asignaturas"): aviso de qué se
+  guarda y quién ve qué, cuestionario, resultado orientativo por escala con sugerencias, responder de nuevo y
+  borrar. Puede **compartir su resultado** (no sus respuestas) con el docente de cada asignatura, y dejar de
+  compartir.
+- **Docente:** resumen de clase en el reporte (solo agregados y solo con 5 o más respuestas) y, en el reporte de
+  cada estudiante, su resultado solo si lo compartió.
+- **Base de datos** (migraciones `autorregulacion` y `compartir_autorregulacion`, aplicadas): tablas
+  `self_regulation_responses` y `self_regulation_shares`; RPC `submit_self_regulation` (valida versión, ítems y
+  valores), `self_regulation_class_summary`, `self_regulation_shared_result` y la auxiliar
+  `self_regulation_scores` (único lugar de SQL con el reparto ítem → escala).
+
+Pendiente antes de usarlo con estudiantes reales:
+- **Permiso de los autores** (Universidad de Oviedo): el archivo de OSF no declara licencia.
+- **Versión breve de 19 ítems** (Harrison y Vallin, 2018), la que mejor ajustó en la validación española: falta
+  la lista de ítems (en el artículo están en negrita, que se pierde al extraer el texto; el de Harrison y Vallin
+  es de pago). Pedirla a los autores. Al cambiarla: `ITEMS` y `INSTRUMENT_VERSION` en `lib/self-regulation.ts`,
+  la versión aceptada en `submit_self_regulation` y en las dos RPC, y el reparto en `self_regulation_scores`.
+- **Validación del experto:** selección de ítems, tramos (hoy provisionales: < 2,5 / 2,5–3,5 / > 3,5; el
+  artículo no da puntos de corte), textos del resultado y sugerencias.
+- **Aviso de privacidad formal** (requisito del piloto): son datos de autopercepción.
+- Más adelante: unir la autoevaluación de F-09 con este diagnóstico.
+
 ## Notas de operación (aprendidas en la auditoría)
 
 - **La app Supabase de GitHub aplica sola las migraciones que llegan a `main`.** Por eso cada migración se

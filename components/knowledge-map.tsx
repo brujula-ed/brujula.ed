@@ -19,6 +19,7 @@ import Link from "next/link";
 import dagre from "@dagrejs/dagre";
 import { STATE_LABEL, type ConceptState } from "@/lib/concept-state";
 import { computeDependents, computeMapEdges, computePrerequisites } from "@/lib/knowledge-graph";
+import { RESOURCE_KIND_LABEL, siteLabel, type ResourceKind } from "@/lib/resource-sources";
 
 export type MapConcept = {
   id: string;
@@ -151,15 +152,20 @@ function buildLayout(concepts: MapConcept[], states?: Record<string, ConceptStat
 // Ficha validada del concepto (F-05): por qué importa y para qué te sirve.
 export type MapFicha = { whyItMatters: string; application: string };
 
+// Recurso abierto validado del concepto (F-11)
+export type MapResource = { title: string; url: string; kind: string; source: string };
+
 export function KnowledgeMap({
   concepts,
   states,
   fichas,
+  resources,
   practiceBaseHref,
 }: {
   concepts: MapConcept[];
   states?: Record<string, ConceptState>;
   fichas?: Record<string, MapFicha>;
+  resources?: Record<string, MapResource[]>;
   practiceBaseHref?: string; // solo en Mi Brújula: enlace a la práctica "Explica con tus palabras" (F-09)
 }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -267,6 +273,25 @@ export function KnowledgeMap({
                   </div>
                 </div>
               )}
+              {resources?.[selected.id]?.length ? (
+                <div className="mb-3">
+                  <p className="text-xs font-medium text-muted-foreground mb-1">Recursos para repasar</p>
+                  <ul className="flex flex-col gap-1">
+                    {resources[selected.id].map((r) => (
+                      <li key={r.url}>
+                        <a href={r.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                          {r.title}
+                        </a>
+                        <span className="text-xs text-muted-foreground">
+                          {" "}
+                          · {RESOURCE_KIND_LABEL[r.kind as ResourceKind] ?? r.kind}
+                          {r.source !== "docente" && ` · ${siteLabel(r.source)}`}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
               <p className="mb-1">
                 <span className="font-medium">Necesitas saber antes:</span>{" "}
                 {requires.length ? requires.map((c) => c.name).join(", ") : "nada previo en este mapa"}

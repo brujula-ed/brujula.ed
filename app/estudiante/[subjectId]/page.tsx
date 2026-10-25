@@ -61,6 +61,17 @@ export default async function MiBrujula({ params }: { params: Promise<{ subjectI
     (fichaRows ?? []).map((f) => [f.concept_id, { whyItMatters: f.why_it_matters, application: f.application }])
   );
 
+  // Recursos abiertos (F-11): la RLS solo devuelve al estudiante los validados de conceptos validados
+  const { data: resourceRows } = await supabase
+    .from("concept_resources")
+    .select("concept_id, title, url, kind, source")
+    .eq("subject_id", subjectId)
+    .order("created_at", { ascending: true });
+  const resources: Record<string, { title: string; url: string; kind: string; source: string }[]> = {};
+  for (const r of resourceRows ?? []) {
+    (resources[r.concept_id] ??= []).push({ title: r.title, url: r.url, kind: r.kind, source: r.source });
+  }
+
   const graphConcepts = concepts ?? [];
   const gap = computePriorityGap(graphConcepts, states);
   const challenge = computeNextChallenge(graphConcepts, states);
@@ -107,6 +118,7 @@ export default async function MiBrujula({ params }: { params: Promise<{ subjectI
           concepts={concepts}
           states={states}
           fichas={fichas}
+          resources={resources}
           practiceBaseHref={`/estudiante/${subjectId}/practicar`}
         />
       ) : (

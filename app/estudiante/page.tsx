@@ -23,6 +23,17 @@ export default async function Estudiante() {
 
       <JoinSubjectForm />
 
+      <Link href="/estudiante/autorregulacion" className="block mt-6">
+        <Card className="hover:border-foreground/30 transition-colors cursor-pointer">
+          <CardHeader>
+            <CardTitle className="text-base">¿Cómo aprendes?</CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm text-muted-foreground">
+            Un cuestionario breve sobre tu forma de estudiar, con sugerencias para mejorar. Versión preliminar.
+          </CardContent>
+        </Card>
+      </Link>
+
       <div className="flex flex-col gap-3 mt-6">
         {enrollments?.map((e) => {
           const s = Array.isArray(e.subjects) ? e.subjects[0] : e.subjects;

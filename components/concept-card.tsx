@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { ConceptFicha, type Ficha } from "@/components/concept-ficha";
+import { ConceptResources, type Resource } from "@/components/concept-resources";
 
 type Concept = {
   id: string;
@@ -20,10 +21,14 @@ export function ConceptCard({
   concept,
   allConcepts,
   ficha,
+  subjectId,
+  resources,
 }: {
   concept: Concept;
   allConcepts: Concept[];
   ficha?: Ficha;
+  subjectId: string;
+  resources: Resource[];
 }) {
   const router = useRouter();
   const supabase = createClient();
@@ -143,6 +148,9 @@ export function ConceptCard({
         </div>
         {error && <div className="mt-2">{errorMessage}</div>}
         {ficha && <ConceptFicha ficha={ficha} />}
+        {concept.status === "validado" && (
+          <ConceptResources conceptId={concept.id} subjectId={subjectId} resources={resources} />
+        )}
       </CardContent>
     </Card>
   );

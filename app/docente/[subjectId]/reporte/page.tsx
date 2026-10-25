@@ -6,6 +6,7 @@ import { computeDependents } from "@/lib/knowledge-graph";
 import { Card, CardContent } from "@/components/ui/card";
 import { computeClassLRR } from "@/lib/lrr";
 import { LRRCard } from "@/components/lrr-card";
+import { BAND_LABEL, RESPONSE_MAX, SCALE_LABEL, type SrlBand, type SrlScale } from "@/lib/self-regulation";
 
 const COLORS: Record<ConceptState, string> = {
   sin_evidencia: "var(--state-none-soft)",
@@ -176,6 +177,36 @@ export default async function Reporte({ params }: { params: Promise<{ subjectId:
     suggestions.push("No hay brechas detectadas en el grupo por ahora.");
   }
 
+  // Autorregulación de la clase (F-08): solo agregados. Con menos de 5 respuestas la función devuelve solo el número.
+  const { data: srlSummaryRows } = await supabase.rpc("self_regulation_class_summary", { p_subject_id: subjectId });
+  const srlSummary = srlSummaryRows?.[0] ?? null;
+  const srlScales: {
+    scale: SrlScale;
+    avg: number | null;
+    bands: Record<SrlBand, number | null>;
+  }[] = srlSummary
+    ? [
+        {
+          scale: "conocimiento",
+          avg: srlSummary.knowledge_avg,
+          bands: {
+            poco_frecuente: srlSummary.knowledge_low,
+            a_veces: srlSummary.knowledge_mid,
+            frecuente: srlSummary.knowledge_high,
+          },
+        },
+        {
+          scale: "regulacion",
+          avg: srlSummary.regulation_avg,
+          bands: {
+            poco_frecuente: srlSummary.regulation_low,
+            a_veces: srlSummary.regulation_mid,
+            frecuente: srlSummary.regulation_high,
+          },
+        },
+      ]
+    : [];
+
   return (
     <main className="max-w-3xl mx-auto p-8">
       <Link href={`/docente`} className="text-sm text-muted-foreground hover:underline mb-4 inline-block">
@@ -206,6 +237,41 @@ export default async function Reporte({ params }: { params: Promise<{ subjectId:
           </CardContent>
         </Card>
       </div>
+
+      {studentIds.length > 0 && (
+        <Card className="mb-8">
+          <CardContent className="pt-6 text-sm">
+            <p className="font-medium mb-1">Autorregulación de la clase (orientativo, versión preliminar)</p>
+            {srlSummary && srlSummary.respondents >= 5 ? (
+              <>
+                <p className="text-xs text-muted-foreground mb-3">
+                  {srlSummary.respondents} estudiante(s) respondieron el cuestionario «¿Cómo aprendes?».
+                </p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {srlScales.map((s) => (
+                    <div key={s.scale} className="rounded-md border p-3">
+                      <p className="font-medium">{SCALE_LABEL[s.scale]}</p>
+                      <p className="text-muted-foreground mb-1">
+                        Promedio {s.avg !== null ? Number(s.avg).toFixed(1).replace(".", ",") : "—"} de {RESPONSE_MAX}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {(Object.keys(BAND_LABEL) as SrlBand[])
+                          .map((b) => `${BAND_LABEL[b]}: ${s.bands[b] ?? 0}`)
+                          .join(" · ")}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <p className="text-muted-foreground">
+                Aún no hay suficientes respuestas para mostrar un resumen (mínimo 5; hoy{" "}
+                {srlSummary?.respondents ?? 0}).
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {studentIds.length === 0 ? (
         <p className="text-sm text-muted-foreground">Aún no hay estudiantes inscritos en esta asignatura.</p>

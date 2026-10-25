@@ -53,6 +53,8 @@ detecta brechas de conocimiento, ve un mapa de conocimiento y recibe un siguient
 - `app/estudiante/page.tsx` asignaturas del estudiante (unirse con código de clase).
 - `app/estudiante/[subjectId]` "Mi Brújula": mapa, brecha prioritaria, próximo desafío, LRR.
 - `app/estudiante/[subjectId]/practicar/[conceptId]` práctica "Explica con tus palabras" (F-09, `components/retrieval-practice.tsx`).
+- `app/estudiante/autorregulacion` cuestionario "¿Cómo aprendes?" (F-08, preliminar; `components/self-regulation-questionnaire.tsx`).
+- `lib/self-regulation.ts` instrumento de autorregulación (MAI en español), medias, tramos provisionales y sugerencias.
 - `app/diagnostico/[subjectId]/page.tsx` diagnóstico, nivelación y microevaluación en una sola página (por etapas).
 - `app/api/` `process-document`, `generate-concepts`, `generate-questions`, `generate-concept-cards` (server-side).
 - `components/` componentes propios; `components/ui/` los de shadcn.
@@ -73,7 +75,13 @@ Tablas principales: `profiles` (rol), `subjects` (con código de clase), `enroll
 `diagnostic_attempts` (`completed_at`), `diagnostic_answers` (`stage`: `diagnostico` | `microevaluacion`,
 `concept`, `is_correct`), `concept_cards` (ficha de concepto: `why_it_matters`, `application`, `source`:
 `material` | `general`, `status`; un trigger pone `subject_id` desde el concepto; el estudiante solo lee fichas
-validadas de conceptos validados).
+validadas de conceptos validados), `self_regulation_responses` (respuestas al cuestionario de autorregulación; el
+estudiante lee y borra las suyas, entran solo por la RPC `submit_self_regulation`) y `self_regulation_shares`
+(con qué asignaturas comparte el estudiante su resultado).
+- Autorregulación: el docente nunca lee respuestas individuales. Ve un resumen de clase
+  (`self_regulation_class_summary`, solo con 5 o más respuestas) y el resultado de un estudiante solo si lo compartió
+  (`self_regulation_shared_result`). El reparto ítem → escala está en `lib/self-regulation.ts` y en la función SQL
+  `self_regulation_scores`: cambiarlos juntos.
 - Solo se usan conceptos y preguntas con `status = 'validado'`.
 - Seguridad: RLS en todas las tablas. Para evitar recursión usar funciones `security definer` con `set search_path = public`.
 - Las respuestas se vinculan al concepto por **`concept_id`**, que un trigger rellena desde la pregunta (no lo
@@ -105,10 +113,9 @@ sin rate limiting · autorregistro de docentes sin verificación · sin recupera
 embeddings se guardan pero aún no se consultan) · diseño no responsive para móvil.
 
 ## Pendiente (orden previsto)
-Autodiagnóstico de autorregulación → recursos curados → ludificación del cierre de brechas → campo de
-capacidades, pruebas, piloto y responsive. (La práctica de recuperación activa, F-09 v1, ya está: pendiente 8.
-La ficha de concepto, F-05, ya está;
-sus ajustes pendientes están en `docs/PENDIENTES.md`, pendiente 7.)
+Recursos curados → ludificación del cierre de brechas → campo de capacidades, pruebas, piloto y responsive.
+Ya hechos, con ajustes pendientes en `docs/PENDIENTES.md`: ficha de concepto (F-05, pendiente 7), recuperación
+activa (F-09 v1, pendiente 8) y autorregulación (F-08 preliminar, pendiente 9: permiso de autores y experto).
 
 ## Seguridad
 - Nunca escribir claves en el código ni en este archivo. `OPENAI_API_KEY` solo en servidor.
