@@ -1,6 +1,19 @@
-# BRÚJULA.ED — Pendientes de la auditoría de deuda técnica
+# BRÚJULA.ED — Estado del trabajo y pendientes
 
-Actualizado: 24/10/2026. Para retomar en una conversación nueva: leer este documento y `CLAUDE.md`.
+Actualizado: 25/10/2026. Para retomar en una conversación nueva: leer este documento y `CLAUDE.md`.
+
+## Estado al 25/10/2026
+
+- **Hecho:** F-01 a F-04, F-06, F-07 y F-10 (base del MVP); F-05 ficha de concepto (pendiente 7); F-09 recuperación
+  activa v1 (pendiente 8); F-08 autorregulación, versión preliminar (pendiente 9); F-11 recursos abiertos
+  (pendiente 10). F-12 quedó cubierta por F-11. Imagen corporativa aplicada salvo el encabezado (pendiente 6).
+- **Siguiente:** F-13, ludificación del cierre de brechas (sin métricas de vanidad).
+- **Esperando a terceros:** Ilse (encabezado y uso del amarillo de marca, pendiente 6); Adri (fichas con
+  conocimiento general y corrección con IA de F-09, pendientes 7 y 8); autores del MAI (permiso y lista de 19 ítems,
+  pendiente 9; Sergio guarda el borrador del correo); experto en educación (validar F-08).
+- **Antes del piloto:** verificación del rol docente (pendiente 1), aviso de privacidad y consentimiento, diseño
+  responsive y pruebas automáticas (ver `docs/ROADMAP.md`, "Requisitos antes de un piloto").
+- **Verificación abierta:** documento grande (verificación 3, abajo).
 
 ## Contexto
 
@@ -191,7 +204,8 @@ Hecho (construido con información disponible, para validarlo después con un ex
   `self_regulation_scores` (único lugar de SQL con el reparto ítem → escala).
 
 Pendiente antes de usarlo con estudiantes reales:
-- **Permiso de los autores** (Universidad de Oviedo): el archivo de OSF no declara licencia.
+- **Permiso de los autores** (Universidad de Oviedo): el archivo de OSF no declara licencia. Enviar el correo a los
+  autores (pide permiso y la lista de 19 ítems); el borrador lo guarda Sergio.
 - **Versión breve de 19 ítems** (Harrison y Vallin, 2018), la que mejor ajustó en la validación española: falta
   la lista de ítems (en el artículo están en negrita, que se pierde al extraer el texto; el de Harrison y Vallin
   es de pago). Pedirla a los autores. Al cambiarla: `ITEMS` y `INSTRUMENT_VERSION` en `lib/self-regulation.ts`,
@@ -201,11 +215,58 @@ Pendiente antes de usarlo con estudiantes reales:
 - **Aviso de privacidad formal** (requisito del piloto): son datos de autopercepción.
 - Más adelante: unir la autoevaluación de F-09 con este diagnóstico.
 
+### 10. Recursos abiertos curados (F-11) — hecho (25/10/2026)
+
+Hecho:
+- **La IA elige los sitios** (no hay lista cerrada): recursos abiertos o de acceso libre y legal, idealmente una
+  lectura, un video y un ejercicio por concepto, de sitios distintos (hasta 3). Ruta
+  `app/api/generate-resources/route.ts`; el aviso detalla cuántos hay de cada tipo y cuántos se descartaron.
+- **Verificación en el servidor** (`lib/link-check.ts`): solo `https`, sin usuario, contraseña ni puerto, nunca una
+  IP escrita, y el dominio debe resolver solo a IP públicas, comprobado en cada redirección (máximo 3, 6 s). Final
+  200 = verificado. YouTube se verifica con oEmbed (responde 200 aunque el video no exista). OpenStax y Khan
+  Academy no se pueden verificar (200 en páginas inexistentes / desafío antibots): se guardan como "sin verificar"
+  y el docente debe abrirlos antes de validar. Probado con 15 casos (sitios reales, páginas inventadas, red
+  interna).
+- **Docente** (página de conceptos, `components/concept-resources.tsx`): validar, descartar y agregar enlaces
+  propios (validados al agregarlos, sin verificación). **Estudiante:** "Recursos para repasar" en el panel del
+  mapa, solo validados.
+- **Base de datos:** tabla `concept_resources` (migración `recursos_curados`; `quitar_sitios_por_asignatura` quitó
+  la elección de sitios por asignatura, que fue un malentendido). `source` guarda el dominio o `docente`.
+
+Pendiente:
+- **Riesgo residual de DNS rebinding:** un dominio que cambie de IP entre la comprobación y la visita. Lo acotan el
+  tiempo límite y que no se lee la respuesta. Para cerrarlo del todo habría que fijar la IP resuelta en la
+  conexión.
+- **Videos:** la IA suele inventar el identificador de YouTube y esos se descartan. Si siguen saliendo pocos,
+  alternativa: proponer canales o listas en lugar de videos sueltos.
+- **Licencias:** la IA decide qué es abierto; el docente lo confirma al validar. No se guarda la licencia de cada
+  recurso (podría añadirse un campo).
+- **F-12** (elección de formato) se da por cubierta con F-11: el estudiante ya elige entre lectura, video y
+  ejercicio, y no se guarda una preferencia (decisión en `docs/ROADMAP.md`).
+- **Qué recursos ayudan a cerrar brechas** (para F-20, motor de evidencias): registrar qué recursos abre cada
+  estudiante y cruzarlo con el LRR. Son datos personales nuevos: requiere aviso de privacidad.
+
+### 11. Cuentas: confirmación de correo y recuperación de contraseña — no iniciado (28/10/2026)
+
+Hoy no hay confirmación de cuenta, recuperación de contraseña ni verificación de correos. En el panel de Supabase
+(Authentication → URL Configuration) la Site URL es `http://localhost:3000` y Redirect URLs está vacía.
+
+Plan (decisión de Sergio): activarlo cuando la app esté lista para presentar, y en ese momento borrar la base de
+datos para empezar de cero. Entonces:
+- Activar "Confirm email" y la recuperación de contraseña (pantalla nueva para elegir la contraseña).
+- Site URL = dirección de producción; Redirect URLs = `http://localhost:3000/**` y la de producción con `/**`.
+- Crear una ruta de retorno (p. ej. `/auth/callback`) para que el enlace del correo abra la sesión; sin ella cae
+  en la landing (`/`) sin sesión.
+- Va junto con la verificación del rol docente (pendiente 1).
+
 ## Notas de operación (aprendidas en la auditoría)
 
 - **La app Supabase de GitHub aplica sola las migraciones que llegan a `main`.** Por eso cada migración se
   aplica con `npx supabase db push` (tras dry-run y confirmación) antes de subir su archivo. Al hacer commit,
   añadir archivos por nombre y no subir migraciones aún no aplicadas.
+- **Advertencia de lint conocida:** `npm run lint` da 0 errores y 1 advertencia en
+  `app/diagnostico/[subjectId]/page.tsx:122` (`useEffect` sin `supabase` en sus dependencias). Es anterior a los
+  cambios de octubre e inofensiva; si aparece otra, sí es nueva.
 - **Consultas de solo lectura a producción:** `npx supabase db query --linked "select ..."`. No requiere
   Docker (`db dump` sí).
 - **Max rows de la Data API = 1000:** cualquier consulta que pueda devolver más filas debe paginarse.

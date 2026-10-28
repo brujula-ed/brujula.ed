@@ -36,8 +36,8 @@ Reglas: la IA propone y el docente valida; estados orientativos (Anexo I, sec. 1
 | Bloque B | Semanas 3–5 | F-09 | Práctica de recuperación activa (explicar con palabras propias) | 6 | Terminado (v1) | Versión 1 sin IA y sin puntaje: desde el mapa, explicar de memoria, comparar con la referencia validada y autoevaluarse (no se guarda). Corrección con IA → F-24 |
 | Bloque B | Semanas 3–5 | F-10 | LRR formalizado por estudiante, concepto y clase | 8 | Terminado | Fórmula según Anexo I, sección 12 |
 | Bloque C | Semanas 6–7 | F-05 | Ficha de concepto (por qué importa, aplicación, qué desbloquea) | 14 | Terminado | La IA propone, el docente valida. Se ve en el panel del mapa. Ajuste fino del prompt pendiente (`docs/PENDIENTES.md`, pendiente 7) |
-| Bloque C | Semanas 6–7 | F-11 | Recursos abiertos curados por IA | 16 | No iniciado | Verificar que los enlaces existan; el docente aprueba |
-| Bloque C | Semanas 6–7 | F-12 | Elección de formato por el estudiante (lectura, video, ejercicio) | 5 | No iniciado | Se ofrece la opción, no se clasifica al estudiante |
+| Bloque C | Semanas 6–7 | F-11 | Recursos abiertos curados por IA | 16 | Terminado | La IA elige recursos abiertos (lectura, video, ejercicio), el servidor verifica los enlaces y el docente aprueba; el docente también agrega los suyos (`docs/PENDIENTES.md`, pendiente 10) |
+| Bloque C | Semanas 6–7 | F-12 | Elección de formato por el estudiante (lectura, video, ejercicio) | 5 | Cubierto por F-11 | El panel ya ofrece lectura, video y ejercicio y el estudiante abre el que quiere. No se guarda una preferencia (ver Decisiones tomadas) |
 | Bloque D | Semanas 8–9 | F-13 | Ludificación del progreso de cierre de brechas | 14 | No iniciado | Sin métricas de vanidad |
 | Bloque E | Semanas 10–11 | F-14 | Preparación del modelo de datos (capacidad opcional por concepto) | 5 | No iniciado | Evita rehacer la estructura cuando lleguen las capacidades |
 | Bloque E | Semanas 10–11 |  | Pruebas de integración, permisos y corrección de errores | 12 | No iniciado |  |
@@ -63,12 +63,12 @@ Esfuerzo: S = días · M = 1–2 semanas · L = 3–6 semanas · XL = meses o in
 | F-08 | Diagnóstico de autorregulación | MVP | M | — | En curso (preliminar) |
 | F-09 | Práctica de recuperación activa | MVP | S | — | Terminado (v1) |
 | F-10 | LRR formalizado | MVP | S–M | — | Terminado |
-| F-11 | Recursos abiertos curados por IA | MVP | M | F-05 | No iniciado |
-| F-12 | Elección de formato por el estudiante | MVP | S | F-11 | No iniciado |
+| F-11 | Recursos abiertos curados por IA | MVP | M | F-05 | Terminado |
+| F-12 | Elección de formato por el estudiante | MVP | S | F-11 | Cubierto por F-11 |
 | F-13 | Ludificación del progreso de cierre de brechas | MVP | M | F-02, F-04 | No iniciado |
 | F-14 | Preparación del modelo de datos (capacidad opcional) | MVP | S | — | No iniciado |
 | F-15 | Piloto con docentes y estudiantes reales | MVP | M | F-06, F-07 | No iniciado |
-| F-20 | Motor de evidencias | Corto plazo | M | — | No iniciado |
+| F-20 | Motor de evidencias (incluye qué recursos ayudan a cerrar brechas) | Corto plazo | M | — | No iniciado |
 | F-21 | Capacidades por asignatura | Corto plazo | L | F-02, F-14 | No iniciado |
 | F-22 | Administración básica de cursos (periodos, grupos, CSV) | Corto plazo | M | — | No iniciado |
 | F-23 | Casos prácticos con rúbrica | Corto plazo | L | F-20 | No iniciado |
@@ -95,11 +95,12 @@ Esfuerzo: S = días · M = 1–2 semanas · L = 3–6 semanas · XL = meses o in
 | Microservicio NER y bóveda cifrada AES-256 | Pospuesto | El Anexo I no lo exige y el MVP no maneja datos sensibles más allá del inicio de sesión | Si se manejan datos personales adicionales |
 | TTFT ≤ 2.0 s | Meta de referencia, no criterio de aceptación | Es una métrica de producto maduro; en un MVP de validación el margen es amplio | Bloque E, si sobra tiempo |
 | CRUD manual de conceptos sin IA | Descartado como diseño principal | El Anexo I (5b-c) pide que el sistema procese el documento y el docente valide | Como respaldo si la IA falla |
-| Estilos o canales de aprendizaje | Reemplazado | Hay poca evidencia de que adaptar la enseñanza al estilo mejore el aprendizaje; se usa autorregulación (F-08) y elección de formato (F-12) | — |
+| Estilos o canales de aprendizaje | Reemplazado | Hay poca evidencia de que adaptar la enseñanza al estilo mejore el aprendizaje; se usa autorregulación (F-08) y la opción de elegir entre tipos de recurso (F-11, que cubre F-12) | — |
 | Indicador «Preparación profesional %» | Pospuesto (F-41) | Un número compuesto necesita validación metodológica antes de mostrarse | Con datos reales del piloto |
 | Tutor de IA avanzado y analítica institucional avanzada | Fuera del MVP (Anexo I, sección 8) | El Anexo los deja para etapas posteriores | Acordar una enmienda con Adri |
 | Imagen corporativa (paleta A, aprobada por Ilse el 22/10/2026) | Aplicada como tokens en `app/globals.css` | Cambiar la estética en un solo lugar; pulido por pantalla, responsive y modo oscuro quedan para después de terminar las funciones | Encabezado aún por decidir (ver `docs/PENDIENTES.md`, pendiente 6) |
 | Mapa de conocimiento (24/10/2026) | Nodos fijos (sin arrastrar), tarjetas uniformes, flechas redundantes ocultas y ruta resaltada al elegir un concepto | A la socia le parecía desordenado; el mapa debe ayudar a entender, no solo a ubicar prioridades | Tras la opinión de la socia y el piloto |
+| Elección de formato (F-12) como función aparte (25/10/2026) | No se implementa: cubierta por F-11 | Con F-11 el estudiante ya elige entre lectura, video y ejercicio. Guardar una preferencia solo reordenaría hasta 3 recursos y se parecería a un "estilo de aprendizaje"; adaptar al formato preferido no mejora el aprendizaje. Al docente le serviría más saber qué recursos ayudan a cerrar brechas: va a F-20 | Si aparecen muchos recursos por concepto (filtro por tipo, sin guardar nada) |
 | Fuente de las fichas de concepto (F-05) | La IA usa el material del docente y el mapa de conceptos validados; si no alcanza, conocimiento general, marcado por origen (`source`) para el docente | Con material tipo programa de curso, "solo el material" daba fichas vacías o pobres. Flexibiliza "no crear contenido pedagógico propio"; lo compensan la validación docente y la etiqueta de origen | Acordar con Adri |
 
 ## Ideas nuevas (reunión de mentoría, 16/10/2026) — sin priorizar

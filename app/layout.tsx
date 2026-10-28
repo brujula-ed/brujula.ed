@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Figtree, Geist_Mono, Onest } from "next/font/google";
 import { Header } from "@/components/header";
+import { HeaderGate } from "@/components/header-gate";
 import "./globals.css";
 
 const figtree = Figtree({
@@ -31,7 +32,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${figtree.variable} ${onest.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <Header />
+        <HeaderGate>
+          <Header />
+        </HeaderGate>
         {children}
       </body>
     </html>
