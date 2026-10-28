@@ -154,3 +154,52 @@
     @apply font-heading;
   }
 }
+
+/* Landing (components/landing/). Todo queda quieto y visible con "reducir movimiento". */
+@theme {
+  --animate-gap-pulse: gap-pulse 1.6s ease-in-out infinite;
+
+  @keyframes gap-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--state-gap) 45%, transparent); }
+    50% { box-shadow: 0 0 0 12px color-mix(in srgb, var(--state-gap) 0%, transparent); }
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html:has([data-landing]) {
+    scroll-behavior: smooth;
+  }
+}
+
+.reveal {
+  height: 100%;
+  transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition-delay: calc(var(--reveal-i, 0) * 90ms);
+}
+.reveal.is-pre {
+  opacity: 0;
+  transform: translateY(22px);
+}
+
+/* Línea que une los pasos de "Cómo funciona": se dibuja de izquierda a derecha. */
+.reveal-line {
+  transform-origin: left center;
+  transition: transform 1.2s ease 0.2s;
+}
+.reveal-line.is-pre {
+  transform: scaleX(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .reveal.is-pre,
+  .reveal-line,
+  .reveal-line.is-pre {
+    transition: none;
+    opacity: 1;
+    transform: none;
+  }
+  .animate-gap-pulse {
+    animation: none;
+  }
+}

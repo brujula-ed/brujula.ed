@@ -4,9 +4,11 @@ import { BrandMark, BrandWord } from "@/components/landing/brand-mark";
 import { HeroMap } from "@/components/landing/hero-map";
 import { LandingHeader, type AccountLink } from "@/components/landing/landing-header";
 import { PilotForm } from "@/components/landing/pilot-form";
+import { Reveal } from "@/components/landing/reveal";
 import {
   BTN_OUTLINE,
   BTN_PRIMARY,
+  CARD_LIFT,
   EYEBROW,
   FOCUS_ON_DARK,
   WRAP,
@@ -60,25 +62,27 @@ const COMMITMENTS = [
 const SECTION = "scroll-mt-20 py-16 min-[561px]:py-24";
 const H2 = "max-w-[17em] text-balance text-[clamp(32px,4.4vw,44px)] leading-[1.08] tracking-[-0.03em]";
 const H3 = "text-[22px] leading-[1.2] tracking-[-0.02em]";
-const CARD = "flex flex-col gap-3 rounded-[22px] border border-border p-8";
+const CARD = "flex h-full flex-col gap-3 rounded-[22px] border border-border p-8";
 
 function SectionHead({ eyebrow, title }: { eyebrow: string; title: string }) {
   return (
-    <div className="mb-10 flex flex-col gap-3.5">
+    <Reveal className="mb-10 flex flex-col gap-3.5">
       <p className={`${EYEBROW} text-primary`}>{eyebrow}</p>
       <h2 className={H2}>{title}</h2>
-    </div>
+    </Reveal>
   );
 }
 
 function CardGrid({ items, cardBg }: { items: { title: string; text: string }[]; cardBg: string }) {
   return (
     <div className="grid gap-6 min-[961px]:grid-cols-3">
-      {items.map((item) => (
-        <div key={item.title} className={`${CARD} ${cardBg}`}>
-          <h3 className={H3}>{item.title}</h3>
-          <p className="text-base text-muted-foreground">{item.text}</p>
-        </div>
+      {items.map((item, i) => (
+        <Reveal key={item.title} index={i}>
+          <div className={`${CARD} ${CARD_LIFT} ${cardBg}`}>
+            <h3 className={H3}>{item.title}</h3>
+            <p className="text-base text-muted-foreground">{item.text}</p>
+          </div>
+        </Reveal>
       ))}
     </div>
   );
@@ -94,7 +98,7 @@ export function LandingPage({ loggedIn = false }: { loggedIn?: boolean }) {
     <>
       <LandingHeader account={account} />
 
-      <main className="text-[17px] leading-[1.55]">
+      <main data-landing className="text-[17px] leading-[1.55]">
         {/* 1. Portada */}
         <div className="pt-12 pb-16 min-[561px]:pt-[72px] min-[561px]:pb-24">
           <div
@@ -137,16 +141,20 @@ export function LandingPage({ loggedIn = false }: { loggedIn?: boolean }) {
           <div className={WRAP}>
             <SectionHead eyebrow="Cómo funciona" title="Del material del docente al siguiente paso" />
             <div className="relative">
-              <div
-                aria-hidden="true"
+              <Reveal
+                variant="line"
                 className="absolute inset-x-[6%] top-[52px] hidden h-[3px] rounded-sm bg-secondary min-[961px]:block"
               />
               <ol role="list" className="relative grid gap-5 min-[561px]:grid-cols-2 min-[961px]:grid-cols-4">
                 {STEPS.map((step, i) => (
-                  <li key={step.title} className={`${CARD} bg-card`}>
-                    <span className="font-heading text-[44px] font-bold leading-none text-primary">{i + 1}</span>
-                    <h3 className={H3}>{step.title}</h3>
-                    <p className="text-base text-muted-foreground">{step.text}</p>
+                  <li key={step.title}>
+                    <Reveal index={i}>
+                      <div className={`${CARD} ${CARD_LIFT} bg-card`}>
+                        <span className="font-heading text-[44px] font-bold leading-none text-primary">{i + 1}</span>
+                        <h3 className={H3}>{step.title}</h3>
+                        <p className="text-base text-muted-foreground">{step.text}</p>
+                      </div>
+                    </Reveal>
                   </li>
                 ))}
               </ol>
@@ -159,7 +167,7 @@ export function LandingPage({ loggedIn = false }: { loggedIn?: boolean }) {
           <div className={WRAP}>
             <h2 className="sr-only">Para universidades</h2>
             <div className="grid gap-6 min-[961px]:grid-cols-2">
-              <div className="flex flex-col gap-4 rounded-[26px] bg-foreground p-[30px] min-[561px]:p-11">
+              <Reveal className="flex flex-col gap-4 rounded-[26px] bg-foreground p-[30px] min-[561px]:p-11">
                 <p className={`${EYEBROW} text-brand-ray`}>Para el docente</p>
                 <h3 className="text-[32px] leading-[1.08] tracking-[-0.03em] text-white">
                   Menos tiempo diagnosticando, más tiempo enseñando
@@ -168,15 +176,15 @@ export function LandingPage({ loggedIn = false }: { loggedIn?: boolean }) {
                   Sube lo que ya tiene, revisa lo que propone la IA y ve en un mapa dónde está cada estudiante.
                   Siempre decide el docente.
                 </p>
-              </div>
-              <div className="flex flex-col gap-4 rounded-[26px] bg-primary p-[30px] text-white min-[561px]:p-11">
+              </Reveal>
+              <Reveal index={1} className="flex flex-col gap-4 rounded-[26px] bg-primary p-[30px] text-white min-[561px]:p-11">
                 <p className={EYEBROW}>Para el estudiante</p>
                 <h3 className="text-[32px] leading-[1.08] tracking-[-0.03em]">Saber qué repasar antes de avanzar</h3>
                 <p className="leading-[1.6]">
                   Un diagnóstico corto, un mapa claro y un siguiente paso concreto. Sin puntos ni rankings: lo que
                   cuenta es cerrar la brecha.
                 </p>
-              </div>
+              </Reveal>
             </div>
           </div>
         </section>
@@ -194,7 +202,7 @@ export function LandingPage({ loggedIn = false }: { loggedIn?: boolean }) {
           <div
             className={`${WRAP} grid items-center gap-10 min-[961px]:grid-cols-[minmax(0,1fr)_minmax(0,520px)] min-[961px]:gap-16`}
           >
-            <div>
+            <Reveal>
               <p className={EYEBROW}>Pedir un piloto</p>
               <h2 className="mt-4 mb-5 text-balance text-[clamp(34px,4.6vw,48px)] leading-[1.08] tracking-[-0.03em]">
                 Probemos brújula.ed en una de tus asignaturas
@@ -202,8 +210,10 @@ export function LandingPage({ loggedIn = false }: { loggedIn?: boolean }) {
               <p className="text-[19px]">
                 Cuéntanos tu universidad y la asignatura. Te escribimos para coordinar un piloto y resolver tus dudas.
               </p>
-            </div>
-            <PilotForm account={account} />
+            </Reveal>
+            <Reveal index={1}>
+              <PilotForm account={account} />
+            </Reveal>
           </div>
         </section>
       </main>

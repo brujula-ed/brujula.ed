@@ -12,8 +12,13 @@ export const FOCUS_ON_DARK =
 export const FOCUS_ON_LIGHT =
   "focus-visible:outline-solid focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-primary";
 
-export const BTN =
-  "inline-flex min-h-[52px] items-center justify-center gap-2 rounded-[14px] border-[1.5px] border-transparent px-[26px] text-base font-bold leading-none";
+// Elevación al pasar el mouse: 2 px en botones y 4 px en tarjetas. Sin elevación con "reducir movimiento".
+export const LIFT =
+  "transition-[translate,box-shadow] duration-200 motion-safe:hover:-translate-y-0.5 hover:shadow-[0_10px_22px] hover:shadow-foreground/18";
+export const CARD_LIFT =
+  "transition-[translate,box-shadow] duration-250 motion-safe:hover:-translate-y-1 hover:shadow-[0_18px_40px] hover:shadow-foreground/10";
+
+export const BTN = `inline-flex min-h-[52px] items-center justify-center gap-2 rounded-[14px] border-[1.5px] border-transparent px-[26px] text-base font-bold leading-none ${LIFT}`;
 export const BTN_PRIMARY = `${BTN} bg-primary text-primary-foreground ${FOCUS_ON_LIGHT}`;
 export const BTN_OUTLINE = `${BTN} border-primary bg-card text-primary ${FOCUS_ON_LIGHT}`;
 // Amarillo solo sobre fondos oscuros o verde azulado.
