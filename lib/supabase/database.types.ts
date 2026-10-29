@@ -338,6 +338,36 @@ export type Database = {
           },
         ]
       }
+      pilot_requests: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          message: string | null
+          name: string
+          status: string
+          university: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          message?: string | null
+          name: string
+          status?: string
+          university: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          message?: string | null
+          name?: string
+          status?: string
+          university?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string | null
