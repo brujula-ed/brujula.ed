@@ -263,7 +263,7 @@ embeddings (pgvector) para relacionar y agrupar conceptos, un modelo de datos pa
 búsqueda híbrida (vectorial + texto) sobre todo el material para citar la evidencia de cada propuesta. Hoy los
 embeddings se guardan pero no se consultan, la IA ve solo el inicio del material y las preguntas no usan el material.
 El Anexo I pide además organizar por unidad y tema, comunicar incertidumbre y trazar hasta el material utilizado
-(sec. 4, 10 y 11). Se detallará en `docs/MOTOR-DE-CONOCIMIENTO.md`.
+(sec. 4, 10 y 11). Propuesta en `docs/MOTOR-DE-CONOCIMIENTO.md`.
 
 **Inicio del estudiante:** por asignatura (su ruta en una asignatura, con selector) o general (lo que le toca en todas).
 Se decide con el piloto.

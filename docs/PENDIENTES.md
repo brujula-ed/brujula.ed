@@ -17,7 +17,13 @@ Actualizado: 30/10/2026. Para retomar en una conversación nueva: leer este docu
   pendiente 9; Sergio guarda el borrador del correo); experto en educación (validar F-08).
 - **Antes del piloto:** verificación del rol docente (pendiente 1), aviso de privacidad y consentimiento, diseño
   responsive y pruebas automáticas (ver `docs/ROADMAP.md`, "Requisitos antes de un piloto").
-- **Verificación abierta:** documento grande (verificación 3, abajo).
+- **Base de datos vaciada el 30/10/2026** para empezar la fase 1 del motor de conocimiento desde cero:
+  - se borraron las filas de las 15 tablas públicas y los 13 usuarios de prueba;
+  - el esquema, las migraciones, las reglas de seguridad y las funciones no se tocaron;
+  - el disparador `on_auth_user_created` sigue activo;
+  - los archivos de Storage los vacía Sergio desde el panel.
+
+  Antes de presentar la app se puede volver a vaciar.
 
 ## Contexto
 
@@ -56,7 +62,10 @@ Cosas que no se pudieron probar desde el código; conviene comprobarlas en produ
    tandas y la limpieza de fragmentos anteriores al reprocesar. **Abierto, a investigar:** Sergio procesó un
    PDF grande (esperaba ~30 fragmentos), no lo borró, y se generaron unos 30 conceptos y sus preguntas. Pero
    la consulta a producción del 22/10/2026 (`subject_documents` + `document_chunks`) muestra 13 documentos y
-   ninguno con más de 4 fragmentos. Falta averiguar dónde están ese documento y sus fragmentos.
+   ninguno con más de 4 fragmentos. **Cerrada sin resolver (30/10/2026):** al vaciar la base había 14 archivos en
+   Storage para 13 documentos, así que el archivo de más era probablemente ese PDF, sin fila en `subject_documents`.
+   La prueba del documento grande se repite en la fase 1 del motor (`docs/MOTOR-DE-CONOCIMIENTO.md`), con el troceado
+   nuevo.
 
 ## Pendientes
 
