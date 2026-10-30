@@ -225,8 +225,15 @@ export function LandingPage({ loggedIn = false }: { loggedIn?: boolean }) {
             <BrandWord className="text-[22px]" />
           </a>
           <span>Aprende con rumbo</span>
-          {/* Correo y dominio provisionales */}
-          <span>correo@brujulaed.com · La Paz, Bolivia · © 2026</span>
+          <span>
+            <a
+              href="mailto:contacto@brujulaed.com"
+              className={`underline underline-offset-4 hover:text-white ${FOCUS_ON_DARK}`}
+            >
+              contacto@brujulaed.com
+            </a>{" "}
+            · La Paz, Bolivia · © 2026
+          </span>
           <Link
             href={account.href}
             className={`inline-flex min-h-11 items-center font-semibold text-white underline underline-offset-4 ${FOCUS_ON_DARK}`}

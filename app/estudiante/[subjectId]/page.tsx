@@ -7,6 +7,7 @@ import { computePriorityGap, computeNextChallenge } from "@/lib/knowledge-graph"
 import { NextSteps } from "@/components/next-steps";
 import { computeLRR } from "@/lib/lrr";
 import { LRRCard } from "@/components/lrr-card";
+import { GapCompass } from "@/components/gap-compass";
 
 export default async function MiBrujula({ params }: { params: Promise<{ subjectId: string }> }) {
   const { subjectId } = await params;
@@ -107,8 +108,9 @@ export default async function MiBrujula({ params }: { params: Promise<{ subjectI
       )}
 
       {(attempts ?? []).length > 0 && (
-        <div className="mb-8">
+        <div className={`mb-8 grid gap-4 ${lrr.identified > 0 ? "md:grid-cols-2" : ""}`}>
           <LRRCard lrr={lrr} title="Tu avance en cerrar brechas" />
+          {lrr.identified > 0 && <GapCompass lrr={lrr} concepts={graphConcepts} states={states} />}
         </div>
       )}
 
