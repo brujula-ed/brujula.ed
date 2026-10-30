@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BrandMark, BrandWord } from "@/components/landing/brand-mark";
+import { BrandMark, BrandWord } from "@/components/brand-mark";
 import { HeroMap } from "@/components/landing/hero-map";
 import { LandingHeader, type AccountLink } from "@/components/landing/landing-header";
 import { PilotForm } from "@/components/landing/pilot-form";

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { BrandMark, BrandWord } from "@/components/landing/brand-mark";
+import { BrandMark, BrandWord } from "@/components/brand-mark";
 import { FOCUS_ON_DARK, LIFT, WRAP } from "@/components/landing/styles";
 import {
   usePrefersReducedMotion,

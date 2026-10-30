@@ -46,7 +46,13 @@ detecta brechas de conocimiento, ve un mapa de conocimiento y recibe un siguient
 - Extracción de texto: `pdf-parse` v2 (imports perezosos + `serverExternalPackages` en `next.config.ts`) y `mammoth` para .docx.
 
 ## Estructura (verificar contra el repo)
-- `app/page.tsx` redirige según el rol; `app/login` y `app/registro` para la autenticación.
+- `app/page.tsx`: sin sesión muestra la landing para universidades; con sesión redirige al panel según el rol.
+  `app/inicio` muestra siempre la landing ("Ir a mi panel" si hay sesión). Landing en `components/landing/`
+  (textos y diseño según `docs/LANDING-PARA-CODE.md` y `docs/landing.html`); `components/header-gate.tsx` oculta la
+  cabecera de la app en `/` e `/inicio`.
+- `app/login` (con sesión redirige a `/`, en `app/login/layout.tsx`) y `app/registro` para la autenticación. Cerrar
+  sesión lleva a `/login`, no a la landing. Los enlaces que se comparten con estudiantes van a `/login`.
+- `app/actions/pilot-request.ts` envío del formulario "Pedir un piloto" (zod, campo trampa `sitio_web`).
 - `app/docente/page.tsx` lista y creación de asignaturas.
 - `app/docente/[subjectId]/page.tsx` documentos de la asignatura (subir, procesar, eliminar) y accesos a lo demás.
 - `app/docente/[subjectId]/conceptos`, `/preguntas`, `/reporte` y `/reporte/[studentId]`: validación y reportes.
@@ -65,7 +71,8 @@ detecta brechas de conocimiento, ve un mapa de conocimiento y recibe un siguient
 - `lib/lrr.ts` cálculo del LRR (por estudiante, concepto y clase).
 - `lib/extract-text.ts`, `lib/chunk-text.ts` extracción y fragmentación de documentos.
 - `lib/data.ts` banco de preguntas de demostración; `lib/class-code.ts` códigos de clase.
-- `lib/supabase/` clientes de servidor y cliente.
+- `lib/supabase/` clientes de servidor y cliente; `admin.ts` cliente con `service_role` (salta la RLS; solo servidor,
+  hoy solo para `pilot_requests`).
 - `proxy.ts` refresca la sesión de Supabase en cada petición (en Next 16 sustituye a `middleware.ts`; corre en Node.js).
 - `supabase/migrations/` esquema y políticas RLS (fuente de verdad); `supabase/snippets/` historial de consultas.
 
@@ -80,7 +87,10 @@ validadas de conceptos validados), `self_regulation_responses` (respuestas al cu
 estudiante lee y borra las suyas, entran solo por la RPC `submit_self_regulation`) y `self_regulation_shares`
 (con qué asignaturas comparte el estudiante su resultado), `concept_resources` (recursos abiertos por concepto:
 `title`, `url` https, `kind`: `lectura` | `video` | `ejercicio`, `source` = dominio o `docente`, `added_by`,
-`link_check`: `verificado` | `no_verificable` | `docente`, `status`; mismas reglas de acceso que las fichas).
+`link_check`: `verificado` | `no_verificable` | `docente`, `status`; mismas reglas de acceso que las fichas),
+`pilot_requests` (solicitudes de piloto de la landing: `name`, `university`, `email`, `message`, `status` =
+`nuevo`; RLS sin políticas y sin permisos para `anon` ni `authenticated`: entran solo por la Server Action con
+`service_role` y se revisan en el panel de Supabase).
 - Recursos: el servidor solo visita enlaces con `checkLink` de `lib/link-check.ts` (https, dominio con IP públicas,
   comprobado en cada redirección). No hacer `fetch` a URLs de la IA o del usuario por otro camino.
 - Autorregulación: el docente nunca lee respuestas individuales. Ve un resumen de clase
@@ -121,10 +131,11 @@ embeddings se guardan pero aún no se consultan) · diseño no responsive para m
 Ludificación del cierre de brechas (F-13) → campo de capacidades, pruebas, piloto y responsive. La elección de
 formato (F-12) quedó cubierta por F-11 (ver Decisiones tomadas en el roadmap). Ya hechos, con ajustes pendientes en `docs/PENDIENTES.md`: ficha de concepto (F-05, pendiente 7),
 recuperación activa (F-09 v1, pendiente 8), autorregulación (F-08 preliminar, pendiente 9: permiso de autores y
-experto) y recursos curados (F-11, pendiente 10).
+experto), recursos curados (F-11, pendiente 10) y landing con formulario de piloto (pendiente 12).
 
 ## Seguridad
-- Nunca escribir claves en el código ni en este archivo. `OPENAI_API_KEY` solo en servidor.
+- Nunca escribir claves en el código ni en este archivo. `OPENAI_API_KEY` y `SUPABASE_SERVICE_ROLE_KEY` solo en
+  servidor (sin prefijo `NEXT_PUBLIC_`); las dos deben existir también en Vercel.
 - Antes de cada commit revisar que `.env.local` no esté incluido (el repositorio es público).
 
    Estado y plan del proyecto: @docs/ROADMAP.md

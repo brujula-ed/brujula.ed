@@ -1,12 +1,14 @@
 # BRÚJULA.ED — Estado del trabajo y pendientes
 
-Actualizado: 25/10/2026. Para retomar en una conversación nueva: leer este documento y `CLAUDE.md`.
+Actualizado: 29/10/2026. Para retomar en una conversación nueva: leer este documento y `CLAUDE.md`.
 
-## Estado al 25/10/2026
+## Estado al 29/10/2026
 
 - **Hecho:** F-01 a F-04, F-06, F-07 y F-10 (base del MVP); F-05 ficha de concepto (pendiente 7); F-09 recuperación
   activa v1 (pendiente 8); F-08 autorregulación, versión preliminar (pendiente 9); F-11 recursos abiertos
   (pendiente 10). F-12 quedó cubierta por F-11. Imagen corporativa aplicada salvo el encabezado (pendiente 6).
+  Landing para universidades en `/` con formulario "Pedir un piloto" (pendiente 12). Dominio `brujulaed.com`
+  comprado en Vercel, con correo en Zoho Mail.
 - **Siguiente:** F-13, ludificación del cierre de brechas (sin métricas de vanidad).
 - **Esperando a terceros:** Ilse (encabezado y uso del amarillo de marca, pendiente 6); Adri (fichas con
   conocimiento general y corrección con IA de F-09, pendientes 7 y 8); autores del MAI (permiso y lista de 19 ítems,
@@ -254,10 +256,42 @@ Hoy no hay confirmación de cuenta, recuperación de contraseña ni verificació
 Plan (decisión de Sergio): activarlo cuando la app esté lista para presentar, y en ese momento borrar la base de
 datos para empezar de cero. Entonces:
 - Activar "Confirm email" y la recuperación de contraseña (pantalla nueva para elegir la contraseña).
-- Site URL = dirección de producción; Redirect URLs = `http://localhost:3000/**` y la de producción con `/**`.
+- Site URL = `https://brujulaed.com`; Redirect URLs = `http://localhost:3000/**` y `https://brujulaed.com/**`
+  (antes, comprobar que el dominio esté asignado al proyecto en Vercel). Se puede hacer ya, sin esperar al resto.
 - Crear una ruta de retorno (p. ej. `/auth/callback`) para que el enlace del correo abra la sesión; sin ella cae
   en la landing (`/`) sin sesión.
 - Va junto con la verificación del rol docente (pendiente 1).
+
+### 12. Landing y formulario "Pedir un piloto" — hecho (29/10/2026)
+
+Hecho, según `docs/LANDING-PARA-CODE.md` (vista previa en `docs/landing.html`):
+- `/` sin sesión muestra la landing (`components/landing/`); con sesión redirige al panel. `/inicio` la muestra
+  siempre. `/login` con sesión redirige a `/`; cerrar sesión lleva a `/login`.
+- Animaciones sin librerías (mapa de la portada, rayo de la cabecera según el scroll, aparición al bajar),
+  desactivadas con "reducir movimiento".
+- Formulario: Server Action `app/actions/pilot-request.ts` (zod y campo trampa) que inserta en `pilot_requests`
+  (migración `solicitudes_de_piloto`, aplicada) con `SUPABASE_SERVICE_ROLE_KEY` (`lib/supabase/admin.ts`). Probado:
+  un envío crea la fila y la clave publicable no puede leer ni escribir la tabla (401). La fila de prueba se borró.
+- Decisiones propias, distintas del documento: anillo de foco verde azulado sobre fondos claros (el amarillo no se
+  ve sobre niebla o blanco); errores del formulario en blanco sobre abeto (no rojo ni amarillo); título oculto
+  "Para universidades" en la sección docente/estudiante para no saltar de h1 a h3.
+
+Pendiente:
+- **Aviso por correo de cada solicitud:** pospuesto por Sergio (29/10/2026). Hoy se revisan en Supabase, Table
+  Editor → `pilot_requests`. Opción propuesta: Resend (registros DNS en un subdominio, `RESEND_API_KEY` y
+  `PILOT_NOTIFY_TO`, avisar después del insert sin bloquear el envío). Los datos pasarían por un servicio externo:
+  mencionarlo en el aviso de privacidad.
+- **Sin límite de envíos por IP:** solo validación y campo trampa. El proyecto no tiene mecanismo por IP
+  (`consume_ai_quota` es por usuario). Revisar si llega spam.
+- **Política de privacidad:** la frase "Usaremos estos datos solo para contactarte." debe enlazarla cuando exista.
+- **Registro de datos en desarrollo:** `next dev` escribe en la terminal los argumentos de cada Server Action, con
+  los datos del formulario. Se apaga con `logging: { serverFunctions: false }` en `next.config.ts` (sin decidir).
+- **`metadataBase`:** sin definir; en Vercel Next usa la dirección de producción. Definirlo con `https://brujulaed.com`
+  si las vistas previas al compartir el enlace salen mal.
+- **Por probar en producción:** celular de 360 a 430 px sin desplazamiento horizontal, "reducir movimiento" y
+  Lighthouse móvil (accesibilidad ≥ 95).
+- **Imagen Open Graph** (`app/opengraph-image.tsx`): usa la fuente por defecto de Next, no Onest (habría que guardar
+  el archivo de la fuente en el repositorio).
 
 ## Notas de operación (aprendidas en la auditoría)
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { BrandMark } from "@/components/landing/brand-mark";
+import { BrandMark } from "@/components/brand-mark";
 import { FOCUS_ON_LIGHT, LIFT } from "@/components/landing/styles";
 import { usePrefersReducedMotion } from "@/components/landing/use-landing-motion";
 

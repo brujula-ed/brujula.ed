@@ -1,5 +1,5 @@
 import { ImageResponse } from "next/og";
-import { RAYS } from "@/components/landing/brand-mark";
+import { RAYS } from "@/components/brand-mark";
 
 export const alt = "brújula.ed · Aprende con rumbo";
 export const size = { width: 1200, height: 630 };
