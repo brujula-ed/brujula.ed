@@ -137,6 +137,8 @@ experto), recursos curados (F-11, pendiente 10) y landing con formulario de pilo
 - Nunca escribir claves en el código ni en este archivo. `OPENAI_API_KEY` y `SUPABASE_SERVICE_ROLE_KEY` solo en
   servidor (sin prefijo `NEXT_PUBLIC_`); las dos deben existir también en Vercel.
 - Antes de cada commit revisar que `.env.local` no esté incluido (el repositorio es público).
+- `docs/proyecto/` (Anexo I, Vol. 2 y propuestas) es privado: está en `.gitignore` y no se sube. Se puede leer y
+  citar por sección ("Anexo I, sec. 11"), pero no copiar su texto en documentos del repositorio.
 
    Estado y plan del proyecto: @docs/ROADMAP.md
    Pendientes de la auditoría de deuda técnica (oct. 2026) y verificaciones tras el último despliegue: @docs/PENDIENTES.md

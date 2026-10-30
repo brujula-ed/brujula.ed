@@ -38,7 +38,7 @@ Reglas: la IA propone y el docente valida; estados orientativos (Anexo I, sec. 1
 | Bloque C | Semanas 6–7 | F-05 | Ficha de concepto (por qué importa, aplicación, qué desbloquea) | 14 | Terminado | La IA propone, el docente valida. Se ve en el panel del mapa. Ajuste fino del prompt pendiente (`docs/PENDIENTES.md`, pendiente 7) |
 | Bloque C | Semanas 6–7 | F-11 | Recursos abiertos curados por IA | 16 | Terminado | La IA elige recursos abiertos (lectura, video, ejercicio), el servidor verifica los enlaces y el docente aprueba; el docente también agrega los suyos (`docs/PENDIENTES.md`, pendiente 10) |
 | Bloque C | Semanas 6–7 | F-12 | Elección de formato por el estudiante (lectura, video, ejercicio) | 5 | Cubierto por F-11 | El panel ya ofrece lectura, video y ejercicio y el estudiante abre el que quiere. No se guarda una preferencia (ver Decisiones tomadas) |
-| Bloque D | Semanas 8–9 | F-13 | Ludificación del progreso de cierre de brechas | 14 | No iniciado | Sin métricas de vanidad |
+| Bloque D | Semanas 8–9 | F-13 | Ludificación del progreso de cierre de brechas | 14 | En curso (pausada) | Sin métricas de vanidad. Hechos "Tu brújula" y el momento de cierre (sin probar); pausada por el rediseño (`docs/PENDIENTES.md`, pendientes 13 y 14) |
 | Bloque E | Semanas 10–11 | F-14 | Preparación del modelo de datos (capacidad opcional por concepto) | 5 | No iniciado | Evita rehacer la estructura cuando lleguen las capacidades |
 | Bloque E | Semanas 10–11 |  | Pruebas de integración, permisos y corrección de errores | 12 | No iniciado |  |
 | Bloque E | Semanas 10–11 |  | Guía de uso para docentes y estudiantes (qué hace cada pantalla) | 4 | No iniciado | Al final, cuando estén todas las funciones. Responde registro del docente, dónde se carga el contenido y de dónde salen las preguntas |
@@ -65,7 +65,7 @@ Esfuerzo: S = días · M = 1–2 semanas · L = 3–6 semanas · XL = meses o in
 | F-10 | LRR formalizado | MVP | S–M | — | Terminado |
 | F-11 | Recursos abiertos curados por IA | MVP | M | F-05 | Terminado |
 | F-12 | Elección de formato por el estudiante | MVP | S | F-11 | Cubierto por F-11 |
-| F-13 | Ludificación del progreso de cierre de brechas | MVP | M | F-02, F-04 | No iniciado |
+| F-13 | Ludificación del progreso de cierre de brechas | MVP | M | F-02, F-04 | En curso (pausada) |
 | F-14 | Preparación del modelo de datos (capacidad opcional) | MVP | S | — | No iniciado |
 | F-15 | Piloto con docentes y estudiantes reales | MVP | M | F-06, F-07 | No iniciado |
 | F-20 | Motor de evidencias (incluye qué recursos ayudan a cerrar brechas) | Corto plazo | M | — | No iniciado |

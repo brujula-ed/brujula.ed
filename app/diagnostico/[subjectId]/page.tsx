@@ -5,6 +5,7 @@ import { useRouter, useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { GapClosureMoment } from "@/components/gap-closure-moment";
 import { createClient } from "@/lib/supabase/client";
 import { questions as fallbackQuestions, levelingContent as fallbackLeveling, subject as fallbackSubject } from "@/lib/data";
 import { selectDiagnosticQuestions, selectMicroQuestions, type BankQuestion } from "@/lib/question-selection";
@@ -407,6 +408,7 @@ export default function Diagnostico() {
     <main className="max-w-xl mx-auto p-8">
       {fallbackBanner}
       <h1 className="text-lg font-medium mb-4">Antes y después</h1>
+      {attemptId && !usingFallback && <GapClosureMoment subjectId={subjectId} attemptId={attemptId} />}
       <div className="flex gap-4 mb-6">
         <Card className="flex-1">
           <CardContent className="pt-4 text-center">

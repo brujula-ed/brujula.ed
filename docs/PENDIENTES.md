@@ -1,15 +1,17 @@
 # BRÚJULA.ED — Estado del trabajo y pendientes
 
-Actualizado: 29/10/2026. Para retomar en una conversación nueva: leer este documento y `CLAUDE.md`.
+Actualizado: 30/10/2026. Para retomar en una conversación nueva: leer este documento y `CLAUDE.md`.
 
-## Estado al 29/10/2026
+## Estado al 30/10/2026
 
 - **Hecho:** F-01 a F-04, F-06, F-07 y F-10 (base del MVP); F-05 ficha de concepto (pendiente 7); F-09 recuperación
   activa v1 (pendiente 8); F-08 autorregulación, versión preliminar (pendiente 9); F-11 recursos abiertos
   (pendiente 10). F-12 quedó cubierta por F-11. Imagen corporativa aplicada salvo el encabezado (pendiente 6).
   Landing para universidades en `/` con formulario "Pedir un piloto" (pendiente 12). Dominio `brujulaed.com`
   comprado en Vercel, con correo en Zoho Mail.
-- **Siguiente:** F-13, ludificación del cierre de brechas (sin métricas de vanidad).
+- **Siguiente:** rediseño de la app según `docs/PRINCIPIOS-DE-DISENO.md` (pendiente 14). Antes de tocar el
+  diagnóstico y la validación: sesión de diseño del motor de conocimiento + diagnóstico (`docs/MOTOR-DE-CONOCIMIENTO.md`,
+  por escribir). F-13 quedó pausada a mitad (pendiente 13).
 - **Esperando a terceros:** Ilse (encabezado y uso del amarillo de marca, pendiente 6); Adri (fichas con
   conocimiento general y corrección con IA de F-09, pendientes 7 y 8); autores del MAI (permiso y lista de 19 ítems,
   pendiente 9; Sergio guarda el borrador del correo); experto en educación (validar F-08).
@@ -293,13 +295,60 @@ Pendiente:
 - **Imagen Open Graph** (`app/opengraph-image.tsx`): usa la fuente por defecto de Next, no Onest (habría que guardar
   el archivo de la fuente en el repositorio).
 
+### 13. Ludificación del cierre de brechas (F-13) — pausada (30/10/2026)
+
+Se pausó para repensar la app (pendiente 14). Ninguna pieza usa puntos, rachas ni rankings, y ninguna necesitó
+migración.
+
+Hecho:
+- `lib/gap-closure.ts`:
+  - `newlyRecovered` da las brechas que se cerraron con un intento, usando la misma función del LRR sin ese intento y
+    con él, así que coincide con el LRR y el reporte. Solo es correcta con el intento más reciente.
+  - `unlockedBy` da los conceptos que se abren al cerrar una brecha: dependientes directos, no dominados, con todos sus
+    prerrequisitos dominados.
+  - Probado con 6 casos en una copia fuera del proyecto.
+- "Tu brújula" en Mi Brújula (`components/gap-compass.tsx`): el rayo se acerca según las brechas cerradas, más la
+  lista de brechas cerradas y lo que abrió cada una. **Sin probar con datos reales.**
+- Momento de cierre al final del diagnóstico (`components/gap-closure-moment.tsx`): "Cerraste la brecha de X" con el
+  rayo cerrándose. **Sin probar con datos reales.**
+- La marca (`components/brand-mark.tsx`) pasó de `components/landing/` a `components/` para usarse en la app.
+
+Pendiente:
+- Probar Tu brújula y el momento de cierre (diagnóstico → fallar un concepto → acertar la microevaluación).
+- Paso 4, marca "Brecha cerrada" en las tarjetas del mapa: pospuesto hasta el rediseño del mapa.
+- "Esta semana cerraste N brechas" (decisión del 30/10/2026, en `docs/PRINCIPIOS-DE-DISENO.md`).
+
+### 14. Rediseño de la app — en preparación (30/10/2026)
+
+Motivo (Sergio): la app se ve plana y genérica, desordenada y poco intuitiva, sin prioridad visual ni una línea
+estética común. El docente va y vuelve entre páginas en lugar de seguir un proceso continuo; el estudiante solo puede
+hacer el diagnóstico global; el diagnóstico y la recuperación son mecánicos y no cumplen su objetivo.
+
+- **Criterio:** `docs/PRINCIPIOS-DE-DISENO.md`, escrito sobre la app real: reglas fijas, organización, lenguaje
+  visual, movimiento, responsive, accesibilidad, qué no hacer, temas abiertos y decisiones con su porqué.
+- **Referencias:** maquetas de inspiración en `docs/redesign/`, junto con el borrador original de Claude Desktop.
+- **Documentos privados:** Anexo I, Vol. 2 y propuestas en `docs/proyecto/`, que está en `.gitignore`.
+- **Abierto:**
+  - motor de conocimiento + diagnóstico (sesión propia, primero);
+  - inicio del estudiante;
+  - menú del docente;
+  - qué ve el estudiante (porcentajes, nombres de estados).
+- **Orden previsto:**
+  1. sesión motor + diagnóstico;
+  2. navegación y componentes comunes;
+  3. flujo docente;
+  4. estudiante;
+  5. resto.
+  Una pantalla o un flujo por entrega, probado en el celular.
+
 ## Notas de operación (aprendidas en la auditoría)
 
 - **La app Supabase de GitHub aplica sola las migraciones que llegan a `main`.** Por eso cada migración se
   aplica con `npx supabase db push` (tras dry-run y confirmación) antes de subir su archivo. Al hacer commit,
   añadir archivos por nombre y no subir migraciones aún no aplicadas.
 - **Advertencia de lint conocida:** `npm run lint` da 0 errores y 1 advertencia en
-  `app/diagnostico/[subjectId]/page.tsx:122` (`useEffect` sin `supabase` en sus dependencias). Es anterior a los
+  `app/diagnostico/[subjectId]/page.tsx` (el `useEffect` de carga, sin `supabase` en sus dependencias; línea 123
+  desde F-13). Es anterior a los
   cambios de octubre e inofensiva; si aparece otra, sí es nueva.
 - **Consultas de solo lectura a producción:** `npx supabase db query --linked "select ..."`. No requiere
   Docker (`db dump` sí).

@@ -21,7 +21,7 @@ Marca: rosa de ocho rayos asimétrica. Siete rayos en el color base y el octavo,
 | Abeto | `#0B2E33` | Texto principal y fondos oscuros |
 | Niebla | `#EFF8F8` | Fondo de página |
 | Menta | `#CDE9E6` | Superficies, hover, bloques secundarios |
-| Amarillo | `#FFC93C` | Solo el rayo que falta y el momento en que se cierra una brecha |
+| Amarillo | `#FFC93C` | El rayo que falta, el momento en que se cierra una brecha y la acción principal de una pantalla, solo sobre fondo abeto o verde azulado (desde el 30/10/2026, ver `docs/PRINCIPIOS-DE-DISENO.md`) |
 
 Tipografías: **Onest** (nombre, títulos, 500/600/700) y **Figtree** (texto de lectura).
 
@@ -147,7 +147,7 @@ Sugerencia:
 ## Reglas de uso de marca (para no romperla después)
 
 - El nombre siempre en minúsculas: `brújula.ed`. Nunca `BRÚJULA.ED` en la interfaz.
-- El rayo amarillo solo va en la marca y en el momento visual de "brecha que se cierra". No usarlo como color de botones, textos ni estados.
+- El amarillo va en la marca, en el momento visual de "brecha que se cierra" y en la acción principal de una pantalla cuando está sobre fondo abeto o verde azulado (una por pantalla). No usarlo sobre fondos claros, como color de texto en claro, de adorno ni para estados.
 - No usar el amarillo `#FFC93C` para el estado "en desarrollo" (ese es `--state-progress`, ámbar `#f59e0b`).
 - Los estados de aprendizaje son orientativos: no son calificaciones. La ludificación premia el cierre de brechas, no métricas de vanidad.
 

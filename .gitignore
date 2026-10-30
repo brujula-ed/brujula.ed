@@ -36,6 +36,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# documentos privados del proyecto (acuerdos y propuestas): no se suben al repositorio público
+/docs/proyecto/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
