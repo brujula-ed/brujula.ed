@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { extractText } from "@/lib/extract-text";
-import { chunkText } from "@/lib/chunk-text";
+import { extractBlocks, type TextBlock } from "@/lib/extract-text";
+import { chunkBlocks } from "@/lib/chunk-text";
 import OpenAI from "openai";
 import { z } from "zod";
 
@@ -62,9 +62,9 @@ export async function POST(req: NextRequest) {
 
     const buffer = Buffer.from(await fileData.arrayBuffer());
     // Formato no soportado o archivo dañado: mensaje útil para el docente, detalle técnico solo en el log
-    let text: string;
+    let blocks: TextBlock[];
     try {
-      text = await extractText(buffer, doc.file_name);
+      blocks = await extractBlocks(buffer, doc.file_name);
     } catch (extractError) {
       console.error("process-document: no se pudo extraer el texto:", extractError);
       return NextResponse.json(
@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-    const chunks = chunkText(text);
+    const chunks = chunkBlocks(blocks);
 
     if (chunks.length === 0) {
       return NextResponse.json({ error: "No se pudo extraer texto del documento" }, { status: 400 });
@@ -98,15 +98,19 @@ export async function POST(req: NextRequest) {
       try {
         const embeddingResponse = await openai.embeddings.create({
           model: "text-embedding-3-small",
-          input: batch,
+          input: batch.map((c) => c.content),
         });
         const { data: inserted, error: insertError } = await supabase
           .from("document_chunks")
           .insert(
-            batch.map((content, j) => ({
+            batch.map((c, j) => ({
               document_id: doc.id,
               subject_id: doc.subject_id,
-              content,
+              content: c.content,
+              page_start: c.pageStart,
+              page_end: c.pageEnd,
+              section: c.section,
+              position: c.position,
               // pgvector recibe el vector como texto "[0.1,0.2,...]" (así lo describen los tipos generados)
               embedding: JSON.stringify(embeddingResponse.data[j].embedding),
             }))

@@ -30,6 +30,9 @@ export async function POST(req: NextRequest) {
       .from("document_chunks")
       .select("content")
       .eq("subject_id", subjectId)
+      // Provisional hasta la búsqueda híbrida (docs/MOTOR-DE-CONOCIMIENTO.md 4.2): el comienzo de cada documento
+      .order("position")
+      .order("document_id")
       .limit(40);
 
     if (chunksError || !chunks || chunks.length === 0) {

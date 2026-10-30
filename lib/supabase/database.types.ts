@@ -270,26 +270,41 @@ export type Database = {
       document_chunks: {
         Row: {
           content: string
+          content_tsv: unknown
           created_at: string | null
           document_id: string
           embedding: string | null
           id: string
+          page_end: number | null
+          page_start: number | null
+          position: number
+          section: string | null
           subject_id: string
         }
         Insert: {
           content: string
+          content_tsv?: unknown
           created_at?: string | null
           document_id: string
           embedding?: string | null
           id?: string
+          page_end?: number | null
+          page_start?: number | null
+          position: number
+          section?: string | null
           subject_id: string
         }
         Update: {
           content?: string
+          content_tsv?: unknown
           created_at?: string | null
           document_id?: string
           embedding?: string | null
           id?: string
+          page_end?: number | null
+          page_start?: number | null
+          position?: number
+          section?: string | null
           subject_id?: string
         }
         Relationships: [
