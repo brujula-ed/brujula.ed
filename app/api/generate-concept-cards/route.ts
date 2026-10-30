@@ -2,11 +2,20 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import OpenAI from "openai";
 import { z } from "zod";
+import { searchMaterial, type MaterialHit } from "@/lib/search-material";
+
+// Cada concepto recibe sus fragmentos más relevantes del material (búsqueda híbrida, docs/MOTOR-DE-CONOCIMIENTO.md
+// 4.2), de a CONCEPTS_PER_CALL conceptos por llamada, con el panorama completo de la asignatura en cada una.
+export const maxDuration = 300;
+const MODEL = "gpt-6-luna";
+const HITS_PER_CONCEPT = 4;
+const CONCEPTS_PER_CALL = 5;
+const CONCURRENCY = 4;
 
 // Forma mínima de cada ficha de la IA. Lo que no cumpla se descarta antes de guardar
 // (el contenido lo sigue revisando el docente al validar).
 const AiCard = z.object({
-  conceptName: z.string().trim().min(1),
+  concepto: z.string().trim(), // etiqueta del concepto en la llamada ("C1"), no su nombre
   whyItMatters: z.string().trim().min(1).max(600),
   application: z.string().trim().min(1).max(600),
   // Si la IA no lo indica, se trata como conocimiento general: obliga al docente a revisar con más cuidado
@@ -78,18 +87,13 @@ export async function POST(req: NextRequest) {
     });
 
     // El material del docente es la primera fuente; si no alcanza, la IA completa y lo marca como "general"
-    const { data: chunks, error: chunksError } = await supabase
+    const { count: chunkCount, error: chunksError } = await supabase
       .from("document_chunks")
-      .select("content")
-      .eq("subject_id", subjectId)
-      // Provisional hasta la búsqueda híbrida (docs/MOTOR-DE-CONOCIMIENTO.md 4.2): el comienzo de cada documento
-      .order("position")
-      .order("document_id")
-      .limit(40);
-    if (chunksError || !chunks || chunks.length === 0) {
+      .select("id", { count: "exact", head: true })
+      .eq("subject_id", subjectId);
+    if (chunksError || !chunkCount) {
       return NextResponse.json({ error: "No hay documentos procesados para esta asignatura" }, { status: 400 });
     }
-    const context = chunks.map((c) => c.content).join("\n\n").slice(0, 12000);
 
     const { data: allowed, error: quotaError } = await supabase.rpc("consume_ai_quota", {
       p_route: "generate-concept-cards",
@@ -105,64 +109,80 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-6-luna",
-      response_format: { type: "json_object" },
-      messages: [
-        {
-          role: "system",
-          content:
-            "Eres un asistente que ayuda a un docente a preparar una ficha breve de cada concepto de su materia, " +
-            "para sus estudiantes. Escribe una ficha para CADA concepto de la lista \"pendientes\", sin omitir " +
-            "ninguno. Cada ficha tiene dos textos de 1 a 3 oraciones, en español claro y tuteando al estudiante:\n" +
-            "- \"whyItMatters\": por qué importa este concepto EN ESTA MATERIA. Conéctalo con el panorama: qué " +
-            "conceptos necesita antes y, sobre todo, qué conceptos del mapa te permite aprender después.\n" +
-            "- \"application\": para qué le sirve este concepto al estudiante más allá de la asignatura: en su " +
-            "vida cotidiana o en su carrera y su futuro profesional. Explica la aplicación general con un caso " +
-            "reconocible fuera del aula, no un detalle técnico de la materia. Evita generalidades vacías como " +
-            "\"se usa en muchas áreas\".\n" +
-            "Fuentes: usa primero el material del docente. Si el material no alcanza para ese concepto, usa tu " +
-            "conocimiento general de la disciplina y marca \"source\": \"general\"; si la ficha sale del material, " +
-            "marca \"source\": \"material\". No inventes datos propios del curso (fechas, evaluaciones, métodos " +
-            "del docente). " +
-            'Responde solo JSON con este formato exacto: {"cards": [{"conceptName": "...", ' +
-            '"whyItMatters": "...", "application": "...", "source": "material"}]}',
-        },
-        {
-          role: "user",
-          content:
-            `Asignatura: ${subject.name}. Tema: ${subject.topic}.\n\n` +
-            "Mapa completo de conceptos (panorama): " +
-            JSON.stringify(concepts.map(withRelations)) +
-            "\n\nPendientes (escribe una ficha para cada uno): " +
-            JSON.stringify(pending.map((c) => c.name)) +
-            "\n\nMaterial del docente:\n" +
-            context,
-        },
-      ],
-    });
+    // Fragmentos de cada concepto pendiente (todos los embeddings en una sola llamada)
+    const hits = await searchMaterial(
+      supabase,
+      openai,
+      subjectId,
+      pending.map((c) => `${c.name}: ${c.description ?? ""}`),
+      HITS_PER_CONCEPT
+    );
+    const panorama = JSON.stringify(concepts.map(withRelations));
 
-    const raw = completion.choices[0].message.content;
-    if (!raw) return NextResponse.json({ error: "La IA no devolvió contenido" }, { status: 500 });
-
-    let json: unknown;
-    try {
-      json = JSON.parse(raw);
-    } catch {
-      json = null;
+    // Una llamada por grupo; si falla, ese grupo queda sin fichas y el aviso final lo cuenta como omitido
+    async function cardsForBatch(batch: { concept: (typeof pending)[number]; hits: MaterialHit[] }[]) {
+      try {
+        const completion = await openai.chat.completions.create({
+          model: MODEL,
+          response_format: { type: "json_object" },
+          messages: [
+            {
+              role: "system",
+              content:
+                "Eres un asistente que ayuda a un docente a preparar una ficha breve de cada concepto de su materia, " +
+                "para sus estudiantes. Escribe una ficha para CADA concepto de la lista \"pendientes\", sin omitir " +
+                "ninguno. Cada ficha tiene dos textos de 1 a 3 oraciones, en español claro y tuteando al estudiante:\n" +
+                "- \"whyItMatters\": por qué importa este concepto EN ESTA MATERIA. Conéctalo con el panorama: qué " +
+                "conceptos necesita antes y, sobre todo, qué conceptos del mapa te permite aprender después.\n" +
+                "- \"application\": para qué le sirve este concepto al estudiante más allá de la asignatura: en su " +
+                "vida cotidiana o en su carrera y su futuro profesional. Explica la aplicación general con un caso " +
+                "reconocible fuera del aula, no un detalle técnico de la materia. Evita generalidades vacías como " +
+                "\"se usa en muchas áreas\".\n" +
+                "Fuentes: cada pendiente trae los fragmentos del material del docente que más tienen que ver con él; " +
+                "úsalos primero. Si no alcanzan para ese concepto, usa tu conocimiento general de la disciplina y " +
+                "marca \"source\": \"general\"; si la ficha sale del material, marca \"source\": \"material\". No " +
+                "inventes datos propios del curso (fechas, evaluaciones, métodos del docente). " +
+                'Responde solo JSON con este formato exacto: {"cards": [{"concepto": "C1", ' +
+                '"whyItMatters": "...", "application": "...", "source": "material"}]}',
+            },
+            {
+              role: "user",
+              content:
+                `Asignatura: ${subject!.name}. Tema: ${subject!.topic}.\n\n` +
+                "Mapa completo de conceptos (panorama): " +
+                panorama +
+                "\n\nPendientes (escribe una ficha para cada uno), con sus fragmentos del material: " +
+                JSON.stringify(
+                  batch.map((b, i) => ({
+                    concepto: `C${i + 1}`,
+                    nombre: b.concept.name,
+                    fragmentos: b.hits.map((h) => h.content),
+                  }))
+                ),
+            },
+          ],
+        });
+        const parsed = AiResponse.safeParse(JSON.parse(completion.choices[0].message.content ?? "null"));
+        return parsed.success ? parsed.data.cards : [];
+      } catch (err) {
+        console.error("generate-concept-cards: falló la generación de un grupo:", err);
+        return [];
+      }
     }
-    const envelope = AiResponse.safeParse(json);
-    if (!envelope.success) {
-      console.error("generate-concept-cards: la IA devolvió un formato inválido:", raw);
-      return NextResponse.json(
-        { error: "La IA devolvió una respuesta con formato inválido. Vuelve a intentarlo." },
-        { status: 502 }
-      );
+
+    const withHits = pending.map((concept, i) => ({ concept, hits: hits[i] }));
+    const batches: (typeof withHits)[] = [];
+    for (let i = 0; i < withHits.length; i += CONCEPTS_PER_CALL) batches.push(withHits.slice(i, i + CONCEPTS_PER_CALL));
+    const perBatch: { batch: typeof withHits; items: unknown[] }[] = [];
+    for (let i = 0; i < batches.length; i += CONCURRENCY) {
+      const group = batches.slice(i, i + CONCURRENCY);
+      const results = await Promise.all(group.map((b) => cardsForBatch(b)));
+      group.forEach((batch, j) => perBatch.push({ batch, items: results[j] }));
     }
 
     // Cada ficha se valida por separado: una mala no tumba a las buenas. Una por concepto pendiente.
-    // El nombre se compara como el índice único de conceptos: sin mayúsculas ni espacios en los extremos.
-    const nameToId = new Map(pending.map((c) => [c.name.trim().toLowerCase(), c.id]));
+    // Los conceptos que queden en remainingIds no recibieron ficha (la IA los omitió o no eran válidos).
+    const remainingIds = new Set(pending.map((c) => c.id));
     const rows: {
       concept_id: string;
       subject_id: string;
@@ -172,21 +192,25 @@ export async function POST(req: NextRequest) {
       status: string;
     }[] = [];
     let discarded = 0;
-    for (const item of envelope.data.cards) {
-      const result = AiCard.safeParse(item);
-      const conceptId = result.success ? nameToId.get(result.data.conceptName.toLowerCase()) : undefined;
-      if (result.success && conceptId) {
-        nameToId.delete(result.data.conceptName.toLowerCase());
-        rows.push({
-          concept_id: conceptId,
-          subject_id: subjectId, // el trigger lo vuelve a poner desde el concepto
-          why_it_matters: result.data.whyItMatters,
-          application: result.data.application,
-          source: result.data.source,
-          status: "sugerido",
-        });
-      } else {
-        discarded += 1;
+    for (const { batch, items } of perBatch) {
+      for (const item of items) {
+        const result = AiCard.safeParse(item);
+        const conceptId = result.success
+          ? batch[Number(result.data.concepto.replace(/\D/g, "")) - 1]?.concept.id
+          : undefined;
+        if (result.success && conceptId && remainingIds.has(conceptId)) {
+          remainingIds.delete(conceptId);
+          rows.push({
+            concept_id: conceptId,
+            subject_id: subjectId, // el trigger lo vuelve a poner desde el concepto
+            why_it_matters: result.data.whyItMatters,
+            application: result.data.application,
+            source: result.data.source,
+            status: "sugerido",
+          });
+        } else {
+          discarded += 1;
+        }
       }
     }
     if (discarded > 0) {
@@ -205,8 +229,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No se pudieron guardar las fichas. Inténtalo de nuevo." }, { status: 500 });
     }
 
-    // Los conceptos que quedaron en nameToId no recibieron ficha (la IA los omitió o no eran válidos)
-    const omitted = nameToId.size;
+    const omitted = remainingIds.size;
     return NextResponse.json({
       success: true,
       count: rows.length,

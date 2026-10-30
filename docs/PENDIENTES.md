@@ -9,9 +9,17 @@ Actualizado: 30/10/2026. Para retomar en una conversación nueva: leer este docu
   (pendiente 10). F-12 quedó cubierta por F-11. Imagen corporativa aplicada salvo el encabezado (pendiente 6).
   Landing para universidades en `/` con formulario "Pedir un piloto" (pendiente 12). Dominio `brujulaed.com`
   comprado en Vercel, con correo en Zoho Mail.
-- **Siguiente:** rediseño de la app según `docs/PRINCIPIOS-DE-DISENO.md` (pendiente 14). Antes de tocar el
-  diagnóstico y la validación: sesión de diseño del motor de conocimiento + diagnóstico (`docs/MOTOR-DE-CONOCIMIENTO.md`,
-  por escribir). F-13 quedó pausada a mitad (pendiente 13).
+- **Motor de conocimiento, fase 1, hecha (30/10/2026):** `docs/MOTOR-DE-CONOCIMIENTO.md`.
+  - Material con páginas.
+  - Búsqueda híbrida.
+  - Conceptos sobre todo el material.
+  - Citas comprobadas.
+  - Preguntas con explicación por opción.
+  - Fichas con el material de su concepto.
+  - Costo de todas las pruebas: unos 0,03 USD.
+- **Siguiente:** rediseño de la app según `docs/PRINCIPIOS-DE-DISENO.md` (pendiente 14): base visual (componentes
+  comunes y navegación) → validación rediseñada con las citas → motor fase 2 → motor fase 3. F-13 quedó pausada a
+  mitad (pendiente 13).
 - **Esperando a terceros:** Ilse (encabezado y uso del amarillo de marca, pendiente 6); Adri (fichas con
   conocimiento general y corrección con IA de F-09, pendientes 7 y 8); autores del MAI (permiso y lista de 19 ítems,
   pendiente 9; Sergio guarda el borrador del correo); experto en educación (validar F-08).

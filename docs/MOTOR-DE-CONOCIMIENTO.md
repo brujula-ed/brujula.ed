@@ -100,9 +100,20 @@ datos para estimar brechas y su cierre, y búsqueda híbrida sobre todo el mater
     - se ven en la página de conceptos, con el botón "Buscar fuentes".
   - **Probado con un PDF de 60 páginas:** 23 conceptos, todos con cita, y 28 de 28 citas literales. Generar los
     conceptos costó unos 0,01 USD.
-- **Pendiente:** citas en las preguntas (paso 2d, con `question_id`); elegir o descartar citas al validar
-  (rediseño de la validación); detectar duplicados cercanos, como "Videojuego como discurso" y "Discurso
-  videolúdico" (fase 2).
+- **Hecho (30/10/2026), preguntas con material:**
+  - migración `explicaciones_de_preguntas` (`questions.explanations`);
+  - cada concepto recibe sus fragmentos;
+  - cada pregunta trae una explicación por opción, que se mezcla junto con las opciones, y una cita comprobada
+    (`evidence_spans.question_id`);
+  - el estudiante no recibe las explicaciones (`get_diagnostic_questions` no las devuelve);
+  - probado con 6 conceptos: 24 preguntas con sus 4 explicaciones, 23 con cita literal.
+- **Costo de todas las pruebas de la fase 1:** unos 0,03 USD.
+- **Pendiente:**
+  - elegir o descartar citas al validar (rediseño de la validación);
+  - detectar duplicados cercanos, como "Videojuego como discurso" y "Discurso videolúdico" (fase 2);
+  - ajustar el prompt de preguntas para que no diga "según el material" (el estudiante quizás no lo leyó);
+- **Hecho (30/10/2026), fichas con material:** cada ficha recibe los fragmentos de su concepto. Probado: 6 de 6 fichas
+  salieron del material, en 2 llamadas. **Con esto, la fase 1 está completa.**
 - **Aporta:**
   - al docente: "Fuente en el material · pág. 12" al validar (la maqueta de validación);
   - al estudiante: material del propio curso, citado, cuando repasa.

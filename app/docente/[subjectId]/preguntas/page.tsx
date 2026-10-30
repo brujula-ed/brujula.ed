@@ -2,6 +2,7 @@ import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { QuestionCard } from "@/components/question-card";
+import type { Evidence } from "@/components/concept-evidence";
 
 export default async function Preguntas({ params }: { params: Promise<{ subjectId: string }> }) {
   const { subjectId } = await params;
@@ -19,9 +20,20 @@ export default async function Preguntas({ params }: { params: Promise<{ subjectI
 
   const { data: questions } = await supabase
     .from("questions")
-    .select("id, prompt, options, correct_index, status, concept_id, concepts(name)")
+    .select("id, prompt, options, explanations, correct_index, status, concept_id, concepts(name)")
     .eq("subject_id", subjectId)
     .order("created_at", { ascending: true });
+
+  // Cita del material que respalda la respuesta correcta de cada pregunta
+  const { data: evidence } = await supabase
+    .from("evidence_spans")
+    .select("question_id, quote, page_start, page_end, section")
+    .eq("subject_id", subjectId)
+    .not("question_id", "is", null);
+  const evidenceByQuestion = new Map<string, Evidence[]>();
+  for (const e of evidence ?? []) {
+    evidenceByQuestion.set(e.question_id!, [...(evidenceByQuestion.get(e.question_id!) ?? []), e]);
+  }
 
   return (
     <main className="max-w-2xl mx-auto p-8">
@@ -36,8 +48,19 @@ export default async function Preguntas({ params }: { params: Promise<{ subjectI
       <div className="flex flex-col gap-3">
         {questions?.map((q) => {
           const conceptName = Array.isArray(q.concepts) ? q.concepts[0]?.name : (q.concepts as { name: string } | null)?.name;
-          // options es jsonb; la restricción questions_correct_index_en_rango garantiza que es una lista
-          return <QuestionCard key={q.id} question={{ ...q, options: q.options as string[], conceptName: conceptName ?? "" }} />;
+          // options y explanations son jsonb; las restricciones de la tabla garantizan que son listas
+          return (
+            <QuestionCard
+              key={q.id}
+              question={{
+                ...q,
+                options: q.options as string[],
+                explanations: q.explanations as string[] | null,
+                conceptName: conceptName ?? "",
+              }}
+              evidence={evidenceByQuestion.get(q.id) ?? []}
+            />
+          );
         })}
         {questions?.length === 0 && (
           <p className="text-sm text-muted-foreground">

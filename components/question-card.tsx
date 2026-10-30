@@ -6,22 +6,26 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
+import { ConceptEvidence, type Evidence } from "@/components/concept-evidence";
 
 type Question = {
   id: string;
   prompt: string;
   options: string[];
+  // Una por opción, en el mismo orden: por qué es correcta o qué error lleva a elegirla. Vacía en preguntas antiguas.
+  explanations: string[] | null;
   correct_index: number;
   status: string;
   conceptName: string;
 };
 
-export function QuestionCard({ question }: { question: Question }) {
+export function QuestionCard({ question, evidence }: { question: Question; evidence: Evidence[] }) {
   const router = useRouter();
   const supabase = createClient();
   const [editing, setEditing] = useState(false);
   const [prompt, setPrompt] = useState(question.prompt);
   const [options, setOptions] = useState(question.options);
+  const [explanations, setExplanations] = useState(question.explanations ?? question.options.map(() => ""));
   const [correctIndex, setCorrectIndex] = useState(question.correct_index);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -35,9 +39,11 @@ export function QuestionCard({ question }: { question: Question }) {
       return;
     }
     setLoading(true);
+    // Sin ninguna explicación escrita se guarda vacío, como en las preguntas antiguas
+    const savedExplanations = explanations.some((e) => e.trim()) ? explanations.map((e) => e.trim()) : null;
     const { data, error: saveError } = await supabase
       .from("questions")
-      .update({ prompt, options, correct_index: correctIndex })
+      .update({ prompt, options, explanations: savedExplanations, correct_index: correctIndex })
       .eq("id", question.id)
       .select("id");
     setLoading(false);
@@ -85,24 +91,37 @@ export function QuestionCard({ question }: { question: Question }) {
           <Input value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="Pregunta" aria-label="Enunciado" />
           <p className="text-xs text-muted-foreground -mb-1">Marca cuál opción es la correcta:</p>
           {options.map((opt, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <input
-                type="radio"
-                name={`correct-${question.id}`}
-                checked={correctIndex === i}
-                onChange={() => setCorrectIndex(i)}
-                className="shrink-0"
-                aria-label={`Marcar la opción ${i + 1} como correcta`}
-              />
+            <div key={i} className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  name={`correct-${question.id}`}
+                  checked={correctIndex === i}
+                  onChange={() => setCorrectIndex(i)}
+                  className="shrink-0"
+                  aria-label={`Marcar la opción ${i + 1} como correcta`}
+                />
+                <Input
+                  value={opt}
+                  onChange={(e) => {
+                    const next = [...options];
+                    next[i] = e.target.value;
+                    setOptions(next);
+                  }}
+                  placeholder={`Opción ${i + 1}`}
+                  aria-label={`Opción ${i + 1}`}
+                />
+              </div>
               <Input
-                value={opt}
+                value={explanations[i] ?? ""}
                 onChange={(e) => {
-                  const next = [...options];
+                  const next = [...explanations];
                   next[i] = e.target.value;
-                  setOptions(next);
+                  setExplanations(next);
                 }}
-                placeholder={`Opción ${i + 1}`}
-                aria-label={`Opción ${i + 1}`}
+                className="ml-6 w-auto text-xs"
+                placeholder={i === correctIndex ? "Por qué es correcta" : "Qué error lleva a elegirla"}
+                aria-label={`Explicación de la opción ${i + 1}`}
               />
             </div>
           ))}
@@ -130,13 +149,17 @@ export function QuestionCard({ question }: { question: Question }) {
           </span>
         </div>
         <p className="text-sm font-medium mb-2">{question.prompt}</p>
-        <ul className="text-sm text-muted-foreground mb-3 list-disc list-inside">
+        <ul className="text-sm text-muted-foreground mb-3 list-disc list-inside flex flex-col gap-1">
           {question.options.map((opt, i) => (
-            <li key={i} className={i === question.correct_index ? "text-green-700 font-medium" : ""}>
-              {opt}
+            <li key={i}>
+              <span className={i === question.correct_index ? "text-green-700 font-medium" : ""}>{opt}</span>
+              {question.explanations?.[i] && (
+                <span className="block pl-5 text-xs">{question.explanations[i]}</span>
+              )}
             </li>
           ))}
         </ul>
+        <ConceptEvidence evidence={evidence} />
         <div className="flex gap-2">
           {question.status === "sugerido" && (
             <Button size="sm" onClick={handleValidate} disabled={loading}>Validar</Button>

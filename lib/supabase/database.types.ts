@@ -487,6 +487,7 @@ export type Database = {
           concept_id: string
           correct_index: number
           created_at: string | null
+          explanations: Json | null
           id: string
           options: Json
           prompt: string
@@ -497,6 +498,7 @@ export type Database = {
           concept_id: string
           correct_index: number
           created_at?: string | null
+          explanations?: Json | null
           id?: string
           options: Json
           prompt: string
@@ -507,6 +509,7 @@ export type Database = {
           concept_id?: string
           correct_index?: number
           created_at?: string | null
+          explanations?: Json | null
           id?: string
           options?: Json
           prompt?: string

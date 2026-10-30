@@ -62,14 +62,23 @@ detecta brechas de conocimiento, ve un mapa de conocimiento y recibe un siguient
 - `app/estudiante/autorregulacion` cuestionario "¿Cómo aprendes?" (F-08, preliminar; `components/self-regulation-questionnaire.tsx`).
 - `lib/self-regulation.ts` instrumento de autorregulación (MAI en español), medias, tramos provisionales y sugerencias.
 - `app/diagnostico/[subjectId]/page.tsx` diagnóstico, nivelación y microevaluación en una sola página (por etapas).
-- `app/api/` `process-document`, `generate-concepts`, `generate-questions`, `generate-concept-cards`, `generate-resources` (server-side).
+- `app/api/` `process-document`, `generate-concepts`, `generate-questions`, `generate-concept-cards`, `generate-resources`,
+  `generate-evidence` (server-side).
+- Motor de conocimiento (`docs/MOTOR-DE-CONOCIMIENTO.md`, fase 1):
+  - `lib/search-material.ts` es la búsqueda híbrida (función SQL `search_chunks`: embeddings + texto en español,
+    fusionados), solo para el docente dueño.
+  - `lib/concept-candidates.ts` arma los tramos y une los candidatos repetidos cuando se generan conceptos sobre todo
+    el material.
+  - `lib/concept-evidence.ts` busca y comprueba las citas del material.
+  - Conceptos, preguntas y fichas reciben los fragmentos relevantes de cada concepto (ya no "los primeros 40").
 - `lib/resource-sources.ts` sitios conocidos (nombre, si se pueden verificar); `lib/link-check.ts` verificación de enlaces con protección contra visitar la red interna.
 - `components/` componentes propios; `components/ui/` los de shadcn.
 - `lib/concept-state.ts` estados por concepto (umbral de dominio 0.7).
 - `lib/knowledge-graph.ts` dependientes, prerrequisitos, flechas del mapa (sin las redundantes), brecha prioritaria, próximo desafío.
 - `components/knowledge-map.tsx` mapa (React Flow + dagre) y su panel; `components/concept-ficha.tsx` validación de fichas.
 - `lib/lrr.ts` cálculo del LRR (por estudiante, concepto y clase).
-- `lib/extract-text.ts`, `lib/chunk-text.ts` extracción y fragmentación de documentos.
+- `lib/extract-text.ts`, `lib/chunk-text.ts` extracción por página (PDF) o por título (Word), sin encabezados ni pies
+  repetidos, y fragmentación por oraciones con página, sección y orden.
 - `lib/data.ts` banco de preguntas de demostración; `lib/class-code.ts` códigos de clase.
 - `lib/supabase/` clientes de servidor y cliente; `admin.ts` cliente con `service_role` (salta la RLS; solo servidor,
   hoy solo para `pilot_requests`).
@@ -79,7 +88,10 @@ detecta brechas de conocimiento, ve un mapa de conocimiento y recibe un siguient
 ## Datos
 Esquema completo en `supabase/migrations/` (cada cambio de esquema va como migración nueva).
 Tablas principales: `profiles` (rol), `subjects` (con código de clase), `enrollments`, `subject_documents`,
-`document_chunks` (con embedding), `concepts` (`prerequisite_ids`, `status`), `questions` (`status`),
+`document_chunks` (con embedding, `page_start`/`page_end`, `section`, `position` y `content_tsv` en español),
+`concepts` (`prerequisite_ids`, `status`), `questions` (`status`, `explanations`: una por opción, que el estudiante
+no recibe), `evidence_spans` (citas del material de cada concepto o pregunta, con su página; un trigger comprueba
+que la cita esté tal cual en el fragmento; solo las ve el docente),
 `diagnostic_attempts` (`completed_at`), `diagnostic_answers` (`stage`: `diagnostico` | `microevaluacion`,
 `concept`, `is_correct`), `concept_cards` (ficha de concepto: `why_it_matters`, `application`, `source`:
 `material` | `general`, `status`; un trigger pone `subject_id` desde el concepto; el estudiante solo lee fichas
@@ -124,11 +136,17 @@ estudiante lee y borra las suyas, entran solo por la RPC `submit_self_regulation
 
 ## Deuda técnica reconocida (no ocultar; priorizar con el desarrollador)
 Sin pruebas ni CI · sin entorno de desarrollo separado · sin validación de esquema de la salida de la IA ·
-sin rate limiting · autorregistro de docentes sin verificación · sin recuperación por similitud (los
-embeddings se guardan pero aún no se consultan) · diseño no responsive para móvil.
+sin rate limiting · autorregistro de docentes sin verificación · diseño no responsive para móvil.
 
 ## Pendiente (orden previsto)
-Ludificación del cierre de brechas (F-13) → campo de capacidades, pruebas, piloto y responsive. La elección de
+Rediseño de la app (`docs/PRINCIPIOS-DE-DISENO.md`, `docs/PENDIENTES.md` pendiente 14), en este orden:
+1. motor de conocimiento, fase 1 (hecha el 30/10/2026);
+2. base visual (componentes comunes y navegación);
+3. validación rediseñada, con las citas;
+4. motor, fase 2 (temas y relaciones);
+5. motor, fase 3 (diagnóstico nuevo y recorrido de cierre).
+
+F-13 (ludificación) quedó pausada a mitad (pendiente 13). Después: capacidades, pruebas, piloto. La elección de
 formato (F-12) quedó cubierta por F-11 (ver Decisiones tomadas en el roadmap). Ya hechos, con ajustes pendientes en `docs/PENDIENTES.md`: ficha de concepto (F-05, pendiente 7),
 recuperación activa (F-09 v1, pendiente 8), autorregulación (F-08 preliminar, pendiente 9: permiso de autores y
 experto), recursos curados (F-11, pendiente 10) y landing con formulario de piloto (pendiente 12).
