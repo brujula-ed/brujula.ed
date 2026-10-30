@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { ConceptFicha, type Ficha } from "@/components/concept-ficha";
 import { ConceptResources, type Resource } from "@/components/concept-resources";
+import { ConceptEvidence, type Evidence } from "@/components/concept-evidence";
 
 type Concept = {
   id: string;
@@ -23,12 +24,14 @@ export function ConceptCard({
   ficha,
   subjectId,
   resources,
+  evidence,
 }: {
   concept: Concept;
   allConcepts: Concept[];
   ficha?: Ficha;
   subjectId: string;
   resources: Resource[];
+  evidence: Evidence[];
 }) {
   const router = useRouter();
   const supabase = createClient();
@@ -139,6 +142,7 @@ export function ConceptCard({
           </span>
         </div>
         <p className="text-sm text-muted-foreground mb-3">{concept.description}</p>
+        <ConceptEvidence evidence={evidence} />
         <div className="flex gap-2">
           {concept.status === "sugerido" && (
             <Button size="sm" onClick={handleValidate} disabled={loading}>Validar</Button>

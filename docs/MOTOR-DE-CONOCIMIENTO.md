@@ -90,6 +90,19 @@ datos para estimar brechas y su cierre, y búsqueda híbrida sobre todo el mater
      se comprueba literalmente** contra el fragmento: si la IA inventa una cita, se descarta. Es una verificación
      determinista, como la de los enlaces en F-11.
 - **Datos:** una tabla de evidencias (a qué pertenece, fragmento, página y cita).
+- **Hecho (30/10/2026):**
+  - **Búsqueda híbrida:** migración `busqueda_hibrida` y `lib/search-material.ts`.
+  - **Conceptos sobre todo el material:** se lee por tramos, se unen los repetidos sin IA, se consolida y se guardan
+    solo los prerrequisitos directos (`lib/concept-candidates.ts`).
+  - **Citas comprobadas:**
+    - migración `evidencias_del_material`, con la tabla `evidence_spans`, y `lib/concept-evidence.ts`;
+    - la base vuelve a comprobar cada cita;
+    - se ven en la página de conceptos, con el botón "Buscar fuentes".
+  - **Probado con un PDF de 60 páginas:** 23 conceptos, todos con cita, y 28 de 28 citas literales. Generar los
+    conceptos costó unos 0,01 USD.
+- **Pendiente:** citas en las preguntas (paso 2d, con `question_id`); elegir o descartar citas al validar
+  (rediseño de la validación); detectar duplicados cercanos, como "Videojuego como discurso" y "Discurso
+  videolúdico" (fase 2).
 - **Aporta:**
   - al docente: "Fuente en el material · pág. 12" al validar (la maqueta de validación);
   - al estudiante: material del propio curso, citado, cuando repasa.

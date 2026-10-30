@@ -353,6 +353,84 @@ export type Database = {
           },
         ]
       }
+      evidence_spans: {
+        Row: {
+          chunk_id: string
+          concept_id: string
+          created_at: string
+          document_id: string
+          id: string
+          page_end: number | null
+          page_start: number | null
+          question_id: string | null
+          quote: string
+          section: string | null
+          subject_id: string
+        }
+        Insert: {
+          chunk_id: string
+          concept_id: string
+          created_at?: string
+          document_id: string
+          id?: string
+          page_end?: number | null
+          page_start?: number | null
+          question_id?: string | null
+          quote: string
+          section?: string | null
+          subject_id: string
+        }
+        Update: {
+          chunk_id?: string
+          concept_id?: string
+          created_at?: string
+          document_id?: string
+          id?: string
+          page_end?: number | null
+          page_start?: number | null
+          question_id?: string | null
+          quote?: string
+          section?: string | null
+          subject_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evidence_spans_chunk_id_fkey"
+            columns: ["chunk_id"]
+            isOneToOne: false
+            referencedRelation: "document_chunks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "evidence_spans_concept_id_fkey"
+            columns: ["concept_id"]
+            isOneToOne: false
+            referencedRelation: "concepts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "evidence_spans_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "subject_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "evidence_spans_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "evidence_spans_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pilot_requests: {
         Row: {
           created_at: string
@@ -586,6 +664,7 @@ export type Database = {
         Args: { target_subject_id: string }
         Returns: boolean
       }
+      normalize_quote_text: { Args: { t: string }; Returns: string }
       search_chunks: {
         Args: {
           p_limit?: number

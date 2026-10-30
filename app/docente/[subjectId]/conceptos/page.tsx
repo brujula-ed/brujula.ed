@@ -7,6 +7,8 @@ import { GenerateCardsButton } from "@/components/generate-cards-button";
 import type { Ficha } from "@/components/concept-ficha";
 import { GenerateResourcesButton } from "@/components/generate-resources-button";
 import type { Resource } from "@/components/concept-resources";
+import { GenerateEvidenceButton } from "@/components/generate-evidence-button";
+import type { Evidence } from "@/components/concept-evidence";
 
 export default async function Conceptos({ params }: { params: Promise<{ subjectId: string }> }) {
   const { subjectId } = await params;
@@ -58,6 +60,18 @@ export default async function Conceptos({ params }: { params: Promise<{ subjectI
     }
   }
 
+  // Citas del material de cada concepto (solo las del concepto, no las de sus preguntas)
+  const { data: evidence } = await supabase
+    .from("evidence_spans")
+    .select("concept_id, quote, page_start, page_end, section")
+    .eq("subject_id", subjectId)
+    .is("question_id", null)
+    .order("page_start", { ascending: true });
+  const evidenceByConcept = new Map<string, Evidence[]>();
+  for (const e of evidence ?? []) {
+    evidenceByConcept.set(e.concept_id, [...(evidenceByConcept.get(e.concept_id) ?? []), e]);
+  }
+
   return (
     <main className="max-w-5xl mx-auto p-8">
         <Link href={`/docente/${subjectId}`} className="text-sm text-muted-foreground hover:underline mb-4 inline-block">
@@ -67,6 +81,16 @@ export default async function Conceptos({ params }: { params: Promise<{ subjectI
       <p className="text-sm text-muted-foreground mb-6">
         {subject.name} — revisa, edita o descarta lo que propuso la IA antes de publicarlo
       </p>
+
+      {allConcepts.length > 0 && (
+        <div className="mb-6">
+          <GenerateEvidenceButton subjectId={subjectId} />
+          <p className="text-xs text-muted-foreground mt-1">
+            Busca en tu material las citas que respaldan cada concepto que aún no tenga fuente, con su página. Cada cita
+            se comprueba palabra por palabra contra el documento.
+          </p>
+        </div>
+      )}
 
       {hasValidated && (
         <div className="mb-6">
@@ -102,6 +126,7 @@ export default async function Conceptos({ params }: { params: Promise<{ subjectI
             ficha={fichaByConcept.get(c.id)}
             subjectId={subjectId}
             resources={resourcesByConcept.get(c.id) ?? []}
+            evidence={evidenceByConcept.get(c.id) ?? []}
           />
         ))}
         {allConcepts.length === 0 && (

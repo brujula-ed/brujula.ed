@@ -4,6 +4,7 @@ import OpenAI from "openai";
 import { z } from "zod";
 import { buildSections, groupCandidates, type Candidate, type ChunkText } from "@/lib/concept-candidates";
 import { computeMapEdges, type GraphConcept } from "@/lib/knowledge-graph";
+import { findAndSaveEvidence } from "@/lib/concept-evidence";
 
 // Conceptos sobre TODO el material (docs/MOTOR-DE-CONOCIMIENTO.md 4.2), en tres pasos:
 //   1. la IA lee el material por tramos y propone candidatos de cada uno (en paralelo);
@@ -283,9 +284,25 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Citas del material de los conceptos nuevos. Si fallan, los conceptos ya están guardados: las citas se pueden
+    // buscar después con /api/generate-evidence ("Buscar fuentes").
+    let evidence = null;
+    try {
+      const described = new Map(concepts.map((c) => [c.name.toLowerCase(), c.description]));
+      evidence = await findAndSaveEvidence(
+        supabase,
+        openai,
+        subjectId,
+        inserted.map((c) => ({ id: c.id, name: c.name, description: described.get(c.name.toLowerCase()) ?? null }))
+      );
+    } catch (err) {
+      console.error("generate-concepts: los conceptos se guardaron, pero falló la búsqueda de citas:", err);
+    }
+
     console.info(
       `generate-concepts: ${sections.length} tramos leídos (${skippedSections} sin leer), ` +
-        `${candidates.length} candidatos, ${groups.length} tras unir repetidos, ${inserted.length} conceptos nuevos`
+        `${candidates.length} candidatos, ${groups.length} tras unir repetidos, ${inserted.length} conceptos nuevos` +
+        (evidence ? `, ${evidence.withQuote} con cita` : ", sin citas (falló la búsqueda)")
     );
     return NextResponse.json({ success: true, count: inserted.length, sections: sections.length, skippedSections });
   } catch (err) {
