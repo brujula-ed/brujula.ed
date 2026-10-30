@@ -586,6 +586,24 @@ export type Database = {
         Args: { target_subject_id: string }
         Returns: boolean
       }
+      search_chunks: {
+        Args: {
+          p_limit?: number
+          p_query: string
+          p_query_embedding: string
+          p_subject_id: string
+        }
+        Returns: {
+          content: string
+          document_id: string
+          id: string
+          page_end: number
+          page_start: number
+          position: number
+          score: number
+          section: string
+        }[]
+      }
       self_regulation_class_summary: {
         Args: { p_subject_id: string }
         Returns: {

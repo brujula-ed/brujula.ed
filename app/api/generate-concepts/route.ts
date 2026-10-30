@@ -2,6 +2,20 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import OpenAI from "openai";
 import { z } from "zod";
+import { buildSections, groupCandidates, type Candidate, type ChunkText } from "@/lib/concept-candidates";
+import { computeMapEdges, type GraphConcept } from "@/lib/knowledge-graph";
+
+// Conceptos sobre TODO el material (docs/MOTOR-DE-CONOCIMIENTO.md 4.2), en tres pasos:
+//   1. la IA lee el material por tramos y propone candidatos de cada uno (en paralelo);
+//   2. se unen los repetidos sin IA (mismo nombre o embeddings casi iguales);
+//   3. una última llamada elige los más importantes, fusiona sinónimos y propone prerrequisitos directos.
+
+// La ruta puede durar hasta 300 s en Vercel Hobby; caben 40 tramos de ~12 000 caracteres (unas 300 páginas), leídos
+// de a 4 en paralelo. Con más material se leen los primeros 40 y se avisa.
+export const maxDuration = 300;
+const MAX_SECTIONS = 40;
+const CONCURRENCY = 4;
+const MODEL = "gpt-6-luna";
 
 // Forma mínima de cada concepto de la IA; se valida ANTES de insertar para no dejar conceptos a medias.
 // Sin descripción o sin prerrequisitos válidos el concepto se conserva: el docente lo completa al validar.
@@ -11,9 +25,78 @@ const AiConcept = z.object({
   prerequisites: z.array(z.string().trim()).catch([]),
 });
 
+const AiCandidate = z.object({ name: z.string().trim().min(1), description: z.string().trim().catch("") });
+
 const AiResponse = z.object({ concepts: z.array(z.unknown()) });
 
 const RequestBody = z.object({ subjectId: z.uuid() });
+
+type SupabaseServer = Awaited<ReturnType<typeof createClient>>;
+
+// Todos los fragmentos de la asignatura en el orden del material. La API devuelve como mucho 1000 filas por consulta.
+async function loadChunks(supabase: SupabaseServer, subjectId: string): Promise<ChunkText[] | null> {
+  const PAGE = 1000;
+  const rows: ChunkText[] = [];
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await supabase
+      .from("document_chunks")
+      .select("document_id, position, content")
+      .eq("subject_id", subjectId)
+      .order("document_id")
+      .order("position")
+      .range(from, from + PAGE - 1);
+    if (error) {
+      console.error("generate-concepts: no se pudieron leer los fragmentos:", error);
+      return null;
+    }
+    rows.push(...data.map((r) => ({ documentId: r.document_id, position: r.position, content: r.content })));
+    if (data.length < PAGE) return rows;
+  }
+}
+
+// Paso 1 para un tramo. Si falla, se registra y se sigue con los demás (un tramo menos no invalida el resto).
+async function candidatesFromSection(openai: OpenAI, section: string): Promise<Candidate[]> {
+  try {
+    const completion = await openai.chat.completions.create({
+      model: MODEL,
+      response_format: { type: "json_object" },
+      messages: [
+        {
+          role: "system",
+          content:
+            "Eres un asistente que ayuda a un docente universitario a estructurar su asignatura. Este es un tramo " +
+            "de su material. Extrae entre 2 y 6 conceptos que se enseñan o se usan en este tramo, cada uno con una " +
+            "descripción breve (1-2 oraciones). Usa nombres cortos y precisos, como los del material. " +
+            'Responde solo JSON: {"concepts": [{"name": "...", "description": "..."}]}',
+        },
+        { role: "user", content: section },
+      ],
+    });
+    const parsed = AiResponse.safeParse(JSON.parse(completion.choices[0].message.content ?? "null"));
+    if (!parsed.success) return [];
+    return parsed.data.concepts.flatMap((item) => {
+      const c = AiCandidate.safeParse(item);
+      return c.success ? [c.data] : [];
+    });
+  } catch (err) {
+    console.error("generate-concepts: falló la lectura de un tramo:", err);
+    return [];
+  }
+}
+
+// Ejecuta fn sobre cada elemento con como mucho `limit` llamadas a la vez, conservando el orden
+async function mapWithLimit<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  let next = 0;
+  async function worker() {
+    while (next < items.length) {
+      const i = next++;
+      results[i] = await fn(items[i]);
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  return results;
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -26,25 +109,20 @@ export async function POST(req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
-    const { data: chunks, error: chunksError } = await supabase
-      .from("document_chunks")
-      .select("content")
-      .eq("subject_id", subjectId)
-      // Provisional hasta la búsqueda híbrida (docs/MOTOR-DE-CONOCIMIENTO.md 4.2): el comienzo de cada documento
-      .order("position")
-      .order("document_id")
-      .limit(40);
-
-    if (chunksError || !chunks || chunks.length === 0) {
+    const chunks = await loadChunks(supabase, subjectId);
+    if (!chunks) return NextResponse.json({ error: "No se pudo leer el material" }, { status: 500 });
+    if (chunks.length === 0) {
       return NextResponse.json({ error: "No hay documentos procesados para esta asignatura" }, { status: 400 });
     }
 
-    const context = chunks.map((c) => c.content).join("\n\n").slice(0, 12000);
+    const allSections = buildSections(chunks);
+    const sections = allSections.slice(0, MAX_SECTIONS);
+    const skippedSections = allSections.length - sections.length;
 
     // Regenerar solo añade conceptos nuevos: los existentes (validados o no) no se tocan
     const { data: existing, error: existingError } = await supabase
       .from("concepts")
-      .select("id, name")
+      .select("id, name, prerequisite_ids")
       .eq("subject_id", subjectId);
     if (existingError) {
       console.error("generate-concepts: no se pudieron leer los conceptos existentes:", existingError);
@@ -69,22 +147,45 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Paso 1: candidatos de cada tramo, en paralelo
+    const perSection = await mapWithLimit(sections, CONCURRENCY, (s) => candidatesFromSection(openai, s));
+    const candidates = perSection.flat();
+    if (candidates.length === 0) {
+      return NextResponse.json(
+        { error: "No se encontraron conceptos en el material. Revisa que el documento tenga contenido temático y texto legible." },
+        { status: 422 }
+      );
+    }
+
+    // Paso 2: unir repetidos sin IA (mismo nombre o significado casi igual)
+    const { data: candidateEmbeddings } = await openai.embeddings.create({
+      model: "text-embedding-3-small",
+      input: candidates.map((c) => `${c.name}: ${c.description}`),
+    });
+    const groups = groupCandidates(candidates, candidateEmbeddings.map((e) => e.embedding));
+
+    // Paso 3: elegir los más importantes, fusionar sinónimos y proponer prerrequisitos directos
     const completion = await openai.chat.completions.create({
-      model: "gpt-6-luna",
+      model: MODEL,
       response_format: { type: "json_object" },
       messages: [
         {
           role: "system",
           content:
-            "Eres un asistente que ayuda a un docente a estructurar el contenido de su materia. " +
-            "A partir del siguiente material, propone entre 4 y 10 conceptos clave, cada uno con una " +
-            "breve descripción (1-2 oraciones) y una lista de nombres de otros conceptos de la misma " +
-            "lista que sean prerrequisito (pueden ser ninguno). " +
+            "Eres un asistente que ayuda a un docente universitario a estructurar su asignatura. Recibes los " +
+            "conceptos candidatos encontrados al leer TODO su material, en orden de aparición y con cuántas partes " +
+            "del material los mencionan (más menciones suele indicar un concepto más central). " +
+            "Elige entre 4 y 25 conceptos clave, según la extensión y la variedad del material: los centrales para " +
+            "la asignatura, no detalles sueltos. Si dos candidatos son el mismo concepto, quédate con uno. " +
+            "Mantén los nombres de la lista siempre que puedas. Para cada concepto da una descripción breve (1-2 " +
+            "oraciones) y sus prerrequisitos DIRECTOS: solo los conceptos que hace falta entender inmediatamente " +
+            "antes, no toda la cadena hacia atrás (si A requiere B y B requiere C, A lista solo B). Los " +
+            "prerrequisitos deben ser nombres de tu propia lista o de los conceptos que ya existen. " +
             existingHint +
             "Responde solo JSON, con este formato exacto: " +
             '{"concepts": [{"name": "...", "description": "...", "prerequisites": ["nombre de otro concepto", ...]}]}',
         },
-        { role: "user", content: context },
+        { role: "user", content: JSON.stringify(groups) },
       ],
     });
 
@@ -162,17 +263,31 @@ export async function POST(req: NextRequest) {
     const nameToId = new Map(
       [...(existing ?? []), ...inserted].map((c) => [c.name.trim().toLowerCase(), c.id])
     );
-    for (const c of concepts) {
+    const newConcepts: GraphConcept[] = concepts.flatMap((c) => {
       const ownId = nameToId.get(c.name.toLowerCase());
+      if (!ownId) return [];
       const prereqIds = c.prerequisites
         .map((p) => nameToId.get(p.toLowerCase()))
         .filter((id): id is string => !!id && id !== ownId);
-      if (ownId && prereqIds.length > 0) {
-        await supabase.from("concepts").update({ prerequisite_ids: prereqIds }).eq("id", ownId);
+      return [{ id: ownId, name: c.name, prerequisite_ids: [...new Set(prereqIds)] }];
+    });
+
+    // Solo prerrequisitos directos: si A ya llega a C pasando por B, A no guarda C. Es la misma regla con la que el
+    // mapa oculta las flechas redundantes (computeMapEdges, que también tolera ciclos). Se aplica solo a los conceptos
+    // nuevos; los existentes no se tocan.
+    const directEdges = computeMapEdges([...(existing ?? []), ...newConcepts]);
+    for (const c of newConcepts) {
+      const direct = directEdges.filter((e) => e.target === c.id).map((e) => e.source);
+      if (direct.length > 0) {
+        await supabase.from("concepts").update({ prerequisite_ids: direct }).eq("id", c.id);
       }
     }
 
-    return NextResponse.json({ success: true, count: inserted.length });
+    console.info(
+      `generate-concepts: ${sections.length} tramos leídos (${skippedSections} sin leer), ` +
+        `${candidates.length} candidatos, ${groups.length} tras unir repetidos, ${inserted.length} conceptos nuevos`
+    );
+    return NextResponse.json({ success: true, count: inserted.length, sections: sections.length, skippedSections });
   } catch (err) {
     // El detalle técnico (OpenAI, Postgres) queda en el log del servidor; al navegador, un mensaje genérico
     console.error("Error en generate-concepts:", err);

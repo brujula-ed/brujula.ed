@@ -23,14 +23,20 @@ export function GenerateConceptsButton({ subjectId }: { subjectId: string }) {
       setStatus(`Error: ${data.error}`);
       return;
     }
-    setStatus(`${data.count} conceptos sugeridos`);
+    // Con material muy largo, la ruta lee solo los primeros tramos y avisa cuántos quedaron sin leer
+    setStatus(
+      `${data.count} conceptos sugeridos` +
+        (data.skippedSections > 0
+          ? `. El material es muy largo: ${data.skippedSections} partes del final no se leyeron.`
+          : "")
+    );
     router.refresh();
   }
 
   return (
     <div className="flex items-center gap-2">
       <Button size="sm" onClick={handleGenerate} disabled={loading}>
-        {loading ? "Generando..." : "Generar estructura con IA"}
+        {loading ? "Leyendo todo el material..." : "Generar estructura con IA"}
       </Button>
       <span role="status" className="text-xs text-muted-foreground">{status}</span>
     </div>

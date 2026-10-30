@@ -62,7 +62,8 @@ export function computePrerequisites(concepts: GraphConcept[]): Map<string, Set<
 }
 
 // Flechas que dibuja el mapa, sin las redundantes: si A ya llega a C pasando por B, no se dibuja A→C.
-// Los prerrequisitos guardados no cambian; solo se simplifica el dibujo.
+// El mapa no cambia los prerrequisitos guardados; generate-concepts usa esta misma regla para guardar solo los
+// directos en los conceptos nuevos.
 export function computeMapEdges(concepts: GraphConcept[]): { source: string; target: string }[] {
   const ids = new Set(concepts.map((c) => c.id));
   const prerequisites = computePrerequisites(concepts);

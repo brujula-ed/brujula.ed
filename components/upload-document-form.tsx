@@ -13,6 +13,18 @@ const CONTENT_TYPES: Record<string, string> = {
   docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 };
 
+// Storage no acepta tildes ni algunos símbolos en la ruta: "Óliver Pérez.pdf" → "Oliver-Perez.pdf".
+// El nombre original se guarda aparte (file_name) y es el que ve el docente.
+function storageSafeName(name: string): string {
+  const safe = name
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "") // quita tildes y diéresis
+    .replace(/[^A-Za-z0-9._-]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-(?=\.)/g, "");
+  return safe.slice(-100) || "documento";
+}
+
 export function UploadDocumentForm({ subjectId }: { subjectId: string }) {
   const router = useRouter();
   const supabase = createClient();
@@ -41,14 +53,15 @@ export function UploadDocumentForm({ subjectId }: { subjectId: string }) {
 
     setUploading(true);
 
-    const path = `${subjectId}/${Date.now()}-${file.name}`;
+    const path = `${subjectId}/${Date.now()}-${storageSafeName(file.name)}`;
     const { error: uploadError } = await supabase.storage
       .from("course-documents")
       .upload(path, file, { contentType });
 
     if (uploadError) {
+      console.error("No se pudo subir el documento:", uploadError);
       setUploading(false);
-      setError(uploadError.message);
+      setError("No se pudo subir el documento. Revisa tu conexión e inténtalo de nuevo.");
       return;
     }
 

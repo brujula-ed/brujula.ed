@@ -67,6 +67,12 @@ datos para estimar brechas y su cierre, y búsqueda híbrida sobre todo el mater
     página de inicio y fin, sección y posición en el documento.
 - **Datos:** columnas nuevas en `document_chunks` (`page_start`, `page_end`, `section`, `position`) y una columna de
   texto completo en español (`tsvector`, con índice GIN).
+- **Hecho (30/10/2026):**
+  - migración `fragmentos_con_estructura`, `lib/extract-text.ts` y `lib/chunk-text.ts`;
+  - se quitan encabezados y pies de página repetidos;
+  - probado con un PDF de 55 páginas.
+- **Idioma:** por ahora solo español (decisión de Sergio, 30/10/2026). Cuando haya material en inglés, se detecta el
+  idioma de cada documento y la búsqueda por palabras usa el análisis de ese idioma.
 - **Aporta:** la página y la sección para citar. Es la base de todo lo demás.
 
 ### 4.2 Búsqueda híbrida y span de evidencia
