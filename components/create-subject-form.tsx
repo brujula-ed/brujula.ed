@@ -35,26 +35,32 @@ export function CreateSubjectForm({ onCreated, onCancel }: { onCreated?: () => v
 
     // class_code es único: si el código generado ya existe (23505, muy poco probable), se prueba con otro
     let insertError: { code: string } | null = null;
+    let created: { id: string } | null = null;
     for (let attempt = 0; attempt < 3; attempt++) {
-      const { error } = await supabase.from("subjects").insert({
-        teacher_id: user.id,
-        name,
-        description: description.trim() || null,
-        class_code: generateClassCode(),
-      });
+      const { data, error } = await supabase
+        .from("subjects")
+        .insert({
+          teacher_id: user.id,
+          name,
+          description: description.trim() || null,
+          class_code: generateClassCode(),
+        })
+        .select("id")
+        .single();
       insertError = error;
+      created = data;
       if (error?.code !== "23505") break;
     }
-    setLoading(false);
-    if (insertError) {
+    if (insertError || !created) {
+      setLoading(false);
       console.error("No se pudo crear la asignatura:", insertError);
       setError("No se pudo crear la asignatura. Inténtalo de nuevo.");
       return;
     }
-    setName("");
-    setDescription("");
+    // A la página de la asignatura nueva, que empieza en el paso Material. loading sigue activo hasta que cambie la
+    // página, para que no se pueda crear dos veces.
     onCreated?.();
-    router.refresh();
+    router.push(`/docente/${created.id}`);
   }
 
   return (

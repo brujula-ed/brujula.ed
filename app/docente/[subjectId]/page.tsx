@@ -42,9 +42,17 @@ export default async function SubjectPage({
 
   const setup = await loadSetup(supabase, subjectId);
   const requestedStep = STEP_IDS.find((id) => id === paso);
-  const view: View =
-    vista === "estudiantes" ? "estudiantes" : vista === "contenido" || requestedStep || setup.current ? "contenido" : "estudiantes";
-  const step: StepId = requestedStep ?? setup.current?.id ?? "material";
+  // Sin nada en la dirección se elige el paso que falta (o Estudiantes) y se redirige a la dirección explícita: así un
+  // router.refresh() tras procesar o validar no cambia de paso solo porque el paso actual quedó hecho.
+  if (vista !== "estudiantes" && !requestedStep) {
+    redirect(
+      setup.current || vista === "contenido"
+        ? `/docente/${subjectId}?paso=${setup.current?.id ?? "material"}`
+        : `/docente/${subjectId}?vista=estudiantes`
+    );
+  }
+  const view: View = vista === "estudiantes" ? "estudiantes" : "contenido";
+  const step: StepId = requestedStep ?? "material";
   const stepIndex = STEP_IDS.indexOf(step);
   const stepInfo = setup.steps[stepIndex];
   const nextStep = setup.steps[stepIndex + 1];
