@@ -2,7 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Check, ChevronLeft, ChevronRight, Filter, List, Network } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, Filter, List, Network } from "lucide-react";
 import { cn } from "cn";
 import { Button } from "@/components/ui/button";
 import { ConceptDetail, type WorkspaceConcept } from "@/components/concept-detail";
@@ -11,7 +11,8 @@ import { DuplicatePairs, type DuplicatePair } from "@/components/duplicate-pairs
 import { ConceptNeighborhood } from "@/components/concept-neighborhood";
 import { NewTopicForm } from "@/components/new-topic-form";
 import { KnowledgeMap, type MapFicha, type MapResource } from "@/components/knowledge-map";
-import type { Evidence } from "@/components/concept-evidence";
+import { EvidenceQuotes, type Evidence } from "@/components/concept-evidence";
+import { ListItem, ContextCard } from "@/components/workspace-parts";
 
 // Un grupo de la lista: un tema (o "Sin tema", topic = null) con sus conceptos ya en orden de aprendizaje
 export type WorkspaceGroup = { topic: Topic | null; notes: TopicNotes; conceptIds: string[] };
@@ -287,23 +288,10 @@ export function StructureWorkspace({
             {concept ? (
               <>
                 <ContextCard title="Fuente en el material">
-                  {(evidence[concept.id] ?? []).length === 0 ? (
-                    <p className="text-sm text-muted-foreground">
-                      Sin cita en el material. Puede que el concepto no salga de tus documentos: revísalo con más cuidado,
-                      o usa «Buscar fuentes».
-                    </p>
-                  ) : (
-                    <div className="flex flex-col gap-3">
-                      {(evidence[concept.id] ?? []).map((e) => (
-                        <figure key={e.quote} className="flex flex-col gap-1">
-                          <blockquote className="rounded-r-control border-l-2 border-primary bg-secondary/60 px-3 py-2 text-sm">
-                            «{e.quote}»
-                          </blockquote>
-                          {where(e) && <figcaption className="text-xs text-muted-foreground">{where(e)}</figcaption>}
-                        </figure>
-                      ))}
-                    </div>
-                  )}
+                  <EvidenceQuotes
+                    evidence={evidence[concept.id] ?? []}
+                    empty="Sin cita en el material. Puede que el concepto no salga de tus documentos: revísalo con más cuidado, o usa «Buscar fuentes»."
+                  />
                 </ContextCard>
                 <ContextCard title="Dónde queda en el mapa">
                   <ConceptNeighborhood
@@ -328,56 +316,4 @@ export function StructureWorkspace({
       )}
     </div>
   );
-}
-
-function ListItem({
-  selected,
-  validated,
-  onClick,
-  className,
-  children,
-}: {
-  selected: boolean;
-  validated: boolean;
-  onClick: () => void;
-  className?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      aria-current={selected ? "true" : undefined}
-      className={cn(
-        "flex w-full items-center justify-between gap-2 rounded-control border px-3 py-2 text-left text-sm transition-colors duration-(--duration-instant)",
-        selected ? "border-primary bg-card shadow-rest" : "border-transparent hover:bg-card",
-        className
-      )}
-    >
-      <span className="min-w-0">{children}</span>
-      {validated ? (
-        <Check aria-label="Validado" className="size-4 shrink-0 text-primary" />
-      ) : (
-        <span className="shrink-0 rounded-full border border-dashed border-primary/50 px-2 py-0.5 text-xs font-medium text-primary">
-          Revisar
-        </span>
-      )}
-    </button>
-  );
-}
-
-function ContextCard({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section className="flex flex-col gap-3 rounded-card bg-card p-4 shadow-rest">
-      <h3 className="text-eyebrow text-muted-foreground">{title}</h3>
-      {children}
-    </section>
-  );
-}
-
-// Página o sección de una cita, para mostrar debajo
-function where(e: Evidence): string {
-  if (e.page_start !== null) {
-    return e.page_end !== null && e.page_end !== e.page_start ? `págs. ${e.page_start}–${e.page_end}` : `pág. ${e.page_start}`;
-  }
-  return e.section ?? "";
 }
