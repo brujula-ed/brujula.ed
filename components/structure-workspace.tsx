@@ -1,12 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Check, Filter, List, Network } from "lucide-react";
+import { ArrowLeft, Check, ChevronLeft, ChevronRight, Filter, List, Network } from "lucide-react";
 import { cn } from "cn";
+import { Button } from "@/components/ui/button";
 import { ConceptDetail, type WorkspaceConcept } from "@/components/concept-detail";
 import { TopicDetail, type Topic, type TopicNotes } from "@/components/topic-detail";
 import { DuplicatePairs, type DuplicatePair } from "@/components/duplicate-pairs";
+import { ConceptNeighborhood } from "@/components/concept-neighborhood";
 import { NewTopicForm } from "@/components/new-topic-form";
 import { KnowledgeMap, type MapFicha, type MapResource } from "@/components/knowledge-map";
 import type { Evidence } from "@/components/concept-evidence";
@@ -41,6 +43,9 @@ export function StructureWorkspace({
   const [view, setView] = useState<"lista" | "mapa">("lista");
   const [onlyPending, setOnlyPending] = useState(false);
   const [selection, setSelection] = useState<Selection | null>(null);
+  // Solo en el celular y la tableta (bajo lg): una pantalla para la lista y otra para lo elegido (principio 5.10)
+  const [pane, setPane] = useState<"lista" | "detalle">("detalle");
+  const root = useRef<HTMLDivElement>(null);
 
   const byId = useMemo(() => new Map(concepts.map((c) => [c.id, c])), [concepts]);
   const topics = groups.flatMap((g) => (g.topic ? [g.topic] : []));
@@ -61,18 +66,23 @@ export function StructureWorkspace({
   const exists = (s: Selection) => (s.kind === "concept" ? byId.has(s.id) : topics.some((t) => t.id === s.id));
   const current = selection && exists(selection) ? selection : fallback;
 
+  // Elegir algo: en el celular abre su pantalla y vuelve arriba (en escritorio la lista ya está a la vista)
+  function select(s: Selection) {
+    setSelection(s);
+    setView("lista");
+    setPane("detalle");
+    if (!window.matchMedia("(min-width: 1024px)").matches) root.current?.scrollIntoView({ block: "start" });
+  }
+
   // Tras validar o descartar: el siguiente pendiente en el orden de la lista (sin contar el actual)
   function goToNextPending(fromId: string) {
     const from = ordered.indexOf(fromId);
     const rest = [...ordered.slice(from + 1), ...ordered.slice(0, from)];
     const next = rest.find((id) => byId.get(id)?.status === "sugerido");
-    setSelection(next ? { kind: "concept", id: next } : { kind: "concept", id: fromId });
+    select({ kind: "concept", id: next ?? fromId });
   }
 
-  const selectConcept = (id: string) => {
-    setSelection({ kind: "concept", id });
-    setView("lista");
-  };
+  const selectConcept = (id: string) => select({ kind: "concept", id });
 
   const concept = current?.kind === "concept" ? byId.get(current.id) : undefined;
   const topicIndex = current?.kind === "topic" ? topics.findIndex((t) => t.id === current.id) : -1;
@@ -93,8 +103,11 @@ export function StructureWorkspace({
     );
   }
 
+  // Posición del concepto elegido entre todos, para "3 de 14 ‹ ›" en el celular
+  const position = concept ? ordered.indexOf(concept.id) : -1;
+
   return (
-    <div className="flex flex-col gap-4">
+    <div ref={root} className="flex scroll-mt-4 flex-col gap-4">
       <DuplicatePairs subjectId={subjectId} pairs={duplicatePairs} onSelect={selectConcept} />
 
       {/* Contador y cambio de vista */}
@@ -140,7 +153,10 @@ export function StructureWorkspace({
           {/* Lista */}
           <nav
             aria-label="Temas y conceptos"
-            className="flex flex-col gap-3 lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:self-start lg:overflow-y-auto lg:pr-1"
+            className={cn(
+              "flex flex-col gap-3 lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:self-start lg:overflow-y-auto lg:pr-1",
+              pane === "detalle" && "hidden lg:flex"
+            )}
           >
             <button
               onClick={() => setOnlyPending(!onlyPending)}
@@ -163,7 +179,7 @@ export function StructureWorkspace({
                   {g.topic ? (
                     <ListItem
                       selected={current?.kind === "topic" && current.id === g.topic.id}
-                      onClick={() => setSelection({ kind: "topic", id: g.topic!.id })}
+                      onClick={() => select({ kind: "topic", id: g.topic!.id })}
                       validated={!topicPending}
                       className="font-heading font-semibold"
                     >
@@ -179,7 +195,7 @@ export function StructureWorkspace({
                         <li key={id}>
                           <ListItem
                             selected={current?.kind === "concept" && current.id === id}
-                            onClick={() => setSelection({ kind: "concept", id })}
+                            onClick={() => select({ kind: "concept", id })}
                             validated={c.status === "validado"}
                           >
                             {c.name}
@@ -200,11 +216,46 @@ export function StructureWorkspace({
             </div>
           </nav>
 
-          {/* Detalle: key cambia con lo elegido, así entra con un fundido breve */}
+          {/* Celular: volver a la lista y pasar al concepto anterior o siguiente */}
+          <div className={cn("flex items-center justify-between gap-2 lg:hidden", pane === "lista" && "hidden")}>
+            <Button variant="ghost" size="sm" onClick={() => setPane("lista")}>
+              <ArrowLeft aria-hidden="true" />
+              Lista
+            </Button>
+            {position >= 0 && (
+              <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label="Concepto anterior"
+                  disabled={position === 0}
+                  onClick={() => selectConcept(ordered[position - 1])}
+                >
+                  <ChevronLeft />
+                </Button>
+                {position + 1} de {ordered.length}
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label="Concepto siguiente"
+                  disabled={position === ordered.length - 1}
+                  onClick={() => selectConcept(ordered[position + 1])}
+                >
+                  <ChevronRight />
+                </Button>
+              </div>
+            )}
+          </div>
+
+          {/* Detalle: key cambia con lo elegido, así entra con un fundido breve. El deslizamiento, solo en escritorio:
+              un transform durante la animación movería la barra fija del celular */}
           <section
             key={current ? `${current.kind}-${current.id}` : "nada"}
             aria-label="Detalle"
-            className="rounded-card bg-card p-5 shadow-rest motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-right-2 motion-safe:duration-(--duration-short) md:p-6"
+            className={cn(
+              "rounded-card bg-card p-5 shadow-rest motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-(--duration-short) md:p-6 lg:motion-safe:slide-in-from-right-2",
+              pane === "lista" && "hidden lg:block"
+            )}
           >
             {concept ? (
               <ConceptDetail
@@ -229,7 +280,10 @@ export function StructureWorkspace({
           </section>
 
           {/* Contexto */}
-          <aside aria-label="Contexto" className="flex flex-col gap-4 lg:sticky lg:top-4 lg:self-start">
+          <aside
+            aria-label="Contexto"
+            className={cn("flex flex-col gap-4 lg:sticky lg:top-4 lg:self-start", pane === "lista" && "hidden lg:flex")}
+          >
             {concept ? (
               <>
                 <ContextCard title="Fuente en el material">
@@ -252,10 +306,13 @@ export function StructureWorkspace({
                   )}
                 </ContextCard>
                 <ContextCard title="Dónde queda en el mapa">
-                  <div className="flex flex-col gap-3 text-sm">
-                    <ConceptLinks label="Necesita" items={prereqs} empty="Ningún prerrequisito." onSelect={selectConcept} />
-                    <ConceptLinks label="Abre" items={opens} empty="Ningún concepto depende de este." onSelect={selectConcept} />
-                  </div>
+                  <ConceptNeighborhood
+                    concept={concept}
+                    prereqs={prereqs}
+                    opens={opens}
+                    topicNames={new Map(topics.map((t) => [t.id, t.name]))}
+                    onSelect={selectConcept}
+                  />
                 </ContextCard>
               </>
             ) : (
@@ -314,41 +371,6 @@ function ContextCard({ title, children }: { title: string; children: React.React
       <h3 className="text-eyebrow text-muted-foreground">{title}</h3>
       {children}
     </section>
-  );
-}
-
-function ConceptLinks({
-  label,
-  items,
-  empty,
-  onSelect,
-}: {
-  label: string;
-  items: WorkspaceConcept[];
-  empty: string;
-  onSelect: (id: string) => void;
-}) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <p className="font-medium">{label}</p>
-      {items.length === 0 ? (
-        <p className="text-muted-foreground">{empty}</p>
-      ) : (
-        <ul className="flex flex-wrap gap-1.5">
-          {items.map((c) => (
-            <li key={c.id}>
-              <button
-                onClick={() => onSelect(c.id)}
-                className="inline-flex items-center gap-1 rounded-full border border-border px-2.5 py-0.5 text-xs hover:border-primary/50 hover:bg-secondary"
-              >
-                {c.status === "validado" && <Check aria-hidden="true" className="size-3 text-primary" />}
-                {c.name}
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
   );
 }
 

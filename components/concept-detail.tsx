@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ReviewChip } from "@/components/review-chip";
+import { ActionBar } from "@/components/action-bar";
 
 export type WorkspaceConcept = {
   id: string;
@@ -185,21 +186,26 @@ export function ConceptDetail({
 
       {errorMessage}
 
-      <div className="flex flex-wrap items-center gap-2 border-t border-border pt-5">
-        {concept.status === "sugerido" ? (
-          <Button onClick={handleValidate} disabled={loading}>
-            <Check aria-hidden="true" />
-            Validar y seguir
-            <ArrowRight aria-hidden="true" />
-          </Button>
-        ) : (
-          <p className="mr-2 flex items-center gap-1.5 text-sm text-muted-foreground">
-            <Check aria-hidden="true" className="size-4 text-primary" />
-            Validado: lo verán tus estudiantes cuando su tema esté validado.
-          </p>
-        )}
-        <Button variant="outline" onClick={() => setEditing(true)}>Editar</Button>
-        <Button variant="ghost" onClick={handleDiscard}>Descartar</Button>
+      {concept.status === "validado" && (
+        <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+          <Check aria-hidden="true" className="size-4 text-primary" />
+          Validado: lo verán tus estudiantes cuando su tema esté validado.
+        </p>
+      )}
+
+      {/* Fija abajo en el celular (ActionBar); desde md, en su lugar. Orden fijo: la principal al final */}
+      <div className="md:border-t md:border-border md:pt-5">
+        <ActionBar>
+          <Button variant="ghost" onClick={handleDiscard}>Descartar</Button>
+          <Button variant="outline" onClick={() => setEditing(true)}>Editar</Button>
+          {concept.status === "sugerido" && (
+            <Button onClick={handleValidate} disabled={loading}>
+              <Check aria-hidden="true" />
+              Validar y seguir
+              <ArrowRight aria-hidden="true" className="hidden sm:block" />
+            </Button>
+          )}
+        </ActionBar>
       </div>
     </div>
   );

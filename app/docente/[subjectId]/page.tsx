@@ -63,7 +63,10 @@ export default async function SubjectPage({
       : { count: 0 };
 
   return (
-    <main className="mx-auto w-full max-w-[1280px] px-4 py-8 md:px-8">
+    // En Estructura, espacio abajo en el celular para la barra de acciones fija (ActionBar), que si no taparía el final
+    <main
+      className={`mx-auto w-full max-w-[1280px] px-4 py-8 md:px-8 ${view === "contenido" && step === "estructura" ? "pb-28 md:pb-8" : ""}`}
+    >
       <PageHeader
         crumbs={[{ label: "Mis asignaturas", href: "/docente" }, { label: subject.name }]}
         title={subject.name}
