@@ -131,6 +131,10 @@ datos para estimar brechas y su cierre, y búsqueda híbrida sobre todo el mater
      algoritmo; el docente renombra, mueve y valida.
 - **Datos:** embedding en `concepts`, tabla de temas o unidades, y sugerencias de relación con su estado (propuesta,
   validada, descartada).
+- **Hoy:** `subjects.topic` es un único texto obligatorio por asignatura ("Tema" al crearla), que se usa como
+  subtítulo y como contexto para la IA. Confunde, porque una asignatura tiene muchos temas. En la fase 2 se decide si
+  pasa a ser una descripción opcional o si se quita. El estudiante ya se inscribe a la asignatura entera (código de
+  clase); los temas viven dentro de ella.
 - **Aporta:**
   - un mapa agrupado por tema (legible con 30 o más conceptos);
   - elegir "asignatura, unidad y tema" (Anexo I);

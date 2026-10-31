@@ -141,10 +141,12 @@ sin rate limiting · autorregistro de docentes sin verificación · diseño no r
 ## Pendiente (orden previsto)
 Rediseño de la app (`docs/PRINCIPIOS-DE-DISENO.md`, `docs/PENDIENTES.md` pendiente 14), en este orden:
 1. motor de conocimiento, fase 1 (hecha el 30/10/2026);
-2. base visual (componentes comunes y navegación);
-3. validación rediseñada, con las citas;
-4. motor, fase 2 (temas y relaciones);
-5. motor, fase 3 (diagnóstico nuevo y recorrido de cierre).
+2. base visual, solo tokens y componentes (no dependen de cómo se organizan los datos);
+3. motor, fase 2: unidades y temas dentro de la asignatura, relaciones y duplicados (sesión de diseño propia);
+4. navegación y validación rediseñadas, ya con temas y citas;
+5. motor, fase 3 (diagnóstico por tema y recorrido de cierre).
+
+La fase 2 va antes de rediseñar pantallas para que cada una se rehaga una sola vez (decisión del 30/10/2026).
 
 F-13 (ludificación) quedó pausada a mitad (pendiente 13). Después: capacidades, pruebas, piloto. La elección de
 formato (F-12) quedó cubierta por F-11 (ver Decisiones tomadas en el roadmap). Ya hechos, con ajustes pendientes en `docs/PENDIENTES.md`: ficha de concepto (F-05, pendiente 7),

@@ -17,9 +17,12 @@ Actualizado: 30/10/2026. Para retomar en una conversación nueva: leer este docu
   - Preguntas con explicación por opción.
   - Fichas con el material de su concepto.
   - Costo de todas las pruebas: unos 0,03 USD.
-- **Siguiente:** rediseño de la app según `docs/PRINCIPIOS-DE-DISENO.md` (pendiente 14): base visual (componentes
-  comunes y navegación) → validación rediseñada con las citas → motor fase 2 → motor fase 3. F-13 quedó pausada a
-  mitad (pendiente 13).
+- **Siguiente:** rediseño de la app según `docs/PRINCIPIOS-DE-DISENO.md` (pendiente 14). F-13 quedó pausada a mitad
+  (pendiente 13). Orden (decisión del 30/10/2026: así cada pantalla se rehace una sola vez):
+  1. base visual (tokens y componentes);
+  2. motor fase 2 (unidades y temas);
+  3. navegación y validación rediseñadas;
+  4. motor fase 3.
 - **Esperando a terceros:** Ilse (encabezado y uso del amarillo de marca, pendiente 6); Adri (fichas con
   conocimiento general y corrección con IA de F-09, pendientes 7 y 8); autores del MAI (permiso y lista de 19 ítems,
   pendiente 9; Sergio guarda el borrador del correo); experto en educación (validar F-08).
