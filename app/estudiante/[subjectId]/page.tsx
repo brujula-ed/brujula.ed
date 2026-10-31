@@ -24,9 +24,16 @@ export default async function MiBrujula({ params }: { params: Promise<{ subjectI
 
   const { data: concepts } = await supabase
     .from("concepts")
-    .select("id, name, description, prerequisite_ids")
+    .select("id, name, description, prerequisite_ids, topic_id")
     .eq("subject_id", subjectId)
     .eq("status", "validado");
+
+  // Temas del mapa en dos niveles: la RLS solo devuelve al estudiante los temas validados
+  const { data: topics } = await supabase
+    .from("topics")
+    .select("id, name, description")
+    .eq("subject_id", subjectId)
+    .order("position");
 
    const { data: attempts } = await supabase
     .from("diagnostic_attempts")
@@ -118,6 +125,7 @@ export default async function MiBrujula({ params }: { params: Promise<{ subjectI
       {concepts && concepts.length > 0 ? (
         <KnowledgeMap
           concepts={concepts}
+          topics={topics ?? []}
           states={states}
           fichas={fichas}
           resources={resources}

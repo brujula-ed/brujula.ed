@@ -93,7 +93,7 @@ export function learningOrder<T extends { id: string; prerequisite_ids: string[]
 // pares de temas que se necesitan mutuamente, que conviene que el docente revise.
 export function computeTopicDependencies(
   topics: { id: string; name: string }[],
-  concepts: { id: string; topic_id: string | null; prerequisite_ids: string[] }[]
+  concepts: { id: string; topic_id?: string | null; prerequisite_ids: string[] }[]
 ): { needs: Map<string, string[]>; mutual: [string, string][] } {
   const topicOf = new Map(concepts.map((c) => [c.id, c.topic_id]));
   const raw = new Map<string, Set<string>>(topics.map((t) => [t.id, new Set<string>()]));

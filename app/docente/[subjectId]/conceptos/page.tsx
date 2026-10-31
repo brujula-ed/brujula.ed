@@ -159,7 +159,7 @@ export default async function Conceptos({ params }: { params: Promise<{ subjectI
 
       {allConcepts.length > 0 && (
         <div className="mb-8">
-          <KnowledgeMap concepts={allConcepts} fichas={validatedFichas} resources={validatedResources} />
+          <KnowledgeMap concepts={allConcepts} topics={topics} fichas={validatedFichas} resources={validatedResources} />
         </div>
     )}
 
