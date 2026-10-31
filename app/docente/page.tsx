@@ -209,12 +209,11 @@ function nextLine(overview: { subject: { name: string }; setup: SetupStatus }[])
   return "Todo al día. Tus asignaturas están listas.";
 }
 
-// Dónde se valida hoy cada cosa: conceptos, temas, fichas y recursos en el paso Estructura; las preguntas en Preguntas.
-// Cambiará cuando las fichas y los recursos tengan su propio paso.
+// Al primer paso del recorrido con algo por validar: conceptos y temas en Estructura, fichas y recursos en su paso, y
+// después las preguntas
 function reviewHref(subjectId: string, p: PendingReview): string {
-  return p.concepts + p.topics + p.cards + p.resources > 0
-    ? `/docente/${subjectId}?paso=estructura`
-    : `/docente/${subjectId}?paso=preguntas`;
+  const step = p.concepts + p.topics > 0 ? "estructura" : p.cards + p.resources > 0 ? "fichas" : "preguntas";
+  return `/docente/${subjectId}?paso=${step}`;
 }
 
 // Estados de toda la clase en una sola barra: suma de los estados de cada concepto validado

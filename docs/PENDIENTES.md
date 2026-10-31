@@ -373,6 +373,17 @@ hacer el diagnóstico global; el diagnóstico y la recuperación son mecánicos 
   5. resto.
   Una pantalla o un flujo por entrega, probado en el celular.
 
+### 15. Archivos huérfanos al eliminar una asignatura — no iniciado (31/10/2026)
+
+- **Qué pasa:** al eliminar una asignatura (`components/subject-actions.tsx`), la base borra en cascada sus filas
+  (documentos, fragmentos, conceptos, preguntas, intentos, inscripciones, temas, fichas y recursos), pero los archivos
+  del bucket de Storage quedan. No se ven en la app, pero se acumulan y son material del docente que sigue guardado.
+- **Viene de antes del rediseño:** la tarjeta del inicio borraba igual.
+- **Cómo resolverlo:** antes de borrar la asignatura, leer los `storage_path` de sus `subject_documents` y borrarlos
+  del bucket, como ya hace `components/delete-document-button.tsx` con un documento suelto. Si falla Storage, no borrar
+  la asignatura (mejor un error que archivos sin dueño).
+- **Además:** revisar en el panel de Supabase si ya quedaron archivos sin fila en `subject_documents`.
+
 ## Notas de operación (aprendidas en la auditoría)
 
 - **La app Supabase de GitHub aplica sola las migraciones que llegan a `main`.** Por eso cada migración se

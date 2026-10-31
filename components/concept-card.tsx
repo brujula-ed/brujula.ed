@@ -6,8 +6,6 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { ConceptFicha, type Ficha } from "@/components/concept-ficha";
-import { ConceptResources, type Resource } from "@/components/concept-resources";
 import { ConceptEvidence, type Evidence } from "@/components/concept-evidence";
 
 type Concept = {
@@ -22,17 +20,11 @@ type Concept = {
 export function ConceptCard({
   concept,
   allConcepts,
-  ficha,
-  subjectId,
-  resources,
   evidence,
   topics,
 }: {
   concept: Concept;
   allConcepts: Concept[];
-  ficha?: Ficha;
-  subjectId: string;
-  resources: Resource[];
   evidence: Evidence[];
   topics: { id: string; name: string }[];
 }) {
@@ -188,10 +180,6 @@ export function ConceptCard({
           )}
         </div>
         {error && <div className="mt-2">{errorMessage}</div>}
-        {ficha && <ConceptFicha ficha={ficha} />}
-        {concept.status === "validado" && (
-          <ConceptResources conceptId={concept.id} subjectId={subjectId} resources={resources} />
-        )}
       </CardContent>
     </Card>
   );

@@ -2,10 +2,6 @@ import { createClient } from "@/lib/supabase/server";
 import { ConceptCard } from "@/components/concept-card";
 import { KnowledgeMap } from "@/components/knowledge-map";
 import { GenerateConceptsButton } from "@/components/generate-concepts-button";
-import { GenerateCardsButton } from "@/components/generate-cards-button";
-import type { Ficha } from "@/components/concept-ficha";
-import { GenerateResourcesButton } from "@/components/generate-resources-button";
-import type { Resource } from "@/components/concept-resources";
 import { GenerateEvidenceButton } from "@/components/generate-evidence-button";
 import type { Evidence } from "@/components/concept-evidence";
 import { OrganizeTopicsButton } from "@/components/organize-topics-button";
@@ -41,32 +37,27 @@ export async function StructureStep({ subjectId }: { subjectId: string }) {
   const namesOf = (ids: string[]) => ids.map((id) => topicName.get(id) ?? "").filter(Boolean);
   const mutualOf = (id: string) => mutual.flatMap(([a, b]) => (a === id ? [b] : b === id ? [a] : []));
 
+  // Fichas y recursos se validan en su propio paso (cards-step.tsx). Aquí solo se leen los validados, porque el mapa
+  // muestra lo mismo que ve el estudiante.
   const { data: fichas } = await supabase
     .from("concept_cards")
-    .select("concept_id, why_it_matters, application, source, status")
-    .eq("subject_id", subjectId);
-  const fichaByConcept = new Map<string, Ficha>((fichas ?? []).map((f) => [f.concept_id, f]));
-  const hasValidated = allConcepts.some((c) => c.status === "validado");
-  // El mapa muestra solo las fichas validadas, para que el docente vea lo mismo que el estudiante
+    .select("concept_id, why_it_matters, application")
+    .eq("subject_id", subjectId)
+    .eq("status", "validado");
   const validatedFichas = Object.fromEntries(
     (fichas ?? [])
-      .filter((f) => f.status === "validado")
       .map((f) => [f.concept_id, { whyItMatters: f.why_it_matters, application: f.application }])
   );
 
   const { data: resources } = await supabase
     .from("concept_resources")
-    .select("id, concept_id, title, url, kind, source, added_by, link_check, status")
+    .select("concept_id, title, url, kind, source")
     .eq("subject_id", subjectId)
+    .eq("status", "validado")
     .order("created_at", { ascending: true });
-  const resourcesByConcept = new Map<string, Resource[]>();
-  // El mapa muestra solo los validados, para que el docente vea lo mismo que el estudiante
   const validatedResources: Record<string, { title: string; url: string; kind: string; source: string }[]> = {};
   for (const r of resources ?? []) {
-    resourcesByConcept.set(r.concept_id, [...(resourcesByConcept.get(r.concept_id) ?? []), r]);
-    if (r.status === "validado") {
-      (validatedResources[r.concept_id] ??= []).push({ title: r.title, url: r.url, kind: r.kind, source: r.source });
-    }
+    (validatedResources[r.concept_id] ??= []).push({ title: r.title, url: r.url, kind: r.kind, source: r.source });
   }
 
   // Citas del material de cada concepto (solo las del concepto, no las de sus preguntas)
@@ -103,9 +94,6 @@ export async function StructureStep({ subjectId }: { subjectId: string }) {
       key={c.id}
       concept={c}
       allConcepts={allConcepts}
-      ficha={fichaByConcept.get(c.id)}
-      subjectId={subjectId}
-      resources={resourcesByConcept.get(c.id) ?? []}
       evidence={evidenceByConcept.get(c.id) ?? []}
       topics={topicOptions}
     />
@@ -148,25 +136,6 @@ export async function StructureStep({ subjectId }: { subjectId: string }) {
           <p className="text-xs text-muted-foreground mt-1">
             Busca en tu material las citas que respaldan cada concepto que aún no tenga fuente, con su página. Cada cita
             se comprueba palabra por palabra contra el documento.
-          </p>
-        </div>
-      )}
-
-      {hasValidated && (
-        <div className="mb-6">
-          <GenerateCardsButton subjectId={subjectId} />
-          <p className="text-xs text-muted-foreground mt-1">
-            Propone una ficha (por qué importa y para qué te sirve) para cada concepto validado que aún no tenga.
-          </p>
-        </div>
-      )}
-
-      {hasValidated && (
-        <div className="mb-6">
-          <GenerateResourcesButton subjectId={subjectId} />
-          <p className="text-xs text-muted-foreground mt-1">
-            La IA busca hasta 3 recursos abiertos por concepto validado (una lectura, un video y un ejercicio cuando
-            los encuentra) y comprueba que los enlaces existan. Tú decides cuáles publicar.
           </p>
         </div>
       )}
