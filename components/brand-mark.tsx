@@ -11,7 +11,7 @@ export const RAYS = [
   "M53.54 57.54 Q41.13 65.35 31.62 72.38 Q38.65 62.87 46.46 50.46 Z",
   "M46.46 57.54 Q39.43 45.90 33.03 37.03 Q41.90 43.43 53.54 50.46 Z",
 ];
-const MISSING_RAY = "M-5.5 0 Q-1.9 -16.5 0 -30 Q1.9 -16.5 5.5 0 Z";
+export const MISSING_RAY = "M-5.5 0 Q-1.9 -16.5 0 -30 Q1.9 -16.5 5.5 0 Z";
 
 export function BrandMark({
   size,

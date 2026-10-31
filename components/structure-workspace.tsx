@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { Check, Filter, List, Network } from "lucide-react";
 import { cn } from "cn";
 import { ConceptDetail, type WorkspaceConcept } from "@/components/concept-detail";
@@ -83,7 +84,11 @@ export function StructureWorkspace({
   if (concepts.length === 0 && topics.length === 0) {
     return (
       <p className="text-sm text-muted-foreground">
-        Aún no hay conceptos. Genéralos con IA a partir de tu material procesado.
+        Aún no hay conceptos. Genéralos desde el paso{" "}
+        <Link href={`/docente/${subjectId}?paso=material`} className="font-medium text-primary hover:underline">
+          Material
+        </Link>
+        , con «Continuar y generar estructura».
       </p>
     );
   }

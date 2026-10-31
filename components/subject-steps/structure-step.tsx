@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { GenerateConceptsButton } from "@/components/generate-concepts-button";
+import { CircleAlert } from "lucide-react";
 import { GenerateEvidenceButton } from "@/components/generate-evidence-button";
 import type { Evidence } from "@/components/concept-evidence";
 import { OrganizeTopicsButton } from "@/components/organize-topics-button";
@@ -94,6 +94,7 @@ export async function StructureStep({ subjectId }: { subjectId: string }) {
   });
 
 
+const withoutEvidence = allConcepts.filter((c) => !evidenceByConcept[c.id]).length;
   // Grupos de la lista en orden: los temas (con sus avisos de orden) y al final los conceptos sin tema
   const ids = (list: typeof allConcepts) => learningOrder(list, conceptPosition).map((c) => c.id);
   const groups: WorkspaceGroup[] = topics.map((t, i) => ({
@@ -111,40 +112,28 @@ export async function StructureStep({ subjectId }: { subjectId: string }) {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Herramientas de la IA: proponen; lo que proponen se revisa abajo, uno por uno */}
-      <div className="flex flex-col gap-3 rounded-card border border-border bg-card/60 p-4">
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-          <GenerateConceptsButton subjectId={subjectId} />
-          {allConcepts.length > 0 && (
-            <>
+      {/* La IA de la estructura se lanza desde Material (generate-structure-button.tsx). Aquí solo "Buscar duplicados"
+          y, cuando hacen falta, los reintentos de organizar en temas y de buscar fuentes */}
+      {allConcepts.length > 0 && (
+        <div className="flex flex-col gap-3">
+          {withoutTopic.length > 0 && (
+            <Notice text={`${plural(withoutTopic.length, "concepto sin tema", "conceptos sin tema")}. La IA puede agruparlos en temas, en el orden de tu material.`}>
               <OrganizeTopicsButton subjectId={subjectId} />
-              <FindDuplicatesButton subjectId={subjectId} />
-              <GenerateEvidenceButton subjectId={subjectId} />
-            </>
+            </Notice>
           )}
+          {withoutEvidence > 0 && (
+            <Notice text={`${plural(withoutEvidence, "concepto sin fuente", "conceptos sin fuente")} en el material. La IA puede buscar la cita que los respalda, con su página.`}>
+              <GenerateEvidenceButton subjectId={subjectId} />
+            </Notice>
+          )}
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <FindDuplicatesButton subjectId={subjectId} />
+            <p className="text-xs text-muted-foreground">
+              Compara los conceptos por su significado y avisa de los que podrían ser el mismo.
+            </p>
+          </div>
         </div>
-        <details className="text-sm text-muted-foreground">
-          <summary className="cursor-pointer font-medium text-foreground">¿Qué hace cada herramienta?</summary>
-          <ul className="mt-2 flex list-disc flex-col gap-1 pl-5">
-            <li>
-              <span className="font-medium text-foreground">Generar estructura:</span> lee todo tu material procesado y
-              propone conceptos nuevos con sus prerrequisitos.
-            </li>
-            <li>
-              <span className="font-medium text-foreground">Organizar en temas:</span> agrupa en temas los conceptos que
-              aún no tienen, en el orden de tu material.
-            </li>
-            <li>
-              <span className="font-medium text-foreground">Buscar duplicados:</span> compara los conceptos por su
-              significado y avisa de los que podrían ser el mismo. Tú decides cuál quitar.
-            </li>
-            <li>
-              <span className="font-medium text-foreground">Buscar fuentes:</span> busca en tu material la cita que respalda
-              cada concepto sin fuente, con su página, y la comprueba palabra por palabra.
-            </li>
-          </ul>
-        </details>
-      </div>
+      )}
 
       <StructureWorkspace
         subjectId={subjectId}
@@ -156,6 +145,21 @@ export async function StructureStep({ subjectId }: { subjectId: string }) {
         mapFichas={validatedFichas}
         mapResources={validatedResources}
       />
+    </div>
+  );
+}
+
+const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+
+// Aviso con su solución: algo que falta en la estructura y el botón de la IA que lo resuelve
+function Notice({ text, children }: { text: string; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-col gap-2 rounded-card border border-border bg-card p-4 shadow-rest md:flex-row md:items-center md:justify-between">
+      <p className="flex items-start gap-2 text-sm">
+        <CircleAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+        {text}
+      </p>
+      <div className="shrink-0">{children}</div>
     </div>
   );
 }

@@ -3,15 +3,22 @@ import { UploadDocumentForm } from "@/components/upload-document-form";
 import { ProcessDocumentButton } from "@/components/process-document-button";
 import { DeleteDocumentButton } from "@/components/delete-document-button";
 import { Card, CardContent } from "@/components/ui/card";
+import { GenerateStructureButton } from "@/components/generate-structure-button";
 
 // Paso 1 de "Contenido": subir y procesar el material. La página de la asignatura ya comprobó que el docente es el dueño.
 export async function MaterialStep({ subjectId }: { subjectId: string }) {
   const supabase = await createClient();
-  const { data: documents } = await supabase
-    .from("subject_documents")
-    .select("id, file_name, storage_path, uploaded_at")
-    .eq("subject_id", subjectId)
-    .order("uploaded_at", { ascending: false });
+  const [{ data: documents }, { data: firstChunks }, { count: conceptCount }] = await Promise.all([
+    supabase
+      .from("subject_documents")
+      .select("id, file_name, storage_path, uploaded_at")
+      .eq("subject_id", subjectId)
+      .order("uploaded_at", { ascending: false }),
+    // Un documento está procesado si tiene fragmentos: basta con mirar el primero (position 0) de cada uno
+    supabase.from("document_chunks").select("document_id").eq("subject_id", subjectId).eq("position", 0),
+    supabase.from("concepts").select("id", { count: "exact", head: true }).eq("subject_id", subjectId),
+  ]);
+  const processed = new Set((firstChunks ?? []).map((c) => c.document_id)).size;
 
   return (
     <div className="max-w-3xl">
@@ -36,6 +43,25 @@ export async function MaterialStep({ subjectId }: { subjectId: string }) {
         {documents?.length === 0 && (
           <p className="text-sm text-muted-foreground">Aún no subiste ningún documento.</p>
         )}
+      </div>
+
+      {/* Toda la IA de la estructura en un solo paso: conceptos, fuentes, duplicados y temas */}
+      <div className="mt-8 flex flex-col gap-2 rounded-card bg-secondary/60 p-5">
+        <p className="font-medium">
+          {(conceptCount ?? 0) > 0 ? "¿Subiste material nuevo?" : "Cuando tu material esté procesado"}
+        </p>
+        <p className="text-sm text-muted-foreground">
+          La IA lee todo tu material procesado y te propone los conceptos de la asignatura con sus prerrequisitos y la
+          cita de donde sale cada uno, y los organiza en temas. Después los revisas uno por uno en Estructura.
+          {(conceptCount ?? 0) > 0 && " Solo se agregan conceptos nuevos: lo que ya revisaste no se toca."}
+        </p>
+        <div className="mt-2">
+          {processed > 0 ? (
+            <GenerateStructureButton subjectId={subjectId} hasConcepts={(conceptCount ?? 0) > 0} />
+          ) : (
+            <p className="text-sm font-medium">Procesa al menos un documento para continuar.</p>
+          )}
+        </div>
       </div>
     </div>
   );
