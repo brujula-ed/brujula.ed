@@ -12,7 +12,8 @@ import type { Evidence } from "@/components/concept-evidence";
 import { OrganizeTopicsButton } from "@/components/organize-topics-button";
 import { NewTopicForm } from "@/components/new-topic-form";
 import { TopicGroup, type Topic } from "@/components/topic-group";
-import { computeTopicDependencies } from "@/lib/knowledge-graph";
+import { computeTopicDependencies, learningOrder } from "@/lib/knowledge-graph";
+import { materialPositions } from "@/lib/topic-organization";
 
 export default async function Conceptos({ params }: { params: Promise<{ subjectId: string }> }) {
   const { subjectId } = await params;
@@ -81,10 +82,13 @@ export default async function Conceptos({ params }: { params: Promise<{ subjectI
   // Citas del material de cada concepto (solo las del concepto, no las de sus preguntas)
   const { data: evidence } = await supabase
     .from("evidence_spans")
-    .select("concept_id, quote, page_start, page_end, section")
+    .select("concept_id, quote, page_start, page_end, section, document_chunks(position), subject_documents(uploaded_at)")
     .eq("subject_id", subjectId)
     .is("question_id", null)
     .order("page_start", { ascending: true });
+  // Dónde aparece cada concepto en el material: desempata el orden de aprendizaje dentro de cada tema
+  const { position: conceptPosition } = materialPositions(evidence ?? []);
+  const inLearningOrder = (list: typeof allConcepts) => learningOrder(list, conceptPosition);
   const evidenceByConcept = new Map<string, Evidence[]>();
   for (const e of evidence ?? []) {
     evidenceByConcept.set(e.concept_id, [...(evidenceByConcept.get(e.concept_id) ?? []), e]);
@@ -173,9 +177,10 @@ export default async function Conceptos({ params }: { params: Promise<{ subjectI
             prev={topics[i - 1]}
             next={topics[i + 1]}
             needs={namesOf(topicNeeds.get(t.id) ?? [])}
+            neededBelow={namesOf((topicNeeds.get(t.id) ?? []).filter((id) => topics.findIndex((o) => o.id === id) > i))}
             mutualWith={namesOf(mutualOf(t.id))}
           >
-            {allConcepts.filter((c) => c.topic_id === t.id).map(card)}
+            {inLearningOrder(allConcepts.filter((c) => c.topic_id === t.id)).map(card)}
             {!allConcepts.some((c) => c.topic_id === t.id) && (
               <p className="text-sm text-muted-foreground">Este tema todavía no tiene conceptos.</p>
             )}
@@ -184,7 +189,7 @@ export default async function Conceptos({ params }: { params: Promise<{ subjectI
         {withoutTopic.length > 0 && (
           <section className="flex flex-col gap-3">
             {topics.length > 0 && <h2 className="text-subsection">Sin tema</h2>}
-            {withoutTopic.map(card)}
+            {inLearningOrder(withoutTopic).map(card)}
           </section>
         )}
         {allConcepts.length === 0 && (

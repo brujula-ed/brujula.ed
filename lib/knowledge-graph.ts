@@ -61,6 +61,32 @@ export function computePrerequisites(concepts: GraphConcept[]): Map<string, Set<
   return result;
 }
 
+// Orden de aprendizaje de una lista de conceptos (p. ej. los de un tema): cada concepto va después de sus
+// prerrequisitos que estén en la lista; entre los que pueden ir, primero el que aparece antes en el material
+// (materialPosition; sin posición, al final). Si la IA generó un ciclo, esos conceptos van al final en orden del
+// material, sin perderse. Determinista.
+export function learningOrder<T extends { id: string; prerequisite_ids: string[] }>(
+  concepts: T[],
+  materialPosition: Map<string, number>
+): T[] {
+  const ids = new Set(concepts.map((c) => c.id));
+  const at = (c: T) => materialPosition.get(c.id) ?? Infinity;
+  const pending = new Map(concepts.map((c) => [c.id, new Set(c.prerequisite_ids.filter((p) => ids.has(p) && p !== c.id))]));
+  const result: T[] = [];
+  const done = new Set<string>();
+
+  while (result.length < concepts.length) {
+    const ready = concepts
+      .filter((c) => !done.has(c.id) && [...pending.get(c.id)!].every((p) => done.has(p)))
+      .sort((a, b) => at(a) - at(b));
+    // Ciclo: ninguno está listo; se toma el que aparece antes en el material para destrabar
+    const next = ready[0] ?? concepts.filter((c) => !done.has(c.id)).sort((a, b) => at(a) - at(b))[0];
+    result.push(next);
+    done.add(next.id);
+  }
+  return result;
+}
+
 // Relaciones entre temas (docs/MOTOR-DE-CONOCIMIENTO.md 4.3, decisión 3): el tema B necesita al tema A si algún
 // concepto de B tiene como prerrequisito un concepto de A. Se calculan, no se guardan, así que siempre coinciden con
 // los prerrequisitos validados. Devuelve las relaciones directas (sin las redundantes, misma regla que el mapa) y los

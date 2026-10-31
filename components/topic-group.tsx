@@ -16,6 +16,7 @@ export function TopicGroup({
   prev,
   next,
   needs = [],
+  neededBelow = [],
   mutualWith = [],
   children,
 }: {
@@ -23,6 +24,7 @@ export function TopicGroup({
   prev?: Topic;
   next?: Topic;
   needs?: string[]; // nombres de los temas que necesita (calculados desde los prerrequisitos)
+  neededBelow?: string[]; // de esos, los que están más abajo en la lista: el docente decide si reordena
   mutualWith?: string[]; // temas que se necesitan mutuamente con este: conviene revisar sus prerrequisitos
   children: React.ReactNode;
 }) {
@@ -121,6 +123,13 @@ export function TopicGroup({
             {topic.description && <p className="text-sm text-muted-foreground">{topic.description}</p>}
             {needs.length > 0 && (
               <p className="text-xs text-muted-foreground">Necesita: {needs.join(", ")}</p>
+            )}
+            {neededBelow.length > 0 && (
+              <p className="flex items-center gap-1 text-xs text-foreground">
+                <CircleAlert aria-hidden="true" className="size-3.5 shrink-0" />
+                {neededBelow.map((n) => `«${n}»`).join(", ")} está más abajo y conviene estudiarlo antes: considera
+                reordenar.
+              </p>
             )}
             {mutualWith.length > 0 && (
               <p className="flex items-center gap-1 text-xs text-foreground">

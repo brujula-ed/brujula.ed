@@ -51,6 +51,29 @@ export function resolveProposal(
   return { newTopics, toExisting, unassigned: conceptIds.filter((id) => !placed.has(id)) };
 }
 
+// Dónde aparece cada concepto en el material, a partir de sus citas (evidence_spans con su fragmento y documento):
+// documentos en el orden en que se subieron y, dentro de cada uno, el orden del fragmento. También la primera página.
+export type EvidencePlace = {
+  concept_id: string;
+  page_start: number | null;
+  document_chunks: { position: number } | null;
+  subject_documents: { uploaded_at: string | null } | null;
+};
+
+export function materialPositions(rows: EvidencePlace[]): { position: Map<string, number>; page: Map<string, number> } {
+  const docOrder = [...new Set(rows.map((e) => e.subject_documents?.uploaded_at ?? ""))].sort();
+  const position = new Map<string, number>();
+  const page = new Map<string, number>();
+  for (const e of rows) {
+    const at = docOrder.indexOf(e.subject_documents?.uploaded_at ?? "") * 1_000_000 + (e.document_chunks?.position ?? 0);
+    if (at < (position.get(e.concept_id) ?? Infinity)) {
+      position.set(e.concept_id, at);
+      if (e.page_start !== null) page.set(e.concept_id, e.page_start);
+    }
+  }
+  return { position, page };
+}
+
 // Ordena los temas nuevos por la primera aparición en el material de cualquiera de sus conceptos. Los temas sin
 // ninguna ubicación conocida van al final, en el orden que propuso la IA.
 export function orderByMaterial<T extends { conceptIds: string[] }>(

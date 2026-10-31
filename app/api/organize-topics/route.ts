@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import OpenAI from "openai";
 import { z } from "zod";
-import { orderByMaterial, resolveProposal, type ProposedTopic } from "@/lib/topic-organization";
+import { materialPositions, orderByMaterial, resolveProposal, type ProposedTopic } from "@/lib/topic-organization";
 
 // Organizar en temas (docs/MOTOR-DE-CONOCIMIENTO.md 4.3): la IA agrupa en temas los conceptos que aún no tienen tema,
 // en una sola llamada; el código comprueba que cada concepto quede en un solo tema (lib/topic-organization.ts) y
@@ -61,17 +61,8 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Posición en el material: documentos en el orden en que se subieron, y dentro de cada uno, el orden del fragmento
-    const docOrder = [...new Set((evidenceRes.data ?? []).map((e) => e.subject_documents?.uploaded_at ?? ""))].sort();
-    const conceptPosition = new Map<string, number>();
-    const conceptPage = new Map<string, number>();
-    for (const e of evidenceRes.data ?? []) {
-      const at = docOrder.indexOf(e.subject_documents?.uploaded_at ?? "") * 1_000_000 + (e.document_chunks?.position ?? 0);
-      if (at < (conceptPosition.get(e.concept_id) ?? Infinity)) {
-        conceptPosition.set(e.concept_id, at);
-        if (e.page_start !== null) conceptPage.set(e.concept_id, e.page_start);
-      }
-    }
+    // Dónde aparece cada concepto en el material (por sus citas)
+    const { position: conceptPosition, page: conceptPage } = materialPositions(evidenceRes.data ?? []);
 
     const { data: allowed, error: quotaError } = await supabase.rpc("consume_ai_quota", { p_route: "organize-topics" });
     if (quotaError) {
