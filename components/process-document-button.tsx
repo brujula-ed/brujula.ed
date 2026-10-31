@@ -2,37 +2,75 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { WorkingDialog } from "@/components/working-dialog";
 
-export function ProcessDocumentButton({ documentId }: { documentId: string }) {
+type Phase = "idle" | "working" | "done" | "error";
+
+// Procesar un documento ya subido (paso Material): para reintentar si falló al subirlo o, si ya estaba procesado, volver
+// a procesarlo (la ruta reemplaza sus fragmentos anteriores). Gasta 1 uso del cupo de IA.
+export function ProcessDocumentButton({
+  documentId,
+  fileName,
+  processed,
+}: {
+  documentId: string;
+  fileName: string;
+  processed: boolean;
+}) {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState<string | null>(null);
+  const [phase, setPhase] = useState<Phase>("idle");
+  const [message, setMessage] = useState("");
 
   async function handleProcess() {
-    setLoading(true);
-    setStatus(null);
+    if (processed && !confirm(`¿Volver a procesar «${fileName}»? Se reemplazan sus fragmentos; los conceptos no se tocan.`)) {
+      return;
+    }
+    setMessage("");
+    setPhase("working");
     const res = await fetch("/api/process-document", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ documentId }),
     });
-    const data = await res.json();
-    setLoading(false);
+    const data = await res.json().catch(() => ({ error: "Respuesta inesperada del servidor." }));
     if (!res.ok) {
-      setStatus(`Error: ${data.error}`);
+      setMessage(data.error ?? "No se pudo procesar el documento. Inténtalo de nuevo.");
+      setPhase("error");
       return;
     }
-    setStatus(`Listo — ${data.chunksCreated} fragmentos procesados`);
+    setMessage(`${data.chunksCreated} fragmentos listos para la búsqueda.`);
+    setPhase("done");
     router.refresh();
   }
 
   return (
-    <div className="flex items-center gap-2">
-      <Button size="sm" variant="outline" onClick={handleProcess} disabled={loading}>
-        {loading ? "Procesando..." : "Procesar con IA"}
+    <>
+      <Button size="sm" variant={processed ? "ghost" : "default"} onClick={handleProcess} disabled={phase === "working"}>
+        {processed && <RefreshCw aria-hidden="true" />}
+        {processed ? "Volver a procesar" : "Procesar"}
       </Button>
-      <span role="status" className="text-xs text-muted-foreground">{status}</span>
-    </div>
+
+      <WorkingDialog
+        open={phase !== "idle"}
+        title={phase === "done" ? "Documento procesado" : phase === "error" ? "No se pudo procesar" : "Procesando el documento"}
+        steps={[
+          {
+            label: `Leyendo «${fileName}» y preparando la búsqueda`,
+            state: phase === "working" ? "active" : phase === "error" ? "error" : "done",
+          },
+        ]}
+        working={phase === "working"}
+        hint="Un documento largo puede tardar unos minutos."
+      >
+        <p role={phase === "error" ? "alert" : "status"} className="text-sm">
+          {message}
+        </p>
+        <div className="flex justify-center">
+          <Button onClick={() => setPhase("idle")}>Cerrar</Button>
+        </div>
+      </WorkingDialog>
+    </>
   );
 }

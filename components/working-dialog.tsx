@@ -78,7 +78,13 @@ export function WorkingDialog({
                 {s.state === "active" && <span className="size-2 rounded-full bg-primary motion-safe:animate-pulse" />}
                 {s.state === "error" && <CircleAlert aria-hidden="true" className="size-3.5" />}
               </span>
-              <span className={cn(s.state === "pending" && "text-muted-foreground", s.state === "active" && "font-semibold")}>
+              <span
+                className={cn(
+                  "min-w-0 break-words",
+                  s.state === "pending" && "text-muted-foreground",
+                  s.state === "active" && "font-semibold"
+                )}
+              >
                 {s.label}
               </span>
               <span className="sr-only">
