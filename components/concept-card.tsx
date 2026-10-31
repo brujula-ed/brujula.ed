@@ -16,6 +16,7 @@ type Concept = {
   description: string | null;
   status: string;
   prerequisite_ids: string[];
+  topic_id: string | null;
 };
 
 export function ConceptCard({
@@ -25,6 +26,7 @@ export function ConceptCard({
   subjectId,
   resources,
   evidence,
+  topics,
 }: {
   concept: Concept;
   allConcepts: Concept[];
@@ -32,6 +34,7 @@ export function ConceptCard({
   subjectId: string;
   resources: Resource[];
   evidence: Evidence[];
+  topics: { id: string; name: string }[];
 }) {
   const router = useRouter();
   const supabase = createClient();
@@ -79,6 +82,23 @@ export function ConceptCard({
     setLoading(false);
     if (validateError || !data?.length) {
       setError("No se pudo validar el concepto. Inténtalo de nuevo.");
+      return;
+    }
+    router.refresh();
+  }
+
+  // Mover el concepto a otro tema (un concepto está en un solo tema; vacío = sin tema)
+  async function handleTopic(topicId: string) {
+    setLoading(true);
+    setError("");
+    const { data, error: topicError } = await supabase
+      .from("concepts")
+      .update({ topic_id: topicId || null })
+      .eq("id", concept.id)
+      .select("id");
+    setLoading(false);
+    if (topicError || !data?.length) {
+      setError("No se pudo cambiar el tema. Inténtalo de nuevo.");
       return;
     }
     router.refresh();
@@ -143,12 +163,28 @@ export function ConceptCard({
         </div>
         <p className="text-sm text-muted-foreground mb-3">{concept.description}</p>
         <ConceptEvidence evidence={evidence} />
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {concept.status === "sugerido" && (
             <Button size="sm" onClick={handleValidate} disabled={loading}>Validar</Button>
           )}
           <Button size="sm" variant="outline" onClick={() => setEditing(true)}>Editar</Button>
           <Button size="sm" variant="ghost" onClick={handleDiscard}>Descartar</Button>
+          {topics.length > 0 && (
+            <label className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
+              Tema
+              <select
+                value={concept.topic_id ?? ""}
+                onChange={(e) => handleTopic(e.target.value)}
+                disabled={loading}
+                className="h-9 max-w-56 rounded-control border border-input bg-card px-2 text-sm text-foreground"
+              >
+                <option value="">Sin tema</option>
+                {topics.map((t) => (
+                  <option key={t.id} value={t.id}>{t.name}</option>
+                ))}
+              </select>
+            </label>
+          )}
         </div>
         {error && <div className="mt-2">{errorMessage}</div>}
         {ficha && <ConceptFicha ficha={ficha} />}

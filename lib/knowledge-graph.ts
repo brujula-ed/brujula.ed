@@ -61,6 +61,37 @@ export function computePrerequisites(concepts: GraphConcept[]): Map<string, Set<
   return result;
 }
 
+// Relaciones entre temas (docs/MOTOR-DE-CONOCIMIENTO.md 4.3, decisión 3): el tema B necesita al tema A si algún
+// concepto de B tiene como prerrequisito un concepto de A. Se calculan, no se guardan, así que siempre coinciden con
+// los prerrequisitos validados. Devuelve las relaciones directas (sin las redundantes, misma regla que el mapa) y los
+// pares de temas que se necesitan mutuamente, que conviene que el docente revise.
+export function computeTopicDependencies(
+  topics: { id: string; name: string }[],
+  concepts: { id: string; topic_id: string | null; prerequisite_ids: string[] }[]
+): { needs: Map<string, string[]>; mutual: [string, string][] } {
+  const topicOf = new Map(concepts.map((c) => [c.id, c.topic_id]));
+  const raw = new Map<string, Set<string>>(topics.map((t) => [t.id, new Set<string>()]));
+  for (const c of concepts) {
+    if (!c.topic_id || !raw.has(c.topic_id)) continue;
+    for (const p of c.prerequisite_ids) {
+      const other = topicOf.get(p);
+      if (other && other !== c.topic_id && raw.has(other)) raw.get(c.topic_id)!.add(other);
+    }
+  }
+
+  const asGraph = topics.map((t) => ({ id: t.id, name: t.name, prerequisite_ids: [...raw.get(t.id)!] }));
+  const needs = new Map<string, string[]>(topics.map((t) => [t.id, []]));
+  for (const e of computeMapEdges(asGraph)) needs.get(e.target)!.push(e.source);
+
+  const mutual: [string, string][] = [];
+  for (const t of topics) {
+    for (const o of raw.get(t.id)!) {
+      if (t.id < o && raw.get(o)!.has(t.id)) mutual.push([t.id, o]);
+    }
+  }
+  return { needs, mutual };
+}
+
 // Flechas que dibuja el mapa, sin las redundantes: si A ya llega a C pasando por B, no se dibuja A→C.
 // El mapa no cambia los prerrequisitos guardados; generate-concepts usa esta misma regla para guardar solo los
 // directos en los conceptos nuevos.

@@ -371,8 +371,8 @@ hacer el diagnóstico global; el diagnóstico y la recuperación son mecánicos 
   aplica con `npx supabase db push` (tras dry-run y confirmación) antes de subir su archivo. Al hacer commit,
   añadir archivos por nombre y no subir migraciones aún no aplicadas.
 - **Advertencia de lint conocida:** `npm run lint` da 0 errores y 1 advertencia en
-  `app/diagnostico/[subjectId]/page.tsx` (el `useEffect` de carga, sin `supabase` en sus dependencias; línea 123
-  desde F-13). Es anterior a los
+  `app/diagnostico/[subjectId]/page.tsx` (el `useEffect` de carga, sin `supabase` en sus dependencias; línea 124
+  desde la fase 2). Es anterior a los
   cambios de octubre e inofensiva; si aparece otra, sí es nueva.
 - **Consultas de solo lectura a producción:** `npx supabase db query --linked "select ..."`. No requiere
   Docker (`db dump` sí).

@@ -9,6 +9,10 @@ import { GenerateResourcesButton } from "@/components/generate-resources-button"
 import type { Resource } from "@/components/concept-resources";
 import { GenerateEvidenceButton } from "@/components/generate-evidence-button";
 import type { Evidence } from "@/components/concept-evidence";
+import { OrganizeTopicsButton } from "@/components/organize-topics-button";
+import { NewTopicForm } from "@/components/new-topic-form";
+import { TopicGroup, type Topic } from "@/components/topic-group";
+import { computeTopicDependencies } from "@/lib/knowledge-graph";
 
 export default async function Conceptos({ params }: { params: Promise<{ subjectId: string }> }) {
   const { subjectId } = await params;
@@ -26,11 +30,25 @@ export default async function Conceptos({ params }: { params: Promise<{ subjectI
 
   const { data: concepts } = await supabase
     .from("concepts")
-    .select("id, name, description, status, prerequisite_ids")
+    .select("id, name, description, status, prerequisite_ids, topic_id")
     .eq("subject_id", subjectId)
     .order("created_at", { ascending: true });
 
   const allConcepts = concepts ?? [];
+
+  // Temas de la asignatura, en su orden (docs/MOTOR-DE-CONOCIMIENTO.md 4.3): cada concepto está en uno o en ninguno
+  const { data: topicRows } = await supabase
+    .from("topics")
+    .select("id, name, description, status, position")
+    .eq("subject_id", subjectId)
+    .order("position");
+  const topics: Topic[] = topicRows ?? [];
+  const withoutTopic = allConcepts.filter((c) => !c.topic_id || !topics.some((t) => t.id === c.topic_id));
+  const nextTopicPosition = topics.reduce((max, t) => Math.max(max, t.position + 1), 0);
+  const { needs: topicNeeds, mutual } = computeTopicDependencies(topics, allConcepts);
+  const topicName = new Map(topics.map((t) => [t.id, t.name]));
+  const namesOf = (ids: string[]) => ids.map((id) => topicName.get(id) ?? "").filter(Boolean);
+  const mutualOf = (id: string) => mutual.flatMap(([a, b]) => (a === id ? [b] : b === id ? [a] : []));
 
   const { data: fichas } = await supabase
     .from("concept_cards")
@@ -72,6 +90,20 @@ export default async function Conceptos({ params }: { params: Promise<{ subjectI
     evidenceByConcept.set(e.concept_id, [...(evidenceByConcept.get(e.concept_id) ?? []), e]);
   }
 
+  const topicOptions = topics.map((t) => ({ id: t.id, name: t.name }));
+  const card = (c: (typeof allConcepts)[number]) => (
+    <ConceptCard
+      key={c.id}
+      concept={c}
+      allConcepts={allConcepts}
+      ficha={fichaByConcept.get(c.id)}
+      subjectId={subjectId}
+      resources={resourcesByConcept.get(c.id) ?? []}
+      evidence={evidenceByConcept.get(c.id) ?? []}
+      topics={topicOptions}
+    />
+  );
+
   return (
     <main className="max-w-5xl mx-auto p-8">
         <Link href={`/docente/${subjectId}`} className="text-sm text-muted-foreground hover:underline mb-4 inline-block">
@@ -81,6 +113,16 @@ export default async function Conceptos({ params }: { params: Promise<{ subjectI
       <p className="text-sm text-muted-foreground mb-6">
         {subject.name} — revisa, edita o descarta lo que propuso la IA antes de publicarlo
       </p>
+
+      {allConcepts.length > 0 && (
+        <div className="mb-6">
+          <OrganizeTopicsButton subjectId={subjectId} />
+          <p className="text-xs text-muted-foreground mt-1">
+            La IA agrupa en temas los conceptos que aún no tienen, en el orden de tu material. Después puedes renombrar,
+            ordenar, validar o mover cada concepto de tema.
+          </p>
+        </div>
+      )}
 
       {allConcepts.length > 0 && (
         <div className="mb-6">
@@ -117,18 +159,34 @@ export default async function Conceptos({ params }: { params: Promise<{ subjectI
         </div>
     )}
 
-      <div className="flex flex-col gap-3">
-        {allConcepts.map((c) => (
-          <ConceptCard
-            key={c.id}
-            concept={c}
-            allConcepts={allConcepts}
-            ficha={fichaByConcept.get(c.id)}
-            subjectId={subjectId}
-            resources={resourcesByConcept.get(c.id) ?? []}
-            evidence={evidenceByConcept.get(c.id) ?? []}
-          />
+      {allConcepts.length > 0 && (
+        <div className="mb-6 max-w-md">
+          <NewTopicForm subjectId={subjectId} nextPosition={nextTopicPosition} />
+        </div>
+      )}
+
+      <div className="flex flex-col gap-6">
+        {topics.map((t, i) => (
+          <TopicGroup
+            key={t.id}
+            topic={t}
+            prev={topics[i - 1]}
+            next={topics[i + 1]}
+            needs={namesOf(topicNeeds.get(t.id) ?? [])}
+            mutualWith={namesOf(mutualOf(t.id))}
+          >
+            {allConcepts.filter((c) => c.topic_id === t.id).map(card)}
+            {!allConcepts.some((c) => c.topic_id === t.id) && (
+              <p className="text-sm text-muted-foreground">Este tema todavía no tiene conceptos.</p>
+            )}
+          </TopicGroup>
         ))}
+        {withoutTopic.length > 0 && (
+          <section className="flex flex-col gap-3">
+            {topics.length > 0 && <h2 className="text-subsection">Sin tema</h2>}
+            {withoutTopic.map(card)}
+          </section>
+        )}
         {allConcepts.length === 0 && (
           <p className="text-sm text-muted-foreground">
             Aún no hay conceptos. Vuelve a la asignatura y genera la estructura con IA.
