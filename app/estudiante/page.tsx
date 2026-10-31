@@ -11,7 +11,7 @@ export default async function Estudiante() {
 
   const { data: enrollments } = await supabase
     .from("enrollments")
-    .select("subjects(id, name, topic)")
+    .select("subjects(id, name, description)")
     .eq("student_id", user.id);
 
   return (
@@ -44,7 +44,7 @@ export default async function Estudiante() {
                 <CardHeader>
                   <CardTitle className="text-base">{s.name}</CardTitle>
                 </CardHeader>
-                <CardContent className="text-sm text-muted-foreground">{s.topic}</CardContent>
+                {s.description && <CardContent className="text-sm text-muted-foreground">{s.description}</CardContent>}
               </Card>
             </Link>
           );

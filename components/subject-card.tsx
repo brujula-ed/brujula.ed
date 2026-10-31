@@ -8,14 +8,14 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 
-type Subject = { id: string; name: string; topic: string; class_code: string };
+type Subject = { id: string; name: string; description: string | null; class_code: string };
 
 export function SubjectCard({ subject }: { subject: Subject }) {
   const router = useRouter();
   const supabase = createClient();
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(subject.name);
-  const [topic, setTopic] = useState(subject.topic);
+  const [description, setDescription] = useState(subject.description ?? "");
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState("");
@@ -24,14 +24,14 @@ export function SubjectCard({ subject }: { subject: Subject }) {
   // simplemente no modifica nada. 0 filas = no se guardó.
   async function handleSave() {
     setError("");
-    if (!name.trim() || !topic.trim()) {
-      setError("Completa el nombre y el tema.");
+    if (!name.trim()) {
+      setError("Escribe el nombre de la asignatura.");
       return;
     }
     setLoading(true);
     const { data, error: saveError } = await supabase
       .from("subjects")
-      .update({ name, topic })
+      .update({ name, description: description.trim() || null })
       .eq("id", subject.id)
       .select("id");
     setLoading(false);
@@ -72,7 +72,12 @@ export function SubjectCard({ subject }: { subject: Subject }) {
             placeholder="Nombre de la asignatura"
             aria-label="Nombre de la asignatura"
           />
-          <Input value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="Tema" aria-label="Tema" />
+          <Input
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="De qué trata (opcional)"
+            aria-label="De qué trata la asignatura"
+          />
           {errorMessage}
           <div className="flex gap-2">
             <Button size="sm" onClick={handleSave} disabled={loading}>
@@ -84,7 +89,7 @@ export function SubjectCard({ subject }: { subject: Subject }) {
               onClick={() => {
                 setEditing(false);
                 setName(subject.name);
-                setTopic(subject.topic);
+                setDescription(subject.description ?? "");
               }}
             >
               Cancelar
@@ -112,7 +117,7 @@ export function SubjectCard({ subject }: { subject: Subject }) {
         </CardTitle>
       </CardHeader>
       <CardContent className="text-sm text-muted-foreground flex items-center justify-between">
-        <span>{subject.topic}</span>
+        <span>{subject.description}</span>
         <div className="flex gap-2">
           <Button size="sm" onClick={() => router.push(`/docente/${subject.id}`)}>
             Gestionar

@@ -8,7 +8,7 @@ export type Question = {
 
 export const subject = {
   name: "Programación I",
-  topic: "Estructuras de control",
+  description: "Estructuras de control",
 };
 
 export const questions: Question[] = [

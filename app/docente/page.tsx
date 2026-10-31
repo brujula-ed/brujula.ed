@@ -18,7 +18,7 @@ export default async function Docente() {
 
   const { data: subjects, error: subjectsError } = await supabase
     .from("subjects")
-    .select("id, name, topic, class_code")
+    .select("id, name, description, class_code")
     .eq("teacher_id", user.id)
     .order("created_at", { ascending: false });
 

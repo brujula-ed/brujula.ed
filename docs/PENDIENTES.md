@@ -340,6 +340,10 @@ Pendiente:
 
 ### 14. Rediseño de la app — en preparación (30/10/2026)
 
+**Migración pendiente tras desplegar:** cuando Vercel tenga el código que usa `subjects.description` (paso 2.1 de la
+fase 2, 31/10/2026), crear una migración que borre `subjects.topic`. Hasta entonces se mantiene opcional para no
+romper la versión desplegada.
+
 Motivo (Sergio): la app se ve plana y genérica, desordenada y poco intuitiva, sin prioridad visual ni una línea
 estética común. El docente va y vuelve entre páginas en lugar de seguir un proceso continuo; el estudiante solo puede
 hacer el diagnóstico global; el diagnóstico y la recuperación son mecánicos y no cumplen su objetivo.

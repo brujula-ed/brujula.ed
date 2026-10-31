@@ -18,7 +18,7 @@ export default async function SubjectDetail({ params }: { params: Promise<{ subj
 
   const { data: subject } = await supabase
     .from("subjects")
-    .select("id, name, topic, teacher_id")
+    .select("id, name, description, teacher_id")
     .eq("id", subjectId)
     .single();
 
@@ -38,7 +38,7 @@ export default async function SubjectDetail({ params }: { params: Promise<{ subj
       </Link>
       
       <h1 className="text-xl font-medium mb-1">{subject.name}</h1>
-      <p className="text-sm text-muted-foreground mb-6">{subject.topic}</p>
+      <p className="text-sm text-muted-foreground mb-6">{subject.description}</p>
 
       <UploadDocumentForm subjectId={subjectId} />
 

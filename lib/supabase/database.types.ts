@@ -146,6 +146,7 @@ export type Database = {
           prerequisite_ids: string[]
           status: string
           subject_id: string
+          topic_id: string | null
         }
         Insert: {
           created_at?: string | null
@@ -155,6 +156,7 @@ export type Database = {
           prerequisite_ids?: string[]
           status?: string
           subject_id: string
+          topic_id?: string | null
         }
         Update: {
           created_at?: string | null
@@ -164,6 +166,7 @@ export type Database = {
           prerequisite_ids?: string[]
           status?: string
           subject_id?: string
+          topic_id?: string | null
         }
         Relationships: [
           {
@@ -171,6 +174,13 @@ export type Database = {
             columns: ["subject_id"]
             isOneToOne: false
             referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "concepts_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "topics"
             referencedColumns: ["id"]
           },
         ]
@@ -236,7 +246,7 @@ export type Database = {
           id: string
           subject: string
           subject_id: string | null
-          topic: string
+          topic: string | null
           user_id: string
         }
         Insert: {
@@ -245,7 +255,7 @@ export type Database = {
           id?: string
           subject: string
           subject_id?: string | null
-          topic: string
+          topic?: string | null
           user_id: string
         }
         Update: {
@@ -254,7 +264,7 @@ export type Database = {
           id?: string
           subject?: string
           subject_id?: string | null
-          topic?: string
+          topic?: string | null
           user_id?: string
         }
         Relationships: [
@@ -619,28 +629,111 @@ export type Database = {
         Row: {
           class_code: string
           created_at: string | null
+          description: string | null
           id: string
           name: string
           teacher_id: string
-          topic: string
+          topic: string | null
         }
         Insert: {
           class_code: string
           created_at?: string | null
+          description?: string | null
           id?: string
           name: string
           teacher_id: string
-          topic: string
+          topic?: string | null
         }
         Update: {
           class_code?: string
           created_at?: string | null
+          description?: string | null
           id?: string
           name?: string
           teacher_id?: string
-          topic?: string
+          topic?: string | null
         }
         Relationships: []
+      }
+      topics: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          position: number
+          status: string
+          subject_id: string
+          unit_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          position?: number
+          status?: string
+          subject_id: string
+          unit_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          position?: number
+          status?: string
+          subject_id?: string
+          unit_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "topics_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "topics_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      units: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          position: number
+          subject_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          position?: number
+          subject_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          position?: number
+          subject_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "units_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

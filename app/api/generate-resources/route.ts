@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
     // Los estudiantes inscritos también leen la asignatura: sin esto podrían disparar la llamada a OpenAI
     const { data: subject } = await supabase
       .from("subjects")
-      .select("teacher_id, name, topic")
+      .select("teacher_id, name, description")
       .eq("id", subjectId)
       .maybeSingle();
     if (!subject || subject.teacher_id !== user.id) {
@@ -124,7 +124,9 @@ export async function POST(req: NextRequest) {
         {
           role: "user",
           content:
-            `Asignatura: ${subject.name}. Tema: ${subject.topic}.\n\n` +
+            `Asignatura: ${subject.name}.` +
+            (subject.description ? ` De qué trata: ${subject.description}.` : "") +
+            "\n\n" +
             "Conceptos pendientes: " +
             JSON.stringify(
               pending.map((c) => ({

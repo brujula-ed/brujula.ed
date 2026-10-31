@@ -13,15 +13,15 @@ export function CreateSubjectForm() {
   const router = useRouter();
   const supabase = createClient();
   const [name, setName] = useState("");
-  const [topic, setTopic] = useState("");
+  const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-    if (!name || !topic) {
-      setError("Completa ambos campos.");
+    if (!name.trim()) {
+      setError("Escribe el nombre de la asignatura.");
       return;
     }
     setLoading(true);
@@ -38,7 +38,7 @@ export function CreateSubjectForm() {
       const { error } = await supabase.from("subjects").insert({
         teacher_id: user.id,
         name,
-        topic,
+        description: description.trim() || null,
         class_code: generateClassCode(),
       });
       insertError = error;
@@ -51,7 +51,7 @@ export function CreateSubjectForm() {
       return;
     }
     setName("");
-    setTopic("");
+    setDescription("");
     router.refresh();
   }
 
@@ -64,8 +64,14 @@ export function CreateSubjectForm() {
             <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ingrese el nombre de la asignatura" />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="topic">Tema</Label>
-            <Input id="topic" value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="Ingrese el nombre del tema" />
+            {/* Los temas de la asignatura se organizan después, desde sus conceptos */}
+            <Label htmlFor="description">De qué trata (opcional)</Label>
+            <Input
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Por ejemplo: análisis de videojuegos como discurso"
+            />
           </div>
           {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
           <Button type="submit" disabled={loading}>

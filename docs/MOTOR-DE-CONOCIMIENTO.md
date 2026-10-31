@@ -131,6 +131,14 @@ datos para estimar brechas y su cierre, y búsqueda híbrida sobre todo el mater
      algoritmo; el docente renombra, mueve y valida.
 - **Datos:** embedding en `concepts`, tabla de temas o unidades, y sugerencias de relación con su estado (propuesta,
   validada, descartada).
+- **Decisiones (30/10/2026):**
+  1. **Niveles:** cada concepto pertenece a un **tema**. Los temas se pueden agrupar en **unidades** si el docente
+     quiere (como en su programa), pero no es obligatorio.
+  2. **Un concepto está en un solo tema.** Si otro tema lo necesita, se ve como prerrequisito.
+  3. **Las relaciones entre temas se calculan solas:** si un concepto del tema B necesita uno del tema A, B depende
+     de A. Es determinista y siempre coherente con los prerrequisitos validados.
+  4. **El campo "Tema" de la asignatura pasa a ser una descripción opcional** ("De qué trata la asignatura"), que sigue
+     sirviendo de contexto para la IA y de subtítulo.
 - **Hoy:** `subjects.topic` es un único texto obligatorio por asignatura ("Tema" al crearla), que se usa como
   subtítulo y como contexto para la IA. Confunde, porque una asignatura tiene muchos temas. En la fase 2 se decide si
   pasa a ser una descripción opcional o si se quita. El estudiante ya se inscribe a la asignatura entera (código de

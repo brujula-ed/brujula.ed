@@ -34,7 +34,7 @@ export default function Diagnostico() {
 
   const [stage, setStage] = useState<Stage>("loading");
   const [usingFallback, setUsingFallback] = useState(false);
-  const [subjectInfo, setSubjectInfo] = useState<{ name: string; topic: string }>({ name: "", topic: "" });
+  const [subjectInfo, setSubjectInfo] = useState<{ name: string; description: string | null }>({ name: "", description: null });
   const [bank, setBank] = useState<Question[]>([]);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [levelingContent, setLevelingContent] = useState<Record<string, string>>({});
@@ -58,7 +58,7 @@ export default function Diagnostico() {
   useEffect(() => {
     async function loadData() {
       const focus = new URLSearchParams(window.location.search).get("concepto");
-      const { data: subjectData } = await supabase.from("subjects").select("name, topic").eq("id", subjectId).single();
+      const { data: subjectData } = await supabase.from("subjects").select("name, description").eq("id", subjectId).single();
 
       const { data: bankData, error: questionsError } = await supabase.rpc("get_diagnostic_questions", {
         p_subject_id: subjectId,
@@ -89,7 +89,7 @@ export default function Diagnostico() {
         setQuestions(selectDiagnosticQuestions(focused.length > 0 ? focused : fullBank));
         setFocusConcept(focused.length > 0 ? focus : null);
         setLevelingContent(levelingMap);
-        setSubjectInfo(subjectData ?? { name: "", topic: "" });
+        setSubjectInfo(subjectData ?? { name: "", description: null });
         setUsingFallback(false);
       } else {
         // En la demostración el nombre del concepto hace de id
@@ -106,7 +106,8 @@ export default function Diagnostico() {
       if (user && !isFallback) {
         const { data: attempt, error: attemptError } = await supabase
           .from("diagnostic_attempts")
-          .insert({ user_id: user.id, subject: subjectData?.name ?? fallbackSubject.name, topic: subjectData?.topic ?? fallbackSubject.topic, subject_id: subjectId })
+          // subject es una columna heredada (pendiente 2): repite el nombre de la asignatura
+          .insert({ user_id: user.id, subject: subjectData?.name ?? fallbackSubject.name, subject_id: subjectId })
           .select()
           .single();
         // Sin intento no se guardaría ninguna respuesta: mejor no empezar

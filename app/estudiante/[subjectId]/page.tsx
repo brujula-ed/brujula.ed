@@ -17,7 +17,7 @@ export default async function MiBrujula({ params }: { params: Promise<{ subjectI
 
   const { data: subject } = await supabase
     .from("subjects")
-    .select("id, name, topic")
+    .select("id, name, description")
     .eq("id", subjectId)
     .single();
   if (!subject) notFound();
@@ -89,7 +89,7 @@ export default async function MiBrujula({ params }: { params: Promise<{ subjectI
         ← Volver a mis asignaturas
       </Link>
       <h1 className="text-xl font-medium mb-1">{subject.name}</h1>
-      <p className="text-sm text-muted-foreground mb-6">{subject.topic}</p>
+      <p className="text-sm text-muted-foreground mb-6">{subject.description}</p>
 
       <Link
         href={`/diagnostico/${subjectId}`}
