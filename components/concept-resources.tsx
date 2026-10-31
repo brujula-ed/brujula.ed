@@ -2,9 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { BookOpen, Check, CircleAlert, ExternalLink, PenLine, Play, Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ReviewChip } from "@/components/review-chip";
 import { RESOURCE_KIND_LABEL, siteLabel, type ResourceKind } from "@/lib/resource-sources";
 
 export type Resource = {
@@ -19,6 +22,8 @@ export type Resource = {
   status: string;
 };
 
+const KIND_ICON: Record<ResourceKind, typeof BookOpen> = { lectura: BookOpen, video: Play, ejercicio: PenLine };
+
 const sourceName = (source: string) => (source === "docente" ? "Agregado por ti" : siteLabel(source));
 
 function isHttpsUrl(value: string) {
@@ -29,7 +34,8 @@ function isHttpsUrl(value: string) {
   }
 }
 
-// Recursos de un concepto en la página de conceptos del docente (F-11): validar, descartar y agregar propios
+// Bloque "Recursos" del centro de la mesa de Fichas y recursos (F-11): validar o descartar cada recurso y agregar
+// enlaces propios. Cada recurso se valida por separado: nada se publica sin mirarlo.
 export function ConceptResources({
   conceptId,
   subjectId,
@@ -76,7 +82,8 @@ export function ConceptResources({
   }
 
   // Los enlaces propios no pasan por el catálogo ni por la verificación: los valida el docente al agregarlos
-  async function handleAdd() {
+  async function handleAdd(e: React.FormEvent) {
+    e.preventDefault();
     setError("");
     if (!title.trim() || !isHttpsUrl(url.trim())) {
       setError("Escribe un título y un enlace que empiece por https://.");
@@ -112,65 +119,119 @@ export function ConceptResources({
     router.refresh();
   }
 
+  const errorMessage = error && <p role="alert" className="text-sm text-destructive">{error}</p>;
+
   return (
-    <div className="border-t pt-3 mt-3">
-      <p className="text-xs font-medium mb-2">Recursos para repasar</p>
-      {resources.length === 0 && (
-        <p className="text-xs text-muted-foreground mb-2">Aún no hay recursos para este concepto.</p>
-      )}
-      <ul className="flex flex-col gap-2 mb-2">
-        {resources.map((r) => (
-          <li key={r.id} className="text-sm flex items-start justify-between gap-2">
-            <div>
-              <a href={r.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-                {r.title}
-              </a>
-              <p className="text-xs text-muted-foreground">
-                {RESOURCE_KIND_LABEL[r.kind as ResourceKind] ?? r.kind} · {sourceName(r.source)}
-                {r.link_check === "no_verificable" && " · Sin verificar: ábrelo antes de validarlo"}
-              </p>
-            </div>
-            <div className="flex items-center gap-1 shrink-0">
-              {r.status === "sugerido" ? (
-                <>
-                  <span className="text-xs px-2 py-1 rounded bg-amber-100 text-amber-700">Sugerido por IA</span>
-                  <Button size="sm" variant="outline" onClick={() => handleValidate(r.id)}>Validar</Button>
-                </>
-              ) : (
-                <span className="text-xs px-2 py-1 rounded bg-green-100 text-green-700">Validado</span>
-              )}
-              <Button size="sm" variant="ghost" onClick={() => handleDiscard(r.id)}>Descartar</Button>
-            </div>
-          </li>
-        ))}
+    <div className="flex flex-col gap-3">
+      {resources.length === 0 && <p className="text-sm text-muted-foreground">Aún no hay recursos para este concepto.</p>}
+
+      <ul className="flex flex-col gap-2">
+        {resources.map((r) => {
+          const Icon = KIND_ICON[r.kind as ResourceKind] ?? BookOpen;
+          return (
+            <li key={r.id} className="flex flex-col gap-3 rounded-control border border-border p-3 sm:flex-row sm:items-start">
+              <div className="flex min-w-0 flex-1 gap-3">
+                <span
+                  aria-hidden="true"
+                  className="flex size-8 shrink-0 items-center justify-center rounded-full bg-secondary text-secondary-foreground"
+                >
+                  <Icon className="size-4" />
+                </span>
+                <div className="flex min-w-0 flex-col gap-1">
+                  <a
+                    href={r.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-start gap-1 font-medium text-primary hover:underline"
+                  >
+                    <span className="min-w-0 break-words">{r.title}</span>
+                    <ExternalLink aria-hidden="true" className="mt-1 size-3.5 shrink-0" />
+                    <span className="sr-only">(se abre en otra pestaña)</span>
+                  </a>
+                  <p className="text-xs text-muted-foreground">
+                    {RESOURCE_KIND_LABEL[r.kind as ResourceKind] ?? r.kind} · {sourceName(r.source)}
+                  </p>
+                  {r.link_check === "verificado" && (
+                    <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <Check aria-hidden="true" className="size-3.5 text-primary" />
+                      Enlace comprobado
+                    </p>
+                  )}
+                  {r.link_check === "no_verificable" && (
+                    <p className="flex items-start gap-1 text-xs font-medium text-foreground">
+                      <CircleAlert aria-hidden="true" className="mt-px size-3.5 shrink-0" />
+                      Este sitio no deja comprobar el enlace: ábrelo antes de validarlo
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+                <ReviewChip validated={r.status === "validado"} />
+                <Button size="sm" variant="ghost" onClick={() => handleDiscard(r.id)}>Descartar</Button>
+                {r.status === "sugerido" && (
+                  <Button size="sm" variant="outline" onClick={() => handleValidate(r.id)}>
+                    <Check aria-hidden="true" />
+                    Validar
+                  </Button>
+                )}
+              </div>
+            </li>
+          );
+        })}
       </ul>
 
       {adding ? (
-        <div className="flex flex-col gap-2">
-          <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Título" aria-label="Título del recurso" />
-          <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://..." aria-label="Enlace del recurso" />
-          <label className="flex items-center gap-2 text-xs text-muted-foreground">
-            Tipo
+        <form onSubmit={handleAdd} className="flex flex-col gap-3 rounded-control border border-dashed border-border p-3">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor={`resource-title-${conceptId}`}>Título</Label>
+            <Input id={`resource-title-${conceptId}`} value={title} onChange={(e) => setTitle(e.target.value)} autoFocus />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor={`resource-url-${conceptId}`}>Enlace</Label>
+            <Input
+              id={`resource-url-${conceptId}`}
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="https://..."
+              inputMode="url"
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor={`resource-kind-${conceptId}`}>Tipo</Label>
             <select
+              id={`resource-kind-${conceptId}`}
               value={kind}
               onChange={(e) => setKind(e.target.value as ResourceKind)}
-              className="h-8 rounded-md border border-input bg-transparent px-2 text-sm text-foreground"
+              className="h-11 max-w-xs rounded-control border border-input bg-card px-3 text-base text-foreground"
             >
               {(Object.keys(RESOURCE_KIND_LABEL) as ResourceKind[]).map((k) => (
                 <option key={k} value={k}>{RESOURCE_KIND_LABEL[k]}</option>
               ))}
             </select>
-          </label>
-          {error && <p role="alert" className="text-xs text-destructive">{error}</p>}
-          <div className="flex gap-2">
-            <Button size="sm" onClick={handleAdd} disabled={loading}>Agregar</Button>
-            <Button size="sm" variant="ghost" onClick={() => { setAdding(false); setError(""); }}>Cancelar</Button>
           </div>
-        </div>
+          <p className="text-xs text-muted-foreground">Tus enlaces se publican al agregarlos: no pasan por la verificación.</p>
+          {errorMessage}
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => {
+                setAdding(false);
+                setError("");
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={loading}>{loading ? "Agregando..." : "Agregar"}</Button>
+          </div>
+        </form>
       ) : (
         <>
-          {error && <p role="alert" className="text-xs text-destructive mb-2">{error}</p>}
-          <Button size="sm" variant="outline" onClick={() => setAdding(true)}>Agregar enlace</Button>
+          {errorMessage}
+          <Button variant="outline" size="sm" className="self-start" onClick={() => setAdding(true)}>
+            <Plus aria-hidden="true" />
+            Agregar enlace propio
+          </Button>
         </>
       )}
     </div>

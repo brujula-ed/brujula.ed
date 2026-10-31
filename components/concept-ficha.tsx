@@ -2,8 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Check, CircleAlert } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { ReviewChip } from "@/components/review-chip";
 
 export type Ficha = {
   concept_id: string;
@@ -13,8 +16,10 @@ export type Ficha = {
   status: string;
 };
 
-const textareaClass = "w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm";
+const textareaClass = "w-full rounded-control border border-input bg-card px-3 py-2 text-base";
 
+// Bloque "Ficha" del centro de la mesa de Fichas y recursos (components/cards-workspace.tsx): validar, editar o
+// descartar la ficha del concepto. El origen (material o conocimiento general) lo ve solo el docente.
 export function ConceptFicha({ ficha }: { ficha: Ficha }) {
   const router = useRouter();
   const supabase = createClient();
@@ -26,7 +31,8 @@ export function ConceptFicha({ ficha }: { ficha: Ficha }) {
 
   // Se piden de vuelta las filas modificadas: si la RLS bloquea la operación, Supabase no da error,
   // simplemente no modifica nada. 0 filas = no se guardó.
-  async function handleSave() {
+  async function handleSave(e: React.FormEvent) {
+    e.preventDefault();
     setError("");
     if (!whyItMatters.trim() || !application.trim()) {
       setError("Completa los dos textos de la ficha.");
@@ -64,7 +70,7 @@ export function ConceptFicha({ ficha }: { ficha: Ficha }) {
   }
 
   async function handleDiscard() {
-    if (!confirm("¿Descartar esta ficha? Podrás generar otra con IA.")) return;
+    if (!confirm("¿Descartar esta ficha? Podrás preparar otra desde Estructura.")) return;
     setError("");
     const { data, error: deleteError } = await supabase
       .from("concept_cards")
@@ -78,79 +84,88 @@ export function ConceptFicha({ ficha }: { ficha: Ficha }) {
     router.refresh();
   }
 
-  const errorMessage = error && <p role="alert" className="text-xs text-destructive">{error}</p>;
+  const errorMessage = error && <p role="alert" className="text-sm text-destructive">{error}</p>;
+
+  if (editing) {
+    return (
+      <form onSubmit={handleSave} className="flex flex-col gap-4">
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="ficha-why">Por qué importa</Label>
+          <textarea
+            id="ficha-why"
+            value={whyItMatters}
+            onChange={(e) => setWhyItMatters(e.target.value)}
+            rows={3}
+            autoFocus
+            className={textareaClass}
+          />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="ficha-application">Para qué te sirve</Label>
+          <textarea
+            id="ficha-application"
+            value={application}
+            onChange={(e) => setApplication(e.target.value)}
+            rows={3}
+            className={textareaClass}
+          />
+        </div>
+        {errorMessage}
+        <div className="flex justify-end gap-2">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => {
+              setEditing(false);
+              setWhyItMatters(ficha.why_it_matters);
+              setApplication(ficha.application);
+              setError("");
+            }}
+          >
+            Cancelar
+          </Button>
+          <Button type="submit" disabled={loading}>{loading ? "Guardando..." : "Guardar"}</Button>
+        </div>
+      </form>
+    );
+  }
 
   return (
-    <div className="border-t pt-3 mt-3">
-      <div className="flex items-center justify-between mb-2">
-        <p className="text-xs font-medium">
-          Ficha del concepto
-          <span className="font-normal text-muted-foreground">
-            {" · "}
-            {ficha.source === "general" ? "Conocimiento general: revísala con cuidado" : "Del material"}
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <ReviewChip validated={ficha.status === "validado"} validatedLabel="Validada" />
+        {ficha.source === "general" ? (
+          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+            <CircleAlert aria-hidden="true" className="size-3.5" />
+            Conocimiento general, no de tu material: revísala con cuidado
           </span>
-        </p>
-        <span
-          className={`text-xs px-2 py-1 rounded shrink-0 ${
-            ficha.status === "validado" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"
-          }`}
-        >
-          {ficha.status === "validado" ? "Validada" : "Sugerida por IA"}
-        </span>
+        ) : (
+          <span className="text-xs text-muted-foreground">Sale de tu material</span>
+        )}
       </div>
 
-      {editing ? (
-        <div className="flex flex-col gap-3">
-          <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-            Por qué importa
-            <textarea
-              value={whyItMatters}
-              onChange={(e) => setWhyItMatters(e.target.value)}
-              rows={3}
-              className={textareaClass}
-            />
-          </label>
-          <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-            Para qué te sirve
-            <textarea
-              value={application}
-              onChange={(e) => setApplication(e.target.value)}
-              rows={3}
-              className={textareaClass}
-            />
-          </label>
-          {errorMessage}
-          <div className="flex gap-2">
-            <Button size="sm" onClick={handleSave} disabled={loading}>Guardar</Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => {
-                setEditing(false);
-                setWhyItMatters(ficha.why_it_matters);
-                setApplication(ficha.application);
-              }}
-            >
-              Cancelar
-            </Button>
-          </div>
-        </div>
-      ) : (
-        <>
-          <p className="text-xs text-muted-foreground">Por qué importa</p>
-          <p className="text-sm mb-2">{ficha.why_it_matters}</p>
-          <p className="text-xs text-muted-foreground">Para qué te sirve</p>
-          <p className="text-sm mb-3">{ficha.application}</p>
-          <div className="flex gap-2">
-            {ficha.status === "sugerido" && (
-              <Button size="sm" onClick={handleValidate} disabled={loading}>Validar ficha</Button>
-            )}
-            <Button size="sm" variant="outline" onClick={() => setEditing(true)}>Editar ficha</Button>
-            <Button size="sm" variant="ghost" onClick={handleDiscard}>Descartar ficha</Button>
-          </div>
-          {error && <div className="mt-2">{errorMessage}</div>}
-        </>
-      )}
+      <div className="flex flex-col gap-1">
+        <p className="text-eyebrow text-muted-foreground">Por qué importa</p>
+        <p className="text-base">{ficha.why_it_matters}</p>
+      </div>
+      <div className="flex flex-col gap-1">
+        <p className="text-eyebrow text-muted-foreground">Para qué te sirve</p>
+        <p className="text-base">{ficha.application}</p>
+      </div>
+
+      {errorMessage}
+
+      {/* Orden fijo: la principal al final */}
+      <div className="flex flex-wrap justify-end gap-2">
+        <Button variant="ghost" size="sm" onClick={handleDiscard}>Descartar</Button>
+        <Button variant="outline" size="sm" onClick={() => setEditing(true)}>Editar</Button>
+        {ficha.status === "sugerido" && (
+          <Button size="sm" onClick={handleValidate} disabled={loading}>
+            <Check aria-hidden="true" />
+            Validar ficha
+          </Button>
+        )}
+      </div>
     </div>
   );
 }

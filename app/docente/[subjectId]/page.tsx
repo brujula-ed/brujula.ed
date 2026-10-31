@@ -63,10 +63,10 @@ export default async function SubjectPage({
       : { count: 0 };
 
   return (
-    // En Estructura y Preguntas, espacio abajo en el celular para la barra de acciones fija (ActionBar), que si no
-    // taparía el final
+    // En las mesas de trabajo (Estructura, Fichas y Preguntas), espacio abajo en el celular para la barra de acciones
+    // fija (ActionBar), que si no taparía el final
     <main
-      className={`mx-auto w-full max-w-[1280px] px-4 py-8 md:px-8 ${view === "contenido" && (step === "estructura" || step === "preguntas") ? "pb-28 md:pb-8" : ""}`}
+      className={`mx-auto w-full max-w-[1280px] px-4 py-8 md:px-8 ${view === "contenido" && (step === "estructura" || step === "fichas" || step === "preguntas") ? "pb-28 md:pb-8" : ""}`}
     >
       <PageHeader
         crumbs={[{ label: "Mis asignaturas", href: "/docente" }, { label: subject.name }]}

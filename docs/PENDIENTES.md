@@ -170,7 +170,7 @@ Hecho:
   listando todos los prerrequisitos); al elegir un concepto se resalta su ruta y se atenúa el resto.
 - **Ficha de concepto (F-05)**: tabla `concept_cards` (migraciones `fichas_de_concepto` y `origen_de_fichas`,
   aplicadas en producción), ruta `app/api/generate-concept-cards/route.ts`, validación en la página de conceptos
-  (`components/concept-ficha.tsx`, `components/generate-cards-button.tsx`) y fichas validadas en el panel del mapa
+  (`components/concept-ficha.tsx`, `components/prepare-cards-button.tsx`, desde Estructura) y fichas validadas en el panel del mapa
   del estudiante ("Por qué importa" y "Para qué te sirve").
 - La IA usa el material del docente, el mapa de conceptos validados (qué necesita y qué desbloquea cada uno) y,
   si el material no alcanza, conocimiento general de la disciplina. Cada ficha guarda su origen (`source`:

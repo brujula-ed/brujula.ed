@@ -8,6 +8,7 @@ import { computeTopicDependencies, learningOrder } from "@/lib/knowledge-graph";
 import { materialPositions } from "@/lib/topic-organization";
 import { FindDuplicatesButton, type DuplicatePair } from "@/components/duplicate-pairs";
 import { StructureWorkspace, type WorkspaceGroup } from "@/components/structure-workspace";
+import { PrepareCardsButton } from "@/components/prepare-cards-button";
 
 // Paso 2 de "Contenido": conceptos y temas. Carga los datos y calcula el orden y los avisos (determinista); la mesa de
 // trabajo (components/structure-workspace.tsx) los muestra. La página de la asignatura ya comprobó que el docente es el
@@ -145,6 +146,26 @@ const withoutEvidence = allConcepts.filter((c) => !evidenceByConcept[c.id]).leng
         mapFichas={validatedFichas}
         mapResources={validatedResources}
       />
+
+      {/* La IA del paso siguiente en un solo botón (como Material con la estructura): fichas y recursos de los
+          conceptos validados. Se puede repetir al validar más: solo completa lo que falta */}
+      {allConcepts.length > 0 && (
+        <div className="mt-2 flex flex-col gap-2 rounded-card bg-secondary/60 p-5">
+          <p className="font-medium">Cuando tengas conceptos validados</p>
+          <p className="text-sm text-muted-foreground">
+            La IA escribe la ficha de cada concepto validado (por qué importa y para qué le sirve al estudiante) y busca
+            hasta 3 recursos abiertos para repasarlo, comprobando que los enlaces existan. Después los revisas en Fichas y
+            recursos. Si validas más conceptos, vuelve a usarlo: solo completa lo que falta.
+          </p>
+          <div className="mt-2">
+            {allConcepts.some((c) => c.status === "validado") ? (
+              <PrepareCardsButton subjectId={subjectId} />
+            ) : (
+              <p className="text-sm font-medium">Valida al menos un concepto para continuar.</p>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
