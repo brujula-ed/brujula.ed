@@ -7,9 +7,10 @@ import { generateClassCode } from "@/lib/class-code";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-export function CreateSubjectForm() {
+// Se usa dentro de la ventana de "Nueva asignatura" (components/new-subject-toggle.tsx)
+export function CreateSubjectForm({ onCreated, onCancel }: { onCreated?: () => void; onCancel?: () => void }) {
   const router = useRouter();
   const supabase = createClient();
   const [name, setName] = useState("");
@@ -52,16 +53,20 @@ export function CreateSubjectForm() {
     }
     setName("");
     setDescription("");
+    onCreated?.();
     router.refresh();
   }
 
   return (
     <Card>
-      <CardContent className="pt-6">
+      <CardHeader>
+        <CardTitle id="new-subject-title">Nueva asignatura</CardTitle>
+      </CardHeader>
+      <CardContent>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="name">Nombre de la asignatura</Label>
-            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ingrese el nombre de la asignatura" />
+            <Input id="name" autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="Ingrese el nombre de la asignatura" />
           </div>
           <div className="flex flex-col gap-1.5">
             {/* Los temas de la asignatura se organizan después, desde sus conceptos */}
@@ -74,9 +79,16 @@ export function CreateSubjectForm() {
             />
           </div>
           {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
-          <Button type="submit" disabled={loading}>
-            {loading ? "Creando..." : "Crear asignatura"}
-          </Button>
+          <div className="flex justify-end gap-2">
+            {onCancel && (
+              <Button type="button" variant="ghost" onClick={onCancel}>
+                Cancelar
+              </Button>
+            )}
+            <Button type="submit" disabled={loading}>
+              {loading ? "Creando..." : "Crear asignatura"}
+            </Button>
+          </div>
         </form>
       </CardContent>
     </Card>

@@ -7,11 +7,13 @@ export function StatTile({
   value,
   context,
   tone = "default",
+  children,
 }: {
   label: string;
   value: string | number;
   context?: string;
   tone?: "default" | "featured";
+  children?: React.ReactNode; // p. ej. accesos directos a lo que cuenta la cifra
 }) {
   return (
     <Card tone={tone}>
@@ -23,6 +25,7 @@ export function StatTile({
             {context}
           </p>
         )}
+        {children}
       </CardContent>
     </Card>
   );

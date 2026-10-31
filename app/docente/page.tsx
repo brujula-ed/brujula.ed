@@ -1,4 +1,6 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
+import { ArrowRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { SubjectCard, type SubjectCardProgress } from "@/components/subject-card";
 import { NewSubjectToggle } from "@/components/new-subject-toggle";
@@ -6,7 +8,7 @@ import { PageHeader } from "@/components/page-header";
 import { StatTile } from "@/components/stat-tile";
 import { EmptyState } from "@/components/empty-state";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { loadSetup, type SetupStatus } from "@/lib/subject-setup";
+import { loadSetup, type PendingReview, type SetupStatus } from "@/lib/subject-setup";
 import { loadClassProgress, type ClassProgress } from "@/lib/class-progress";
 
 // Inicio del docente (docs/PRINCIPIOS-DE-DISENO.md 2.10): qué sigue, pendientes y estados de todas sus asignaturas.
@@ -69,13 +71,34 @@ export default async function Docente() {
       <PageHeader
         title={firstName ? `Hola, ${firstName}` : "Hola"}
         next={nextLine(overview)}
-        action={<NewSubjectToggle startOpen={list.length === 0} />}
+        action={<NewSubjectToggle />}
       />
 
       {list.length > 0 && (pendingReview > 0 || students > 0) && (
         <div className="mb-8 grid grid-cols-2 gap-4 md:grid-cols-3">
           {pendingReview > 0 && (
-            <StatTile tone="featured" label="Por validar" value={pendingReview} context="propuestas de la IA esperando tu revisión" />
+            <StatTile tone="featured" label="Por validar" value={pendingReview} context="propuestas de la IA esperando tu revisión">
+              <ul className="mt-1 flex flex-col gap-1 border-t border-primary-foreground/25 pt-3 text-sm">
+                {overview
+                  .filter((o) => o.setup.pendingReview > 0)
+                  .sort((a, b) => b.setup.pendingReview - a.setup.pendingReview)
+                  .map((o) => (
+                    <li key={o.subject.id}>
+                      <Link
+                        href={reviewHref(o.subject.id, o.setup.pending)}
+                        className="flex items-center justify-between gap-2 rounded-control py-1 font-medium hover:underline"
+                      >
+                        <span className="min-w-0 truncate">
+                          {o.subject.name} · {o.setup.pendingReview}
+                        </span>
+                        <span className="flex shrink-0 items-center gap-1">
+                          Validar <ArrowRight aria-hidden="true" className="size-4" />
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+              </ul>
+            </StatTile>
           )}
           {students > 0 && (
             <StatTile label="Estudiantes con brechas" value={studentsWithGaps} context={`de ${students} inscritos`} />
@@ -93,7 +116,7 @@ export default async function Docente() {
       {list.length === 0 ? (
         <EmptyState
           title="Todavía no tienes asignaturas"
-          text="Crea tu primera asignatura con el botón de arriba. Después subirás tu material y la IA te propondrá sus conceptos, temas y preguntas para que los revises."
+          text="Crea tu primera asignatura con el botón Nueva asignatura. Después subirás tu material y la IA te propondrá sus conceptos, temas y preguntas para que los revises."
         />
       ) : (
         <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
@@ -162,10 +185,14 @@ export default async function Docente() {
 
 // Qué sigue, por prioridad: lo que falta validar, la asignatura que no está lista, invitar estudiantes o todo al día
 function nextLine(overview: { subject: { name: string }; setup: SetupStatus }[]): string {
-  if (overview.length === 0) return "Empieza por crear tu primera asignatura.";
+  if (overview.length === 0) return "Empieza por crear tu primera asignatura con el botón Nueva asignatura.";
+  const total = overview.reduce((n, o) => n + o.setup.pendingReview, 0);
   const review = [...overview].sort((a, b) => b.setup.pendingReview - a.setup.pendingReview)[0];
   if (review.setup.pendingReview > 0) {
-    return `Tienes ${review.setup.pendingReview} propuestas de la IA por validar en ${review.subject.name}. Empieza por ahí.`;
+    // El mismo total que la cifra "Por validar"; si está repartido, se nombra la asignatura con más
+    return total === review.setup.pendingReview
+      ? `Tienes ${total} propuestas de la IA por validar en ${review.subject.name}.`
+      : `Tienes ${total} propuestas de la IA por validar, ${review.setup.pendingReview} en ${review.subject.name}. Empieza por ahí.`;
   }
   const notReady = overview.find((o) => !o.setup.ready);
   if (notReady && notReady.setup.current) {
@@ -174,6 +201,14 @@ function nextLine(overview: { subject: { name: string }; setup: SetupStatus }[])
   const toInvite = overview.find((o) => o.setup.current?.id === "invitar");
   if (toInvite) return `${toInvite.subject.name} está lista: comparte el código de clase con tus estudiantes.`;
   return "Todo al día. Tus asignaturas están listas.";
+}
+
+// Dónde se valida hoy cada cosa: conceptos, temas, fichas y recursos en el paso Estructura; las preguntas en Preguntas.
+// Cambiará cuando las fichas y los recursos tengan su propio paso.
+function reviewHref(subjectId: string, p: PendingReview): string {
+  return p.concepts + p.topics + p.cards + p.resources > 0
+    ? `/docente/${subjectId}?paso=estructura`
+    : `/docente/${subjectId}?paso=preguntas`;
 }
 
 // Estados de toda la clase en una sola barra: suma de los estados de cada concepto validado

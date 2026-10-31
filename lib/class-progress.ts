@@ -3,7 +3,7 @@ import { computeConceptStates, type ConceptState } from "@/lib/concept-state";
 import { computeClassLRR, type ClassLRRResult } from "@/lib/lrr";
 
 // Progreso de la clase de una asignatura: estados por concepto y estudiante, y LRR grupal. Misma lógica que el reporte
-// de clase (app/docente/[subjectId]/reporte/page.tsx), que pasará a usar esta función en el rediseño de "Estudiantes".
+// de clase (components/subject-steps/students-step.tsx), que pasará a usar esta función en el rediseño de "Estudiantes".
 
 type SupabaseServer = Awaited<ReturnType<typeof createClient>>;
 

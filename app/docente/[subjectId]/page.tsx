@@ -1,90 +1,115 @@
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { UploadDocumentForm } from "@/components/upload-document-form";
-import { ProcessDocumentButton } from "@/components/process-document-button";
-import { GenerateConceptsButton } from "@/components/generate-concepts-button";
-import { Card, CardContent } from "@/components/ui/card";
-//import { ArrowLeft } from "lucide-react";
-import { GenerateQuestionsButton } from "@/components/generate-questions-button";
-import { DeleteDocumentButton } from "@/components/delete-document-button";
+import { PageHeader } from "@/components/page-header";
+import { CopyCodeButton } from "@/components/copy-code-button";
+import { buttonVariants } from "@/components/ui/button";
+import { loadSetup, type StepId } from "@/lib/subject-setup";
+import { SubjectTabs, SetupStepsNav, shortLabel, type View } from "@/components/subject-steps/subject-nav";
+import { MaterialStep } from "@/components/subject-steps/material-step";
+import { StructureStep } from "@/components/subject-steps/structure-step";
+import { CardsStep } from "@/components/subject-steps/cards-step";
+import { QuestionsStep } from "@/components/subject-steps/questions-step";
+import { InviteStep } from "@/components/subject-steps/invite-step";
+import { StudentsStep } from "@/components/subject-steps/students-step";
 
+const STEP_IDS: StepId[] = ["material", "estructura", "fichas", "preguntas", "invitar"];
 
-export default async function SubjectDetail({ params }: { params: Promise<{ subjectId: string }> }) {
+// Página de la asignatura (docs/PRINCIPIOS-DE-DISENO.md 2.10): pestañas "Contenido" (los 5 pasos de preparación) y
+// "Estudiantes". Lo que se ve lo dice la dirección (?vista= y ?paso=); sin nada, se abre en el paso que falta o, si no
+// falta ninguno, en Estudiantes. Cada paso carga solo sus datos.
+export default async function SubjectPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ subjectId: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   const { subjectId } = await params;
+  const { vista, paso } = await searchParams;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
   const { data: subject } = await supabase
     .from("subjects")
-    .select("id, name, description, teacher_id")
+    .select("id, name, description, teacher_id, class_code")
     .eq("id", subjectId)
     .single();
-
   if (!subject || subject.teacher_id !== user.id) notFound();
 
-  const { data: documents } = await supabase
-    .from("subject_documents")
-    .select("id, file_name, storage_path, uploaded_at")
-    .eq("subject_id", subjectId)
-    .order("uploaded_at", { ascending: false });
+  const setup = await loadSetup(supabase, subjectId);
+  const requestedStep = STEP_IDS.find((id) => id === paso);
+  const view: View =
+    vista === "estudiantes" ? "estudiantes" : vista === "contenido" || requestedStep || setup.current ? "contenido" : "estudiantes";
+  const step: StepId = requestedStep ?? setup.current?.id ?? "material";
+  const stepIndex = STEP_IDS.indexOf(step);
+  const stepInfo = setup.steps[stepIndex];
+  const nextStep = setup.steps[stepIndex + 1];
+
+  const { count: students } =
+    view === "contenido" && step === "invitar"
+      ? await supabase.from("enrollments").select("student_id", { count: "exact", head: true }).eq("subject_id", subjectId)
+      : { count: 0 };
 
   return (
-    <main className="max-w-2xl mx-auto p-8">
-      
-      <Link href="/docente" className="text-sm text-muted-foreground hover:underline mb-4 inline-block">
-        ← Volver a mis asignaturas
-      </Link>
-      
-      <h1 className="text-xl font-medium mb-1">{subject.name}</h1>
-      <p className="text-sm text-muted-foreground mb-6">{subject.description}</p>
+    <main className="mx-auto w-full max-w-[1280px] px-4 py-8 md:px-8">
+      <PageHeader
+        crumbs={[{ label: "Mis asignaturas", href: "/docente" }, { label: subject.name }]}
+        title={subject.name}
+        next={
+          <>
+            {subject.description && <span className="block">{subject.description}</span>}
+            <span className="block">
+              {setup.ready
+                ? "Lista para estudiantes."
+                : setup.current
+                  ? `En preparación: paso ${STEP_IDS.indexOf(setup.current.id) + 1} de 5, ${setup.current.label.toLowerCase()}.`
+                  : ""}
+            </span>
+          </>
+        }
+        action={<CopyCodeButton code={subject.class_code} />}
+      />
 
-      <UploadDocumentForm subjectId={subjectId} />
+      <SubjectTabs subjectId={subjectId} view={view} />
 
-      <div className="flex flex-col gap-2 mt-6">
-        {documents?.map((d) => (
-          <Card key={d.id}>
-            <CardContent className="pt-4 text-sm flex flex-wrap items-center justify-between gap-2">
-              <span className="truncate">{d.file_name}</span>
-              <div className="flex items-center gap-2 shrink-0">
-                <ProcessDocumentButton documentId={d.id} />
-                <DeleteDocumentButton documentId={d.id} storagePath={d.storage_path} fileName={d.file_name} />
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-        {documents?.length === 0 && (
-          <p className="text-sm text-muted-foreground">Aún no subiste ningún documento.</p>
-        )}
-      </div>
+      {view === "estudiantes" ? (
+        <StudentsStep subjectId={subjectId} />
+      ) : (
+        <>
+          <SetupStepsNav subjectId={subjectId} steps={setup.steps} selected={step} current={setup.current?.id ?? null} />
 
-      <div className="mt-8 pt-6 border-t">
-        <h2 className="text-sm font-medium mb-3">Estructura de conceptos</h2>
-        <div className="flex items-center gap-3">
-          <GenerateConceptsButton subjectId={subjectId} />
-          <Link href={`/docente/${subjectId}/conceptos`} className="text-sm text-muted-foreground hover:underline">
-            Ver / validar conceptos →
-          </Link>
-        </div>
-      </div>
+          <section aria-labelledby="step-title" className="flex flex-col gap-2">
+            <h2 id="step-title" className="text-section">
+              {stepIndex + 1}. {stepInfo.label}
+              {!stepInfo.required && <span className="ml-2 text-sm font-normal text-muted-foreground">(opcional)</span>}
+            </h2>
+            <p className="text-sm font-medium">{stepInfo.detail}.</p>
+            <div className="mt-2">
+              {step === "material" && <MaterialStep subjectId={subjectId} />}
+              {step === "estructura" && <StructureStep subjectId={subjectId} />}
+              {step === "fichas" && <CardsStep subjectId={subjectId} />}
+              {step === "preguntas" && <QuestionsStep subjectId={subjectId} />}
+              {step === "invitar" && (
+                <InviteStep classCode={subject.class_code} students={students ?? 0} ready={setup.ready} />
+              )}
+            </div>
+          </section>
 
-      <div className="mt-6 pt-6 border-t">
-        <h2 className="text-sm font-medium mb-3">Preguntas de diagnóstico</h2>
-        <div className="flex items-center gap-3">
-          <GenerateQuestionsButton subjectId={subjectId} />
-          <Link href={`/docente/${subjectId}/preguntas`} className="text-sm text-muted-foreground hover:underline">
-            Ver / validar preguntas →
-          </Link>
-        </div>
-      </div>
-
-      <div className="mt-3">
-        <Link href={`/docente/${subjectId}/reporte`} className="text-sm text-muted-foreground hover:underline">
-          Ver reporte de clase →
-        </Link>
-      </div>
-
+          {/* Cada paso ofrece el siguiente: se avanza en el recorrido, sin volver atrás */}
+          <div className="mt-10 flex justify-end border-t border-border pt-6">
+            <Link
+              href={nextStep ? `/docente/${subjectId}?paso=${nextStep.id}` : `/docente/${subjectId}?vista=estudiantes`}
+              className={buttonVariants({ variant: "outline" })}
+            >
+              {nextStep ? `Siguiente: ${shortLabel(nextStep)}` : "Ver estudiantes"}
+              <ArrowRight aria-hidden="true" />
+            </Link>
+          </div>
+        </>
+      )}
     </main>
   );
 }

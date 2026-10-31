@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { StateBar } from "@/components/state-bar";
@@ -161,9 +161,12 @@ export function SubjectCard({
           >
             {copied ? "¡Copiado!" : `Código ${subject.class_code}`}
           </button>
-          <div className="flex gap-1">
+          <div className="flex flex-wrap items-center gap-1">
+            <Link href={`/docente/${subject.id}`} className={buttonVariants({ variant: "outline", size: "sm" })}>
+              Gestionar
+            </Link>
             {progress && progress.students > 0 && (
-              <Button variant="ghost" size="xs" onClick={() => router.push(`/docente/${subject.id}/reporte`)}>
+              <Button variant="ghost" size="xs" onClick={() => router.push(`/docente/${subject.id}?vista=estudiantes`)}>
                 Resultados
               </Button>
             )}

@@ -27,7 +27,10 @@ export type SetupStatus = {
   ready: boolean;
   current: SetupStep | null; // primer paso obligatorio que falta; null si no falta ninguno
   pendingReview: number; // propuestas de la IA esperando validación (conceptos, temas, preguntas, fichas, recursos)
+  pending: PendingReview; // el mismo total, por tipo: dice a qué página llevar al docente para validar
 };
+
+export type PendingReview = { concepts: number; topics: number; questions: number; cards: number; resources: number };
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
@@ -43,7 +46,7 @@ export function computeSetup(input: SetupInput): SetupStatus {
   }
   const short = studentConcepts.filter((c) => (validatedQuestions.get(c.id) ?? 0) < MIN_QUESTIONS_PER_CONCEPT);
 
-  const pending = {
+  const pending: PendingReview = {
     concepts: input.concepts.filter((c) => c.status === "sugerido").length,
     topics: input.topics.filter((t) => t.status === "sugerido").length,
     questions: input.questions.filter((q) => q.status === "sugerido").length,
@@ -120,6 +123,7 @@ export function computeSetup(input: SetupInput): SetupStatus {
     ready: structureDone && questionsDone,
     current: steps.find((s) => s.required && !s.done) ?? null,
     pendingReview: pending.concepts + pending.topics + pending.questions + pending.cards + pending.resources,
+    pending,
   };
 }
 

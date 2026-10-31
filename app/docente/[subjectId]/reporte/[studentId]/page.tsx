@@ -94,7 +94,7 @@ export default async function EstudianteDetalle({
   return (
     <main className="max-w-5xl mx-auto p-8">
       <Link
-        href={`/docente/${subjectId}/reporte`}
+        href={`/docente/${subjectId}?vista=estudiantes`}
         className="text-sm text-muted-foreground hover:underline mb-4 inline-block"
       >
         ← Volver a los resultados
