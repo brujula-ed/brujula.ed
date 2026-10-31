@@ -5,12 +5,27 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { StateBar } from "@/components/state-bar";
+import type { StateCounts } from "@/lib/class-progress";
+import type { SetupStep } from "@/lib/subject-setup";
 import Link from "next/link";
 
 type Subject = { id: string; name: string; description: string | null; class_code: string };
 
-export function SubjectCard({ subject }: { subject: Subject }) {
+// Resumen de la preparación (lib/subject-setup.ts) y del progreso de la clase (lib/class-progress.ts)
+export type SubjectCardSetup = { ready: boolean; current: SetupStep | null; stepNumber: number; pendingReview: number };
+export type SubjectCardProgress = { counts: StateCounts; students: number; studentsWithGaps: number };
+
+export function SubjectCard({
+  subject,
+  setup,
+  progress,
+}: {
+  subject: Subject;
+  setup: SubjectCardSetup;
+  progress?: SubjectCardProgress;
+}) {
   const router = useRouter();
   const supabase = createClient();
   const [editing, setEditing] = useState(false);
@@ -101,36 +116,60 @@ export function SubjectCard({ subject }: { subject: Subject }) {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base flex items-center justify-between">
-          <Link href={`/docente/${subject.id}`} className="hover:underline">
-          {subject.name}
-          </Link>
+    <Card className="transition-[translate,box-shadow] duration-(--duration-short) ease-out-soft hover:shadow-raised motion-safe:hover:-translate-y-1">
+      <CardContent className="flex flex-col gap-3">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <Link href={`/docente/${subject.id}`} className="font-heading text-subsection hover:underline">
+              {subject.name}
+            </Link>
+            {subject.description && <p className="mt-0.5 text-sm text-muted-foreground">{subject.description}</p>}
+          </div>
+          <div className="flex shrink-0 flex-col items-end gap-1">
+            <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-medium">
+              {setup.ready ? "Lista" : "En preparación"}
+            </span>
+            {setup.pendingReview > 0 && (
+              <span className="rounded-full bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground">
+                {setup.pendingReview} por validar
+              </span>
+            )}
+          </div>
+        </div>
+
+        {setup.ready && progress && progress.students > 0 ? (
+          <div className="flex flex-col gap-1.5">
+            <StateBar counts={progress.counts} showLegend={false} />
+            <p className="text-xs text-muted-foreground">
+              {progress.students} estudiantes · {progress.studentsWithGaps} con brechas
+            </p>
+          </div>
+        ) : setup.current ? (
+          <p className="text-sm">
+            <span className="font-medium">
+              Paso {setup.stepNumber} de 5: {setup.current.label}.
+            </span>{" "}
+            <span className="text-muted-foreground">{setup.current.detail}</span>
+          </p>
+        ) : null}
+
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <button
             onClick={handleCopy}
-            title="Clic para copiar"
-            className="text-xs font-mono bg-muted px-2 py-1 rounded hover:bg-muted/70 transition-colors"
+            title="Copiar el código de clase"
+            className="rounded-control bg-muted px-2.5 py-1 font-mono text-xs transition-colors duration-(--duration-instant) hover:bg-secondary"
           >
-            {copied ? "¡Copiado!" : subject.class_code}
+            {copied ? "¡Copiado!" : `Código ${subject.class_code}`}
           </button>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="text-sm text-muted-foreground flex items-center justify-between">
-        <span>{subject.description}</span>
-        <div className="flex gap-2">
-          <Button size="sm" onClick={() => router.push(`/docente/${subject.id}`)}>
-            Gestionar
-          </Button>
-          <Button size="sm" variant="outline" onClick={() => router.push(`/docente/${subject.id}/reporte`)}>
-            Resultados
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => setEditing(true)}>
-            Editar
-          </Button>
-          <Button variant="ghost" size="sm" onClick={handleDelete}>
-            Eliminar
-          </Button>
+          <div className="flex gap-1">
+            {progress && progress.students > 0 && (
+              <Button variant="ghost" size="xs" onClick={() => router.push(`/docente/${subject.id}/reporte`)}>
+                Resultados
+              </Button>
+            )}
+            <Button variant="ghost" size="xs" onClick={() => setEditing(true)}>Editar</Button>
+            <Button variant="ghost" size="xs" onClick={handleDelete}>Eliminar</Button>
+          </div>
         </div>
       </CardContent>
       {error && <CardContent className="pt-0">{errorMessage}</CardContent>}

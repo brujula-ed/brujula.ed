@@ -42,7 +42,28 @@ cambio se anota en la sección 9 con su porqué.
    *Por qué:* hoy la página de la asignatura es un centro con enlaces a páginas separadas, y cada tarea obliga a
    regresar para seguir.
 5. **"Lista para estudiantes" es una meta visible.** El docente ve cuándo su asignatura ya sirve a los estudiantes y
-   qué le falta. El criterio exacto (cuántas preguntas por concepto, por ejemplo) se define con el diagnóstico (sección 8).
+   qué le falta. Criterio provisional (31/10/2026), hasta el diagnóstico nuevo:
+   - al menos un tema validado;
+   - cada concepto validado de esos temas, con 2 o más preguntas validadas.
+   Las fichas y los recursos suman, pero no bloquean.
+10. **El docente no tiene menú (31/10/2026).** Su trabajo es corto y tiene dos momentos, así que bastan dos niveles:
+    - **Inicio:** pendientes y estados de todas sus asignaturas, las tarjetas de cada una y "Nueva asignatura" como
+      botón (no un formulario en el centro).
+    - **Asignatura:** dos pestañas.
+      - **"Contenido"** es la preparación, un recorrido de 5 pasos con su estado:
+        1. material;
+        2. estructura (conceptos y temas);
+        3. fichas y recursos;
+        4. preguntas;
+        5. invitar estudiantes.
+        Cada paso termina con la revisión del docente y ofrece el siguiente.
+      - **"Estudiantes"** es el seguimiento: LRR grupal e individual, brechas frecuentes, estados por tema,
+        sugerencias para la clase y la lista de estudiantes.
+      - La página se abre en "Contenido" mientras la asignatura no esté lista, y en "Estudiantes" cuando lo esté.
+        Contenido sigue disponible para corregir o sumar material.
+    - **Arriba, en toda la app:** la marca, "Mis asignaturas" y la cuenta.
+    *Por qué:* una vez preparada la asignatura, al docente solo le importa el estado de sus estudiantes; un menú de
+    secciones globales separaba cada tarea de su asignatura.
 6. **Nada escondido que importe.** Lo que bloquea el avance (validaciones pendientes, una brecha que es prerrequisito)
    se ve sin buscarlo; los pendientes llevan contador en la navegación.
 7. **Siempre se sabe dónde se está.** Destino activo marcado en el menú, migas de pan en rutas profundas, y volver
@@ -268,9 +289,6 @@ El Anexo I pide además organizar por unidad y tema, comunicar incertidumbre y t
 **Inicio del estudiante:** por asignatura (su ruta en una asignatura, con selector) o general (lo que le toca en todas).
 Se decide con el piloto.
 
-**Menú del docente:** asignatura como centro (recorrido por pasos) o secciones globales (Materiales, Validación,
-Estudiantes con filtro por asignatura). Se decide al empezar el panel docente, mirando la app real.
-
 **Lo que ve el estudiante:** si ve porcentajes o solo estados y conteos; cómo se nombran los estados sin etiquetarlo.
 
 **Transparencia de las propuestas:** mostrar la cita y la página del material de donde sale cada concepto exige
@@ -287,4 +305,6 @@ guardarlas al procesar el documento (hoy no se guardan).
 | 30/10/2026 | Los errores de la interfaz usan su propio rojo, siempre con ícono y texto | Es lo que el usuario reconoce como error; el ícono y el texto evitan confundirlo con el estado "brecha" |
 | 30/10/2026 | Movimiento expresivo, siempre con propósito | La app se siente plana; el movimiento debe conectar pantallas y estados, no decorar |
 | 30/10/2026 | El lenguaje visual vive en `components/ui` (ajustado) y pocas piezas propias | Un solo lugar para cambiar el estilo, sin una capa nueva que mantener |
+| 31/10/2026 | El docente no tiene menú: inicio + página de asignatura con pestañas "Contenido" y "Estudiantes" (2.10) | Su trabajo es corto y tiene dos momentos; las secciones globales separaban cada tarea de su asignatura |
+| 31/10/2026 | "Lista para estudiantes" = un tema validado y sus conceptos validados con 2 o más preguntas validadas (provisional) | Es lo mínimo para diagnosticar y comprobar; fichas y recursos suman pero no frenan abrir la clase |
 | 30/10/2026 | Movimiento con `<ViewTransition>` y CSS, sin librerías de animación (el Vol. 2 citaba Framer Motion) | Cubren los patrones de la sección 4 sin una dependencia más; si algún patrón no se pudiera hacer así, se reconsidera |

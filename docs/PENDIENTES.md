@@ -340,6 +340,14 @@ Pendiente:
 
 ### 14. Rediseño de la app — en preparación (30/10/2026)
 
+**"Actividad reciente" en el inicio del docente:** hoy es un espacio reservado, sin datos inventados (decisión de
+Sergio, 31/10/2026). Falta la función que traiga los eventos.
+- **Se podría sacar de lo que ya existe:**
+  - diagnósticos completados (`diagnostic_attempts.completed_at`);
+  - brechas cerradas (`newlyRecovered` de `lib/gap-closure.ts` por intento);
+  - material procesado (`subject_documents.uploaded_at` y sus fragmentos).
+- **Por decidir:** si se calcula al vuelo o con una tabla de eventos, y cuántos días se muestran.
+
 **Migración pendiente tras desplegar:** cuando Vercel tenga el código que usa `subjects.description` (paso 2.1 de la
 fase 2, 31/10/2026), crear una migración que borre `subjects.topic`. Hasta entonces se mantiene opcional para no
 romper la versión desplegada.

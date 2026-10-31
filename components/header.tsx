@@ -29,7 +29,7 @@ export async function Header() {
         <div className="flex items-center gap-4 text-sm text-white">
           {role === "docente" && (
             <Link href="/docente" className="text-white/80 hover:text-white">
-              Panel docente
+              Mis asignaturas
             </Link>
           )}
           {role === "estudiante" && (
