@@ -75,7 +75,19 @@ detecta brechas de conocimiento, ve un mapa de conocimiento y recibe un siguient
 - `components/` componentes propios; `components/ui/` los de shadcn.
 - `lib/concept-state.ts` estados por concepto (umbral de dominio 0.7).
 - `lib/knowledge-graph.ts` dependientes, prerrequisitos, flechas del mapa (sin las redundantes), brecha prioritaria, próximo desafío.
-- `components/knowledge-map.tsx` mapa (React Flow + dagre) y su panel; `components/concept-ficha.tsx` validación de fichas.
+- `components/knowledge-map.tsx` mapa en dos niveles (React Flow + dagre): temas (`components/topic-map.tsx`) y, al
+  entrar en uno, sus conceptos con los prerrequisitos de otros temas como tarjetas tenues; sin temas, un solo nivel.
+  `components/concept-ficha.tsx` validación de fichas.
+- Temas (fase 2 del motor):
+  - `app/api/organize-topics` y `lib/topic-organization.ts`, para organizar en temas;
+  - `components/topic-group.tsx`, `components/new-topic-form.tsx` y `components/organize-topics-button.tsx`, en
+    Estructura de conceptos;
+  - en `lib/knowledge-graph.ts`, `computeTopicDependencies` (qué tema necesita a cuál) y `learningOrder`
+    (prerrequisitos primero);
+  - `lib/concept-embeddings.ts` y `app/api/find-duplicates`, para los posibles duplicados: los embeddings eligen las
+    parejas y la IA juzga, y el docente decide.
+- Base visual: tokens en `app/globals.css`, `components/ui` ajustados y las piezas `page-header`, `state-bar`,
+  `stat-tile`, `state-chip`, `empty-state` y `action-bar`; muestrario en `/estilos`, solo en desarrollo.
 - `lib/lrr.ts` cálculo del LRR (por estudiante, concepto y clase).
 - `lib/extract-text.ts`, `lib/chunk-text.ts` extracción por página (PDF) o por título (Word), sin encabezados ni pies
   repetidos, y fragmentación por oraciones con página, sección y orden.
@@ -87,9 +99,14 @@ detecta brechas de conocimiento, ve un mapa de conocimiento y recibe un siguient
 
 ## Datos
 Esquema completo en `supabase/migrations/` (cada cambio de esquema va como migración nueva).
-Tablas principales: `profiles` (rol), `subjects` (con código de clase), `enrollments`, `subject_documents`,
+Tablas principales: `profiles` (rol), `subjects` (con código de clase y `description` opcional; `topic` queda solo hasta
+borrarlo), `topics` (temas de la asignatura: `position`, `status`, `unit_id` opcional; el estudiante solo lee los
+validados), `units` (agrupan temas, opcionales), `enrollments`, `subject_documents`,
 `document_chunks` (con embedding, `page_start`/`page_end`, `section`, `position` y `content_tsv` en español),
-`concepts` (`prerequisite_ids`, `status`), `questions` (`status`, `explanations`: una por opción, que el estudiante
+`concepts` (`prerequisite_ids`, `status`, `topic_id`: un concepto en un solo tema de su asignatura; `embedding`, que se
+vacía al cambiar nombre o descripción: nunca hacer `select("*")` de conceptos), `concept_duplicate_candidates` y
+`concept_pair_dismissals` (posibles duplicados que confirmó la IA y parejas que el docente marcó como distintas),
+`questions` (`status`, `explanations`: una por opción, que el estudiante
 no recibe), `evidence_spans` (citas del material de cada concepto o pregunta, con su página; un trigger comprueba
 que la cita esté tal cual en el fragmento; solo las ve el docente),
 `diagnostic_attempts` (`completed_at`), `diagnostic_answers` (`stage`: `diagnostico` | `microevaluacion`,

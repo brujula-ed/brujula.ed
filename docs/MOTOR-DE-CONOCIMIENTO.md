@@ -139,6 +139,31 @@ datos para estimar brechas y su cierre, y búsqueda híbrida sobre todo el mater
      de A. Es determinista y siempre coherente con los prerrequisitos validados.
   4. **El campo "Tema" de la asignatura pasa a ser una descripción opcional** ("De qué trata la asignatura"), que sigue
      sirviendo de contexto para la IA y de subtítulo.
+- **Hecho (31/10/2026):**
+  1. **Modelo de datos:** migraciones `unidades_y_temas` y `corregir_disparadores_de_temas`, con las tablas `topics`
+     y `units`, la columna `concepts.topic_id` y `subjects.description` en lugar de `subjects.topic`.
+  2. **Organizar en temas:** `app/api/organize-topics`, `lib/topic-organization.ts`. Una llamada a la IA; el código
+     comprueba que cada concepto esté en un solo tema y ordena los temas por el material. El docente valida,
+     renombra, ordena, crea, borra y mueve conceptos.
+  3. **Relaciones entre temas y orden:** `computeTopicDependencies` y `learningOrder` en `lib/knowledge-graph.ts`.
+     - Los conceptos de cada tema van en orden de aprendizaje.
+     - Los temas van en el orden que elige el docente, con un aviso si uno necesita a otro que está más abajo.
+  4. **Mapa en dos niveles:** `components/topic-map.tsx` y `components/knowledge-map.tsx`.
+     - Primero los temas, ordenados por dependencias.
+     - Al entrar en uno, sus conceptos, con los prerrequisitos de otros temas como tarjetas tenues.
+     - El estudiante ve solo los temas validados.
+  5. **Posibles duplicados (versión simple):** migraciones `duplicados_de_conceptos` y `candidatos_a_duplicado`, y
+     `lib/concept-embeddings.ts`.
+     - Cada concepto guarda su embedding, que se vacía si cambian el nombre o la descripción.
+     - Los embeddings eligen las 10 parejas más parecidas y la IA juzga cuáles son el mismo concepto.
+     - El docente descarta o edita uno, o marca "No son el mismo".
+     - **Calibración:** con conceptos de una misma disciplina, el parecido por embeddings no separa duplicados de
+       relacionados (0,72–0,80), por eso decide la IA y, al final, el docente. En la prueba, la IA marcó una pareja de
+       10 y el docente la rechazó.
+- **Pendiente de la fase 2:**
+  - fusionar duplicados con su historial (preguntas, citas, intentos), cuando haya estudiantes reales;
+  - pantalla de unidades (con el rediseño);
+  - borrar `subjects.topic` después del despliegue.
 - **Hoy:** `subjects.topic` es un único texto obligatorio por asignatura ("Tema" al crearla), que se usa como
   subtítulo y como contexto para la IA. Confunde, porque una asignatura tiene muchos temas. En la fase 2 se decide si
   pasa a ser una descripción opcional o si se quita. El estudiante ya se inscribe a la asignatura entera (código de

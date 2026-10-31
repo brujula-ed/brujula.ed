@@ -14,6 +14,7 @@ import { NewTopicForm } from "@/components/new-topic-form";
 import { TopicGroup, type Topic } from "@/components/topic-group";
 import { computeTopicDependencies, learningOrder } from "@/lib/knowledge-graph";
 import { materialPositions } from "@/lib/topic-organization";
+import { DuplicatePairs, FindDuplicatesButton, type DuplicatePair } from "@/components/duplicate-pairs";
 
 export default async function Conceptos({ params }: { params: Promise<{ subjectId: string }> }) {
   const { subjectId } = await params;
@@ -94,6 +95,19 @@ export default async function Conceptos({ params }: { params: Promise<{ subjectI
     evidenceByConcept.set(e.concept_id, [...(evidenceByConcept.get(e.concept_id) ?? []), e]);
   }
 
+  // Posibles duplicados que confirmó la IA (lib/concept-embeddings.ts); se guardan al generar o con "Buscar duplicados"
+  const { data: candidates } = await supabase
+    .from("concept_duplicate_candidates")
+    .select("concept_a, concept_b, reason")
+    .eq("subject_id", subjectId)
+    .order("similarity", { ascending: false });
+  const conceptById = new Map(allConcepts.map((c) => [c.id, c]));
+  const duplicatePairs: DuplicatePair[] = (candidates ?? []).flatMap((p) => {
+    const a = conceptById.get(p.concept_a);
+    const b = conceptById.get(p.concept_b);
+    return a && b ? [{ a: { id: a.id, name: a.name }, b: { id: b.id, name: b.name }, reason: p.reason }] : [];
+  });
+
   const topicOptions = topics.map((t) => ({ id: t.id, name: t.name }));
   const card = (c: (typeof allConcepts)[number]) => (
     <ConceptCard
@@ -117,6 +131,17 @@ export default async function Conceptos({ params }: { params: Promise<{ subjectI
       <p className="text-sm text-muted-foreground mb-6">
         {subject.name} — revisa, edita o descarta lo que propuso la IA antes de publicarlo
       </p>
+
+      <DuplicatePairs subjectId={subjectId} pairs={duplicatePairs} />
+
+      {allConcepts.length > 0 && (
+        <div className="mb-6">
+          <FindDuplicatesButton subjectId={subjectId} />
+          <p className="text-xs text-muted-foreground mt-1">
+            Compara los conceptos por su significado y avisa de los que podrían ser el mismo. Tú decides cuál quitar.
+          </p>
+        </div>
+      )}
 
       {allConcepts.length > 0 && (
         <div className="mb-6">

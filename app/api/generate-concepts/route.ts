@@ -5,6 +5,7 @@ import { z } from "zod";
 import { buildSections, groupCandidates, type Candidate, type ChunkText } from "@/lib/concept-candidates";
 import { computeMapEdges, type GraphConcept } from "@/lib/knowledge-graph";
 import { findAndSaveEvidence } from "@/lib/concept-evidence";
+import { refreshDuplicateCandidates, saveConceptEmbeddings } from "@/lib/concept-embeddings";
 
 // Conceptos sobre TODO el material (docs/MOTOR-DE-CONOCIMIENTO.md 4.2), en tres pasos:
 //   1. la IA lee el material por tramos y propone candidatos de cada uno (en paralelo);
@@ -297,6 +298,20 @@ export async function POST(req: NextRequest) {
       );
     } catch (err) {
       console.error("generate-concepts: los conceptos se guardaron, pero falló la búsqueda de citas:", err);
+    }
+
+    // Posibles duplicados: embeddings de los conceptos nuevos y juicio de la IA sobre las parejas más parecidas.
+    // Si falla, los conceptos ya están guardados: "Buscar duplicados" lo completa.
+    try {
+      const described = new Map(concepts.map((c) => [c.name.toLowerCase(), c.description]));
+      await saveConceptEmbeddings(
+        supabase,
+        openai,
+        inserted.map((c) => ({ id: c.id, name: c.name, description: described.get(c.name.toLowerCase()) ?? null }))
+      );
+      await refreshDuplicateCandidates(supabase, openai, subjectId);
+    } catch (err) {
+      console.error("generate-concepts: los conceptos se guardaron, pero falló la búsqueda de duplicados:", err);
     }
 
     console.info(

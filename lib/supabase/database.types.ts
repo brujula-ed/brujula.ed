@@ -80,6 +80,98 @@ export type Database = {
           },
         ]
       }
+      concept_duplicate_candidates: {
+        Row: {
+          concept_a: string
+          concept_b: string
+          created_at: string
+          reason: string
+          similarity: number
+          subject_id: string
+        }
+        Insert: {
+          concept_a: string
+          concept_b: string
+          created_at?: string
+          reason: string
+          similarity: number
+          subject_id: string
+        }
+        Update: {
+          concept_a?: string
+          concept_b?: string
+          created_at?: string
+          reason?: string
+          similarity?: number
+          subject_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "concept_duplicate_candidates_concept_a_fkey"
+            columns: ["concept_a"]
+            isOneToOne: false
+            referencedRelation: "concepts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "concept_duplicate_candidates_concept_b_fkey"
+            columns: ["concept_b"]
+            isOneToOne: false
+            referencedRelation: "concepts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "concept_duplicate_candidates_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      concept_pair_dismissals: {
+        Row: {
+          concept_a: string
+          concept_b: string
+          created_at: string
+          subject_id: string
+        }
+        Insert: {
+          concept_a: string
+          concept_b: string
+          created_at?: string
+          subject_id: string
+        }
+        Update: {
+          concept_a?: string
+          concept_b?: string
+          created_at?: string
+          subject_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "concept_pair_dismissals_concept_a_fkey"
+            columns: ["concept_a"]
+            isOneToOne: false
+            referencedRelation: "concepts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "concept_pair_dismissals_concept_b_fkey"
+            columns: ["concept_b"]
+            isOneToOne: false
+            referencedRelation: "concepts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "concept_pair_dismissals_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       concept_resources: {
         Row: {
           added_by: string
@@ -141,6 +233,7 @@ export type Database = {
         Row: {
           created_at: string | null
           description: string | null
+          embedding: string | null
           id: string
           name: string
           prerequisite_ids: string[]
@@ -151,6 +244,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           description?: string | null
+          embedding?: string | null
           id?: string
           name: string
           prerequisite_ids?: string[]
@@ -161,6 +255,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           description?: string | null
+          embedding?: string | null
           id?: string
           name?: string
           prerequisite_ids?: string[]
@@ -803,6 +898,14 @@ export type Database = {
           answered_at: string
           knowledge_avg: number
           regulation_avg: number
+        }[]
+      }
+      similar_concepts: {
+        Args: { p_min_similarity: number; p_subject_id: string }
+        Returns: {
+          concept_a: string
+          concept_b: string
+          similarity: number
         }[]
       }
       submit_answer: {

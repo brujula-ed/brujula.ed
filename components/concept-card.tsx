@@ -144,7 +144,8 @@ export function ConceptCard({
   }
 
   return (
-    <Card>
+    // id: destino de los enlaces del aviso de posibles duplicados
+    <Card id={`concepto-${concept.id}`} className="scroll-mt-6">
       <CardContent className="pt-6">
         <div className="flex items-start justify-between mb-2">
           <div>
