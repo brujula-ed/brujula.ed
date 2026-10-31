@@ -4,7 +4,8 @@ import type { createClient } from "@/lib/supabase/server";
 // "Contenido" y si la asignatura está lista para estudiantes. Determinista, a partir de lo que hay en la base.
 //
 // "Lista para estudiantes" (provisional, 31/10/2026): al menos un tema validado, y cada concepto validado de los temas
-// validados con 2 o más preguntas validadas. Fichas y recursos suman pero no bloquean.
+// validados con 2 o más preguntas validadas. Fichas y recursos son un paso más del recorrido (no se lo salta), pero no
+// bloquean "lista": los estudiantes pueden empezar antes (decisión del 31/10/2026).
 
 export const MIN_QUESTIONS_PER_CONCEPT = 2;
 
@@ -20,12 +21,12 @@ export type SetupInput = {
   students: number;
 };
 
-export type SetupStep = { id: StepId; label: string; done: boolean; required: boolean; detail: string };
+export type SetupStep = { id: StepId; label: string; done: boolean; detail: string };
 
 export type SetupStatus = {
   steps: SetupStep[];
   ready: boolean;
-  current: SetupStep | null; // primer paso obligatorio que falta; null si no falta ninguno
+  current: SetupStep | null; // primer paso que falta; null si no falta ninguno
   pendingReview: number; // propuestas de la IA esperando validación (conceptos, temas, preguntas, fichas, recursos)
   pending: PendingReview; // el mismo total, por tipo: dice a qué página llevar al docente para validar
 };
@@ -66,7 +67,6 @@ export function computeSetup(input: SetupInput): SetupStatus {
     {
       id: "material",
       label: "Material",
-      required: true,
       done: input.processedDocuments > 0,
       detail: input.processedDocuments > 0
         ? plural(input.processedDocuments, "documento procesado", "documentos procesados")
@@ -75,7 +75,6 @@ export function computeSetup(input: SetupInput): SetupStatus {
     {
       id: "estructura",
       label: "Estructura: conceptos y temas",
-      required: true,
       done: structureDone,
       detail: pending.concepts + pending.topics > 0
         ? [
@@ -89,7 +88,6 @@ export function computeSetup(input: SetupInput): SetupStatus {
     {
       id: "fichas",
       label: "Fichas y recursos",
-      required: false,
       done: validatedConcepts.length > 0 && cardsDone === validatedConcepts.length && resourcesDone === validatedConcepts.length,
       detail: validatedConcepts.length > 0
         ? `Fichas ${cardsDone} de ${validatedConcepts.length} · recursos ${resourcesDone} de ${validatedConcepts.length}`
@@ -98,7 +96,6 @@ export function computeSetup(input: SetupInput): SetupStatus {
     {
       id: "preguntas",
       label: "Preguntas",
-      required: true,
       done: questionsDone,
       detail: !structureDone
         ? "Primero valida conceptos dentro de un tema"
@@ -110,7 +107,6 @@ export function computeSetup(input: SetupInput): SetupStatus {
     {
       id: "invitar",
       label: "Invitar estudiantes",
-      required: true,
       done: input.students > 0,
       detail: input.students > 0
         ? plural(input.students, "estudiante inscrito", "estudiantes inscritos")
@@ -121,7 +117,7 @@ export function computeSetup(input: SetupInput): SetupStatus {
   return {
     steps,
     ready: structureDone && questionsDone,
-    current: steps.find((s) => s.required && !s.done) ?? null,
+    current: steps.find((s) => !s.done) ?? null,
     pendingReview: pending.concepts + pending.topics + pending.questions + pending.cards + pending.resources,
     pending,
   };

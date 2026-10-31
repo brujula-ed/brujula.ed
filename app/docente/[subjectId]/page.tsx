@@ -4,6 +4,7 @@ import { ArrowRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/page-header";
 import { CopyCodeButton } from "@/components/copy-code-button";
+import { SubjectActions } from "@/components/subject-actions";
 import { buttonVariants } from "@/components/ui/button";
 import { loadSetup, type StepId } from "@/lib/subject-setup";
 import { SubjectTabs, SetupStepsNav, shortLabel, type View } from "@/components/subject-steps/subject-nav";
@@ -70,7 +71,12 @@ export default async function SubjectPage({
             </span>
           </>
         }
-        action={<CopyCodeButton code={subject.class_code} />}
+        action={
+          <div className="flex flex-wrap items-center gap-2">
+            <CopyCodeButton code={subject.class_code} />
+            <SubjectActions subject={subject} />
+          </div>
+        }
       />
 
       <SubjectTabs subjectId={subjectId} view={view} />
@@ -84,7 +90,6 @@ export default async function SubjectPage({
           <section aria-labelledby="step-title" className="flex flex-col gap-2">
             <h2 id="step-title" className="text-section">
               {stepIndex + 1}. {stepInfo.label}
-              {!stepInfo.required && <span className="ml-2 text-sm font-normal text-muted-foreground">(opcional)</span>}
             </h2>
             <p className="text-sm font-medium">{stepInfo.detail}.</p>
             <div className="mt-2">

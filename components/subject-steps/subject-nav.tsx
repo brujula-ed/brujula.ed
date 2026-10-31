@@ -42,7 +42,7 @@ export function SetupStepsNav({
   subjectId: string;
   steps: SetupStep[];
   selected: StepId;
-  current: StepId | null; // el primer paso obligatorio que falta
+  current: StepId | null; // el primer paso que falta
 }) {
   return (
     <nav aria-label="Pasos para preparar la asignatura" className="mb-8">
@@ -76,11 +76,11 @@ export function SetupStepsNav({
                   <span className="hidden text-sm font-semibold md:inline">{shortLabel(s)}</span>
                 </span>
                 <span className="hidden text-xs text-muted-foreground md:block">
-                  {s.done ? "Hecho" : s.id === current ? "Paso actual" : s.required ? "Pendiente" : "Opcional"}
+                  {s.done ? "Hecho" : s.id === current ? "Paso actual" : "Pendiente"}
                 </span>
                 {/* Lo mismo para lectores de pantalla en el celular, donde el texto de arriba está oculto */}
                 <span className="sr-only md:hidden">
-                  {shortLabel(s)}: {s.done ? "hecho" : s.required ? "pendiente" : "opcional"}
+                  {shortLabel(s)}: {s.done ? "hecho" : "pendiente"}
                 </span>
               </Link>
             </li>

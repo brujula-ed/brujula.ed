@@ -1,15 +1,10 @@
-"use client";
-
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
-import { Button, buttonVariants } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { StateBar } from "@/components/state-bar";
+import { CopyCodeButton } from "@/components/copy-code-button";
 import type { StateCounts } from "@/lib/class-progress";
 import type { SetupStep } from "@/lib/subject-setup";
-import Link from "next/link";
 
 type Subject = { id: string; name: string; description: string | null; class_code: string };
 
@@ -17,6 +12,9 @@ type Subject = { id: string; name: string; description: string | null; class_cod
 export type SubjectCardSetup = { ready: boolean; current: SetupStep | null; stepNumber: number; pendingReview: number };
 export type SubjectCardProgress = { counts: StateCounts; students: number; studentsWithGaps: number };
 
+// Tarjeta de asignatura del inicio del docente: toda la tarjeta lleva a la página de la asignatura (el enlace del nombre
+// se estira sobre ella con after:inset-0). Solo "Copiar código" queda encima, porque compartirlo es frecuente; editar y
+// eliminar están en la página de la asignatura (components/subject-actions.tsx).
 export function SubjectCard({
   subject,
   setup,
@@ -26,101 +24,15 @@ export function SubjectCard({
   setup: SubjectCardSetup;
   progress?: SubjectCardProgress;
 }) {
-  const router = useRouter();
-  const supabase = createClient();
-  const [editing, setEditing] = useState(false);
-  const [name, setName] = useState(subject.name);
-  const [description, setDescription] = useState(subject.description ?? "");
-  const [loading, setLoading] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const [error, setError] = useState("");
-
-  // Se piden de vuelta las filas modificadas: si la RLS bloquea la operación, Supabase no da error,
-  // simplemente no modifica nada. 0 filas = no se guardó.
-  async function handleSave() {
-    setError("");
-    if (!name.trim()) {
-      setError("Escribe el nombre de la asignatura.");
-      return;
-    }
-    setLoading(true);
-    const { data, error: saveError } = await supabase
-      .from("subjects")
-      .update({ name, description: description.trim() || null })
-      .eq("id", subject.id)
-      .select("id");
-    setLoading(false);
-    if (saveError || !data?.length) {
-      setError("No se pudieron guardar los cambios. Inténtalo de nuevo.");
-      return;
-    }
-    setEditing(false);
-    router.refresh();
-  }
-
-  async function handleDelete() {
-    if (!confirm("¿Eliminar esta asignatura? Esto no se puede deshacer.")) return;
-    setError("");
-    const { data, error: deleteError } = await supabase.from("subjects").delete().eq("id", subject.id).select("id");
-    if (deleteError || !data?.length) {
-      setError("No se pudo eliminar la asignatura. Inténtalo de nuevo.");
-      return;
-    }
-    router.refresh();
-  }
-
-  const errorMessage = error && <p role="alert" className="text-xs text-destructive">{error}</p>;
-
-  async function handleCopy() {
-    await navigator.clipboard.writeText(subject.class_code);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
-  }
-
-  if (editing) {
-    return (
-      <Card>
-        <CardContent className="pt-6 flex flex-col gap-3">
-          <Input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Nombre de la asignatura"
-            aria-label="Nombre de la asignatura"
-          />
-          <Input
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="De qué trata (opcional)"
-            aria-label="De qué trata la asignatura"
-          />
-          {errorMessage}
-          <div className="flex gap-2">
-            <Button size="sm" onClick={handleSave} disabled={loading}>
-              {loading ? "Guardando..." : "Guardar"}
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => {
-                setEditing(false);
-                setName(subject.name);
-                setDescription(subject.description ?? "");
-              }}
-            >
-              Cancelar
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
-    <Card className="transition-[translate,box-shadow] duration-(--duration-short) ease-out-soft hover:shadow-raised motion-safe:hover:-translate-y-1">
+    <Card className="relative transition-[translate,box-shadow] duration-(--duration-short) ease-out-soft hover:shadow-raised motion-safe:hover:-translate-y-1 has-[a:focus-visible]:ring-3 has-[a:focus-visible]:ring-ring/50">
       <CardContent className="flex flex-col gap-3">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <Link href={`/docente/${subject.id}`} className="font-heading text-subsection hover:underline">
+            <Link
+              href={`/docente/${subject.id}`}
+              className="font-heading text-subsection outline-none after:absolute after:inset-0 after:rounded-card"
+            >
               {subject.name}
             </Link>
             {subject.description && <p className="mt-0.5 text-sm text-muted-foreground">{subject.description}</p>}
@@ -153,29 +65,16 @@ export function SubjectCard({
           </p>
         ) : null}
 
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <button
-            onClick={handleCopy}
-            title="Copiar el código de clase"
-            className="rounded-control bg-muted px-2.5 py-1 font-mono text-xs transition-colors duration-(--duration-instant) hover:bg-secondary"
-          >
-            {copied ? "¡Copiado!" : `Código ${subject.class_code}`}
-          </button>
-          <div className="flex flex-wrap items-center gap-1">
-            <Link href={`/docente/${subject.id}`} className={buttonVariants({ variant: "outline", size: "sm" })}>
-              Gestionar
-            </Link>
-            {progress && progress.students > 0 && (
-              <Button variant="ghost" size="xs" onClick={() => router.push(`/docente/${subject.id}?vista=estudiantes`)}>
-                Resultados
-              </Button>
-            )}
-            <Button variant="ghost" size="xs" onClick={() => setEditing(true)}>Editar</Button>
-            <Button variant="ghost" size="xs" onClick={handleDelete}>Eliminar</Button>
-          </div>
+        <div className="flex items-center justify-between gap-2">
+          {/* relative z-10: por encima del enlace estirado, para copiar sin entrar a la asignatura */}
+          <CopyCodeButton code={subject.class_code} className="relative z-10" />
+          {/* Lo mismo que abre la página: el paso que falta o, si no falta ninguno, Estudiantes */}
+          <span aria-hidden="true" className="flex items-center gap-1 text-sm font-semibold text-primary">
+            {setup.current ? "Continuar" : "Ver estudiantes"}
+            <ArrowRight className="size-4" />
+          </span>
         </div>
       </CardContent>
-      {error && <CardContent className="pt-0">{errorMessage}</CardContent>}
     </Card>
   );
 }

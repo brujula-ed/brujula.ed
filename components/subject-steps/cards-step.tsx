@@ -7,7 +7,8 @@ export function CardsStep({ subjectId }: { subjectId: string }) {
     <div className="max-w-3xl flex flex-col gap-3 text-sm">
       <p className="text-muted-foreground">
         Cada concepto validado puede tener una ficha (por qué importa y para qué le sirve al estudiante) y hasta 3
-        recursos abiertos para repasar. Son opcionales: la asignatura puede estar lista sin ellos.
+        recursos abiertos para repasar. Ayudan al estudiante a entender por qué estudia cada concepto y a repasarlo; tus
+        estudiantes pueden empezar el diagnóstico antes de que termines este paso.
       </p>
       <p>
         Por ahora se generan y se validan en cada concepto, en el paso{" "}

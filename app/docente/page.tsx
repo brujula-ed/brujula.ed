@@ -198,8 +198,14 @@ function nextLine(overview: { subject: { name: string }; setup: SetupStatus }[])
   if (notReady && notReady.setup.current) {
     return `${notReady.subject.name}: ${notReady.setup.current.label.toLowerCase()}. ${notReady.setup.current.detail}.`;
   }
-  const toInvite = overview.find((o) => o.setup.current?.id === "invitar");
-  if (toInvite) return `${toInvite.subject.name} está lista: comparte el código de clase con tus estudiantes.`;
+  // Asignaturas ya listas a las que les falta un paso: fichas y recursos, o invitar a los estudiantes
+  const withStep = overview.find((o) => o.setup.current);
+  if (withStep?.setup.current?.id === "invitar") {
+    return `${withStep.subject.name} está lista: comparte el código de clase con tus estudiantes.`;
+  }
+  if (withStep?.setup.current) {
+    return `${withStep.subject.name}: ${withStep.setup.current.label.toLowerCase()}. ${withStep.setup.current.detail}.`;
+  }
   return "Todo al día. Tus asignaturas están listas.";
 }
 
