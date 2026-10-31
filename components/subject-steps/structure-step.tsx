@@ -1,17 +1,17 @@
 import { createClient } from "@/lib/supabase/server";
-import { ConceptCard } from "@/components/concept-card";
-import { KnowledgeMap } from "@/components/knowledge-map";
 import { GenerateConceptsButton } from "@/components/generate-concepts-button";
 import { GenerateEvidenceButton } from "@/components/generate-evidence-button";
 import type { Evidence } from "@/components/concept-evidence";
 import { OrganizeTopicsButton } from "@/components/organize-topics-button";
-import { NewTopicForm } from "@/components/new-topic-form";
-import { TopicGroup, type Topic } from "@/components/topic-group";
+import type { Topic } from "@/components/topic-detail";
 import { computeTopicDependencies, learningOrder } from "@/lib/knowledge-graph";
 import { materialPositions } from "@/lib/topic-organization";
-import { DuplicatePairs, FindDuplicatesButton, type DuplicatePair } from "@/components/duplicate-pairs";
+import { FindDuplicatesButton, type DuplicatePair } from "@/components/duplicate-pairs";
+import { StructureWorkspace, type WorkspaceGroup } from "@/components/structure-workspace";
 
-// Paso 2 de "Contenido": conceptos y temas. La página de la asignatura ya comprobó que el docente es el dueño.
+// Paso 2 de "Contenido": conceptos y temas. Carga los datos y calcula el orden y los avisos (determinista); la mesa de
+// trabajo (components/structure-workspace.tsx) los muestra. La página de la asignatura ya comprobó que el docente es el
+// dueño.
 export async function StructureStep({ subjectId }: { subjectId: string }) {
   const supabase = await createClient();
 
@@ -69,10 +69,15 @@ export async function StructureStep({ subjectId }: { subjectId: string }) {
     .order("page_start", { ascending: true });
   // Dónde aparece cada concepto en el material: desempata el orden de aprendizaje dentro de cada tema
   const { position: conceptPosition } = materialPositions(evidence ?? []);
-  const inLearningOrder = (list: typeof allConcepts) => learningOrder(list, conceptPosition);
-  const evidenceByConcept = new Map<string, Evidence[]>();
+  // Al navegador va solo lo que se muestra de cada cita
+  const evidenceByConcept: Record<string, Evidence[]> = {};
   for (const e of evidence ?? []) {
-    evidenceByConcept.set(e.concept_id, [...(evidenceByConcept.get(e.concept_id) ?? []), e]);
+    (evidenceByConcept[e.concept_id] ??= []).push({
+      quote: e.quote,
+      page_start: e.page_start,
+      page_end: e.page_end,
+      section: e.section,
+    });
   }
 
   // Posibles duplicados que confirmó la IA (lib/concept-embeddings.ts); se guardan al generar o con "Buscar duplicados"
@@ -88,99 +93,69 @@ export async function StructureStep({ subjectId }: { subjectId: string }) {
     return a && b ? [{ a: { id: a.id, name: a.name }, b: { id: b.id, name: b.name }, reason: p.reason }] : [];
   });
 
-  const topicOptions = topics.map((t) => ({ id: t.id, name: t.name }));
-  const card = (c: (typeof allConcepts)[number]) => (
-    <ConceptCard
-      key={c.id}
-      concept={c}
-      allConcepts={allConcepts}
-      evidence={evidenceByConcept.get(c.id) ?? []}
-      topics={topicOptions}
-    />
-  );
+
+  // Grupos de la lista en orden: los temas (con sus avisos de orden) y al final los conceptos sin tema
+  const ids = (list: typeof allConcepts) => learningOrder(list, conceptPosition).map((c) => c.id);
+  const groups: WorkspaceGroup[] = topics.map((t, i) => ({
+    topic: t,
+    notes: {
+      needs: namesOf(topicNeeds.get(t.id) ?? []),
+      neededBelow: namesOf((topicNeeds.get(t.id) ?? []).filter((id) => topics.findIndex((o) => o.id === id) > i)),
+      mutualWith: namesOf(mutualOf(t.id)),
+    },
+    conceptIds: ids(allConcepts.filter((c) => c.topic_id === t.id)),
+  }));
+  if (withoutTopic.length > 0) {
+    groups.push({ topic: null, notes: { needs: [], neededBelow: [], mutualWith: [] }, conceptIds: ids(withoutTopic) });
+  }
 
   return (
-    <div>
-      <p className="text-sm text-muted-foreground mb-6">
-        Revisa, edita o descarta lo que propuso la IA antes de publicarlo.
-      </p>
-
-      <div className="mb-6">
-        <GenerateConceptsButton subjectId={subjectId} />
+    <div className="flex flex-col gap-6">
+      {/* Herramientas de la IA: proponen; lo que proponen se revisa abajo, uno por uno */}
+      <div className="flex flex-col gap-3 rounded-card border border-border bg-card/60 p-4">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <GenerateConceptsButton subjectId={subjectId} />
+          {allConcepts.length > 0 && (
+            <>
+              <OrganizeTopicsButton subjectId={subjectId} />
+              <FindDuplicatesButton subjectId={subjectId} />
+              <GenerateEvidenceButton subjectId={subjectId} />
+            </>
+          )}
+        </div>
+        <details className="text-sm text-muted-foreground">
+          <summary className="cursor-pointer font-medium text-foreground">¿Qué hace cada herramienta?</summary>
+          <ul className="mt-2 flex list-disc flex-col gap-1 pl-5">
+            <li>
+              <span className="font-medium text-foreground">Generar estructura:</span> lee todo tu material procesado y
+              propone conceptos nuevos con sus prerrequisitos.
+            </li>
+            <li>
+              <span className="font-medium text-foreground">Organizar en temas:</span> agrupa en temas los conceptos que
+              aún no tienen, en el orden de tu material.
+            </li>
+            <li>
+              <span className="font-medium text-foreground">Buscar duplicados:</span> compara los conceptos por su
+              significado y avisa de los que podrían ser el mismo. Tú decides cuál quitar.
+            </li>
+            <li>
+              <span className="font-medium text-foreground">Buscar fuentes:</span> busca en tu material la cita que respalda
+              cada concepto sin fuente, con su página, y la comprueba palabra por palabra.
+            </li>
+          </ul>
+        </details>
       </div>
 
-      <DuplicatePairs subjectId={subjectId} pairs={duplicatePairs} />
-
-      {allConcepts.length > 0 && (
-        <div className="mb-6">
-          <FindDuplicatesButton subjectId={subjectId} />
-          <p className="text-xs text-muted-foreground mt-1">
-            Compara los conceptos por su significado y avisa de los que podrían ser el mismo. Tú decides cuál quitar.
-          </p>
-        </div>
-      )}
-
-      {allConcepts.length > 0 && (
-        <div className="mb-6">
-          <OrganizeTopicsButton subjectId={subjectId} />
-          <p className="text-xs text-muted-foreground mt-1">
-            La IA agrupa en temas los conceptos que aún no tienen, en el orden de tu material. Después puedes renombrar,
-            ordenar, validar o mover cada concepto de tema.
-          </p>
-        </div>
-      )}
-
-      {allConcepts.length > 0 && (
-        <div className="mb-6">
-          <GenerateEvidenceButton subjectId={subjectId} />
-          <p className="text-xs text-muted-foreground mt-1">
-            Busca en tu material las citas que respaldan cada concepto que aún no tenga fuente, con su página. Cada cita
-            se comprueba palabra por palabra contra el documento.
-          </p>
-        </div>
-      )}
-
-      {allConcepts.length > 0 && (
-        <div className="mb-8">
-          <KnowledgeMap concepts={allConcepts} topics={topics} fichas={validatedFichas} resources={validatedResources} />
-        </div>
-    )}
-
-      {allConcepts.length > 0 && (
-        <div className="mb-6 max-w-md">
-          <NewTopicForm subjectId={subjectId} nextPosition={nextTopicPosition} />
-        </div>
-      )}
-
-      <div className="flex flex-col gap-6">
-        {topics.map((t, i) => (
-          <TopicGroup
-            key={t.id}
-            topic={t}
-            prev={topics[i - 1]}
-            next={topics[i + 1]}
-            needs={namesOf(topicNeeds.get(t.id) ?? [])}
-            neededBelow={namesOf((topicNeeds.get(t.id) ?? []).filter((id) => topics.findIndex((o) => o.id === id) > i))}
-            mutualWith={namesOf(mutualOf(t.id))}
-          >
-            {inLearningOrder(allConcepts.filter((c) => c.topic_id === t.id)).map(card)}
-            {!allConcepts.some((c) => c.topic_id === t.id) && (
-              <p className="text-sm text-muted-foreground">Este tema todavía no tiene conceptos.</p>
-            )}
-          </TopicGroup>
-        ))}
-        {withoutTopic.length > 0 && (
-          <section className="flex flex-col gap-3">
-            {topics.length > 0 && <h2 className="text-subsection">Sin tema</h2>}
-            {inLearningOrder(withoutTopic).map(card)}
-          </section>
-        )}
-        {allConcepts.length === 0 && (
-          <p className="text-sm text-muted-foreground">
-            Aún no hay conceptos. Genéralos con IA a partir de tu material procesado.
-          </p>
-        )}
-      </div>
+      <StructureWorkspace
+        subjectId={subjectId}
+        groups={groups}
+        concepts={allConcepts}
+        evidence={evidenceByConcept}
+        duplicatePairs={duplicatePairs}
+        nextTopicPosition={nextTopicPosition}
+        mapFichas={validatedFichas}
+        mapResources={validatedResources}
+      />
     </div>
   );
 }

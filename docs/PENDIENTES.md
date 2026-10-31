@@ -348,6 +348,11 @@ Sergio, 31/10/2026). Falta la función que traiga los eventos.
   - material procesado (`subject_documents.uploaded_at` y sus fragmentos).
 - **Por decidir:** si se calcula al vuelo o con una tabla de eventos, y cuántos días se muestran.
 
+**Editar prerrequisitos (decisión del 31/10/2026: después de la mesa de Estructura):** hoy el docente solo cambia
+nombre, definición y tema de un concepto; los prerrequisitos los pone la IA. La maqueta de validación tiene "+ Añadir".
+Hacerlo en una entrega propia: quitar y añadir desde el detalle del concepto (`components/concept-detail.tsx`), con aviso
+si se forma un ciclo. El grafo es la base del diagnóstico.
+
 **Migración pendiente tras desplegar:** cuando Vercel tenga el código que usa `subjects.description` (paso 2.1 de la
 fase 2, 31/10/2026), crear una migración que borre `subjects.topic`. Hasta entonces se mantiene opcional para no
 romper la versión desplegada.

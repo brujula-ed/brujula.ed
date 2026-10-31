@@ -43,8 +43,17 @@ export function FindDuplicatesButton({ subjectId }: { subjectId: string }) {
 }
 
 // Posibles duplicados (versión simple, docs/MOTOR-DE-CONOCIMIENTO.md 4.3): el docente descarta o edita uno de los dos
-// desde su tarjeta, o marca que no son el mismo (el aviso no vuelve a salir).
-export function DuplicatePairs({ subjectId, pairs }: { subjectId: string; pairs: DuplicatePair[] }) {
+// desde la mesa de Estructura (onSelect abre el concepto en ella), o marca que no son el mismo (el aviso no vuelve a
+// salir).
+export function DuplicatePairs({
+  subjectId,
+  pairs,
+  onSelect,
+}: {
+  subjectId: string;
+  pairs: DuplicatePair[];
+  onSelect: (conceptId: string) => void;
+}) {
   const router = useRouter();
   const supabase = createClient();
   const [error, setError] = useState("");
@@ -69,21 +78,21 @@ export function DuplicatePairs({ subjectId, pairs }: { subjectId: string; pairs:
   if (pairs.length === 0) return null;
   return (
     <section className="mb-6 flex flex-col gap-3 rounded-card border border-border bg-card p-4 shadow-rest">
-      <h2 className="flex items-center gap-2 text-subsection">
+      <h3 className="flex items-center gap-2 text-subsection">
         <CircleAlert aria-hidden="true" className="size-4" />
         Posibles duplicados
-      </h2>
+      </h3>
       <p className="text-sm text-muted-foreground">
-        Estos conceptos se parecen mucho. Si son el mismo, descarta o edita uno desde su tarjeta.
+        Estos conceptos se parecen mucho. Si son el mismo, ábrelo y descarta o edita uno de los dos.
       </p>
       <ul className="flex flex-col gap-2">
         {pairs.map((p) => (
           <li key={`${p.a.id}-${p.b.id}`} className="flex flex-col gap-1 text-sm">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
               <span>
-                <a href={`#concepto-${p.a.id}`} className="font-medium text-primary hover:underline">«{p.a.name}»</a>
+                <button onClick={() => onSelect(p.a.id)} className="font-medium text-primary hover:underline">«{p.a.name}»</button>
                 {" y "}
-                <a href={`#concepto-${p.b.id}`} className="font-medium text-primary hover:underline">«{p.b.name}»</a>
+                <button onClick={() => onSelect(p.b.id)} className="font-medium text-primary hover:underline">«{p.b.name}»</button>
               </span>
               <Button size="xs" variant="ghost" onClick={() => dismiss(p)}>No son el mismo</Button>
             </div>
