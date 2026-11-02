@@ -149,7 +149,9 @@ Commit "Cambio de imagen parte 2":
 - Encabezado (`components/header.tsx`) **a medio decidir**. A Sergio no le convencieron: blanco (logo en color),
   fondo abeto y fondo verde azulado. Estado actual (publicado): fondo `bg-primary`, logo
   `brujula-ed_marca-sobre-verde.svg` (variante nueva creada aquí: igual a la de abeto pero sin el fondo),
-  "brújula" y enlaces en blanco, ".ed" en amarillo.
+  "brújula" y enlaces en blanco, ".ed" en amarillo. Desde el 02/11/2026 usa la misma marca que la landing
+  (`BrandMark` de 36 px y `BrandWord`), con el ancho de las páginas (1280 px); en el celular "Cerrar sesión" es solo
+  un ícono. El archivo `brujula-ed_marca-sobre-verde.svg` ya no lo usa ninguna pantalla.
 
 Por decidir:
 - Diseño final del encabezado (probar otra opción).
