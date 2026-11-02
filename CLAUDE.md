@@ -60,7 +60,7 @@ detecta brechas de conocimiento, ve un mapa de conocimiento y recibe un siguient
   Tu brújula con las brechas de todas, una tarjeta por asignatura (barra de estados y siguiente paso) y unirse con código.
 - `app/estudiante/[subjectId]` "Mi Brújula": siguiente paso (`lib/next-step.ts`, `components/next-step-card.tsx`), brechas
   cerradas esta semana, temas (`components/topic-list.tsx`, con el mapa aparte) y Tu brújula con el LRR.
-- `app/estudiante/[subjectId]/concepto/[conceptId]` página del concepto: recorrido de 5 pasos, práctica y comprobaciones
+- `app/estudiante/[subjectId]/concepto/[conceptId]` página del concepto: recorrido de 6 pasos (el primero, "Qué es"), práctica y comprobaciones
   (`components/concept-journey.tsx`, `components/concept-quiz.tsx`; `/practicar` redirige aquí).
 - `app/diagnostico/[subjectId]/tema/[topicId]` diagnóstico adaptativo de un tema (`lib/topic-diagnosis.ts`).
 - `app/estudiante/autorregulacion` cuestionario "¿Cómo aprendes?" (F-08, preliminar; `components/self-regulation-questionnaire.tsx`).

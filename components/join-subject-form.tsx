@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
 
 export function JoinSubjectForm() {
   const router = useRouter();
@@ -47,23 +46,22 @@ export function JoinSubjectForm() {
     router.refresh();
   }
 
+  // Va en el encabezado de Mis asignaturas, como "Nueva asignatura" en el del docente: el campo directo, sin ventana
   return (
-    <Card>
-      <CardContent className="pt-6">
-        <form onSubmit={handleSubmit} className="flex gap-2">
-          <Input
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            placeholder="Código de clase (ej. 4X7KPQ)"
-            aria-label="Código de clase"
-            className="font-mono uppercase"
-          />
-          <Button type="submit" disabled={loading}>
-            {loading ? "Uniendo..." : "Unirme"}
-          </Button>
-        </form>
-        {error && <p role="alert" className="text-sm text-destructive mt-2">{error}</p>}
-      </CardContent>
-    </Card>
+    <div className="flex flex-col gap-2">
+      <form onSubmit={handleSubmit} className="flex gap-2">
+        <Input
+          value={code}
+          onChange={(e) => setCode(e.target.value)}
+          placeholder="Código de clase"
+          aria-label="Código de clase para unirte a una asignatura"
+          className="h-11 min-w-0 flex-1 font-mono uppercase md:w-52 md:flex-none"
+        />
+        <Button type="submit" disabled={loading || code.trim() === ""}>
+          {loading ? "Uniendo..." : "Unirme"}
+        </Button>
+      </form>
+      {error && <p role="alert" className="text-sm text-destructive md:max-w-80">{error}</p>}
+    </div>
   );
 }

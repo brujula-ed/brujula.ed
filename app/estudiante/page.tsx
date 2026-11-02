@@ -44,10 +44,11 @@ export default async function Estudiante() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: enrollments } = await supabase
-    .from("enrollments")
-    .select("subjects(id, name)")
-    .eq("student_id", user.id);
+  const [{ data: profile }, { data: enrollments }] = await Promise.all([
+    supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle(),
+    supabase.from("enrollments").select("subjects(id, name)").eq("student_id", user.id),
+  ]);
+  const firstName = profile?.full_name?.split(" ")[0];
   const subjects = (enrollments ?? [])
     .map((e) => (Array.isArray(e.subjects) ? e.subjects[0] : e.subjects))
     .filter((s): s is Subject => !!s)
@@ -109,8 +110,9 @@ export default async function Estudiante() {
   return (
     <main className="mx-auto w-full max-w-[1120px] px-4 py-6 md:px-8 md:py-8">
       <PageHeader
-        title="Mis asignaturas"
-        next={subjects.length > 0 ? undefined : "Únete con el código que te dio tu docente."}
+        title={firstName ? `Hola, ${firstName}` : "Hola"}
+        next={greetingLine(subjects.length, progress)}
+        action={<JoinSubjectForm />}
       />
 
       <div className="flex flex-col gap-8">
@@ -135,14 +137,9 @@ export default async function Estudiante() {
         )}
 
         <div className="grid items-start gap-6 lg:grid-cols-2">
-          <section aria-labelledby="join-title" className="flex flex-col gap-3">
-            <h2 id="join-title" className="text-subsection">Unirme a una asignatura</h2>
-            <JoinSubjectForm />
-          </section>
-
           <Link
             href="/estudiante/autorregulacion"
-            className="flex items-center gap-3 rounded-card border border-border p-5 transition-colors duration-(--duration-instant) hover:border-primary/60 lg:mt-10"
+            className="flex items-center gap-3 rounded-card border border-border p-5 transition-colors duration-(--duration-instant) hover:border-primary/60"
           >
             <span className="flex min-w-0 flex-1 flex-col gap-1">
               <span className="font-medium">¿Cómo aprendes?</span>
@@ -156,6 +153,16 @@ export default async function Estudiante() {
       </div>
     </main>
   );
+}
+
+// Línea bajo el saludo: cuántas brechas tiene abiertas hoy, en cuántas asignaturas
+function greetingLine(subjectCount: number, progress: SubjectProgress[]): string {
+  if (subjectCount === 0) return "Únete a tu primera asignatura con el código que te dio tu docente.";
+  const withGaps = progress.filter((p) => (p.counts?.brecha ?? 0) > 0);
+  const gaps = withGaps.reduce((s, p) => s + (p.counts?.brecha ?? 0), 0);
+  if (gaps === 0) return "No tienes brechas abiertas.";
+  const where = withGaps.length === 1 ? "en 1 asignatura" : `en ${withGaps.length} asignaturas`;
+  return `Tienes ${gaps === 1 ? "1 brecha abierta" : `${gaps} brechas abiertas`} ${where}.`;
 }
 
 // La asignatura que conviene seguir: menor RANK y, empatadas, la de más brechas abiertas (después, por nombre)

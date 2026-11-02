@@ -57,11 +57,12 @@ La unidad de trabajo (principio 2.1).
 - **Arriba:** nombre, estado y de dónde sale ("Estimado con 4 respuestas: 3 correctas, la última hace 2 días"). Qué
   necesita y qué abre.
 - **Recorrido para cerrar la brecha** (también sirve para repasar un concepto sin brecha):
-  1. por qué importa y para qué te sirve (ficha validada);
-  2. un recurso abierto (F-11);
-  3. explícalo con tus palabras (F-09, la práctica que ya existe);
-  4. practica: preguntas con la explicación de cada respuesta;
-  5. comprueba: la comprobación inmediata y, días después, la diferida.
+  1. qué es: la descripción validada del concepto, lo primero (agregado a pedido de Sergio, 02/11/2026);
+  2. por qué importa y para qué te sirve (ficha validada);
+  3. un recurso abierto (F-11);
+  4. explícalo con tus palabras (F-09, la práctica que ya existe);
+  5. practica: preguntas con la explicación de cada respuesta;
+  6. comprueba: la comprobación inmediata y, días después, la diferida.
 - Los pasos no se bloquean entre sí (Anexo I, sec. 10): se recomienda el orden, pero se puede ir directo a comprobar.
 - La acción principal cambia según el momento: "Empieza el repaso", "Comprueba ahora" o "Vuelve el jueves para la
   comprobación final".

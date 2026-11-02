@@ -20,9 +20,16 @@ const KIND: Record<string, { label: string; Icon: typeof BookOpen }> = {
   ejercicio: { label: "Ejercicio", Icon: PenLine },
 };
 
-const STEPS = ["Por qué importa", "Un recurso para repasar", "Explícalo con tus palabras", "Practica", "Comprueba"];
+const STEPS = [
+  "Qué es",
+  "Por qué importa",
+  "Un recurso para repasar",
+  "Explícalo con tus palabras",
+  "Practica",
+  "Comprueba",
+];
 
-// Recorrido de un concepto (docs/DISENO-DEL-ESTUDIANTE.md 2.3), primero para el celular: los 5 pasos en lista, con el
+// Recorrido de un concepto (docs/DISENO-DEL-ESTUDIANTE.md 2.3), primero para el celular: los 6 pasos en lista, con el
 // recomendado abierto; el botón fijo de abajo avanza al siguiente y, en el último, comprueba. Los pasos no se bloquean
 // entre sí (Anexo I, sec. 10). Practicar y comprobar ocupan la pantalla mientras duran.
 export function ConceptJourney({
@@ -81,7 +88,14 @@ export function ConceptJourney({
   }
 
   const content: React.ReactNode[] = [
-    // 1. Por qué importa
+    // 1. Qué es: la descripción validada por el docente, lo primero que hay que entender
+    concept.description ? (
+      <p className="text-base">{concept.description}</p>
+    ) : (
+      <p className="text-sm text-muted-foreground">Tu docente aún no publicó la descripción de este concepto.</p>
+    ),
+
+    // 2. Por qué importa
     ficha ? (
       <div className="flex flex-col gap-3 text-base">
         <p>{ficha.whyItMatters}</p>
@@ -91,13 +105,10 @@ export function ConceptJourney({
         </div>
       </div>
     ) : (
-      <div className="flex flex-col gap-2 text-base">
-        {concept.description && <p>{concept.description}</p>}
-        <p className="text-sm text-muted-foreground">Tu docente aún no publicó la ficha de este concepto.</p>
-      </div>
+      <p className="text-sm text-muted-foreground">Tu docente aún no publicó la ficha de este concepto.</p>
     ),
 
-    // 2. Un recurso
+    // 3. Un recurso
     resources.length > 0 ? (
       <ul className="flex flex-col gap-2">
         {resources.map((r) => {
@@ -133,7 +144,7 @@ export function ConceptJourney({
       <p className="text-sm text-muted-foreground">Aún no hay recursos validados para este concepto.</p>
     ),
 
-    // 3. Explícalo
+    // 4. Explícalo
     <RetrievalPractice
       key="explicalo"
       conceptName={concept.name}
@@ -145,7 +156,7 @@ export function ConceptJourney({
       onCheck={canCheck ? () => setMode("comprobacion") : undefined}
     />,
 
-    // 4. Practica
+    // 5. Practica
     practiceQuestions.length > 0 ? (
       <div className="flex flex-col gap-3">
         <p className="text-sm text-muted-foreground">
@@ -163,7 +174,7 @@ export function ConceptJourney({
       </p>
     ),
 
-    // 5. Comprueba
+    // 6. Comprueba
     <p key="comprueba" className="text-sm text-muted-foreground">
       {status.deferredReady
         ? "Ya pasaron unos días desde tu comprobación: es el momento de la comprobación final. Si la superas, cerraste la brecha."
@@ -273,8 +284,8 @@ export function ConceptJourney({
 // Paso que se abre al entrar, según el estado (docs/DISENO-DEL-ESTUDIANTE.md 2.3)
 function initialStep(status: { state: ConceptState; lowEvidence: boolean; deferredFrom: string | null }, hasCheck: boolean) {
   if (status.state === "brecha") return 0;
-  if (status.deferredFrom || status.state === "dominado") return 3; // mientras espera, o para repasar: practicar
-  return hasCheck ? 4 : 0; // sin evidencia o con poca: comprobar
+  if (status.deferredFrom || status.state === "dominado") return 4; // mientras espera, o para repasar: practicar
+  return hasCheck ? 5 : 0; // sin evidencia o con poca: comprobar
 }
 
 function NeighborList({ label, list, subjectId }: { label: string; list: Neighbor[]; subjectId: string }) {
