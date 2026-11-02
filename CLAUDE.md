@@ -132,13 +132,16 @@ estudiante lee y borra las suyas, entran solo por la RPC `submit_self_regulation
   Estados y LRR emparejan siempre por id, así que renombrar un concepto no rompe su historial.
 
 ## Reglas de negocio ya implementadas
-- Estados: `sin_evidencia`, `brecha`, `en_desarrollo`, `dominado`. Dominado si exactitud ≥ 0.7.
+- Estados: `sin_evidencia`, `brecha`, `en_desarrollo`, `dominado` (`lib/concept-state.ts`, modelo de la fase 3 en
+  `docs/DISENO-DEL-ESTUDIANTE.md` 3.1). Aciertos ponderados (las respuestas pierden la mitad del peso cada 30 días; la
+  práctica no cuenta) frente al umbral 0.7. Dominado exige 3 respuestas y, si fue brecha, la comprobación diferida;
+  superar una comprobación estando en brecha hace que el estado se calcule desde ella.
 - LRR: brecha = concepto < 0.7 en el **primer** diagnóstico; recuperada = la evidencia **más reciente**
   posterior (microevaluación, o diagnóstico de un intento posterior) ≥ 0.7; las pendientes cuentan en el
   denominador. Los criterios se afinarán en el piloto.
 - Selección de preguntas (`lib/question-selection.ts`, provisional): diagnóstico con la mitad de las validadas
   de cada concepto (máx. 2; 1 si solo hay una); microevaluación con hasta 2 no vistas en el intento; se
-  prefieren las nunca respondidas. Sin preguntas nuevas, la brecha queda pendiente. La IA genera 4 por concepto.
+  prefieren las nunca respondidas. Sin preguntas nuevas, la brecha queda pendiente. La IA genera 6 por concepto (desde la fase 3; antes 4).
 - Los estudiantes no leen `questions` ni insertan respuestas directamente: usan las RPC
   `get_diagnostic_questions` (sin `correct_index`) y `submit_answer` (corrige en la base de datos).
 - Las opciones de las preguntas se mezclan en código (la IA tendía a poner la correcta primera).

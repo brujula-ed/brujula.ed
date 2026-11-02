@@ -71,3 +71,17 @@ export function selectMicroQuestions<T extends BankQuestion>(
   }
   return { questions, conceptsWithoutQuestions };
 }
+
+// Recorrido de un concepto (docs/DISENO-DEL-ESTUDIANTE.md 3.3 y 3.5)
+export const CHECK_QUESTIONS = 2;
+
+// Comprobación: preguntas del concepto, primero las nunca respondidas y después las respondidas hace más tiempo
+export function selectCheckQuestions<T extends BankQuestion>(bank: T[], conceptId: string): T[] {
+  return byPreference(bank.filter((q) => q.conceptId === conceptId)).slice(0, CHECK_QUESTIONS);
+}
+
+// Práctica: solo preguntas que el estudiante ya respondió (la base lo exige: no revela las que pueden salir en una
+// comprobación). Primero las respondidas hace más tiempo.
+export function selectPracticeQuestions<T extends BankQuestion>(bank: T[], conceptId: string): T[] {
+  return byPreference(bank.filter((q) => q.conceptId === conceptId && q.lastAnsweredAt !== null));
+}

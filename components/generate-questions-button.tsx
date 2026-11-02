@@ -8,7 +8,7 @@ import { WorkingDialog } from "@/components/working-dialog";
 
 type Phase = "idle" | "working" | "done" | "error";
 
-// "Generar preguntas" (paso Preguntas): /api/generate-questions completa hasta 4 por concepto validado. Es una sola
+// "Generar preguntas" (paso Preguntas): /api/generate-questions completa hasta 6 por concepto validado. Es una sola
 // llamada, así que la ventana muestra una sola etapa (no se sabe en cuál va por dentro) y, al terminar, lo que respondió.
 export function GenerateQuestionsButton({ subjectId }: { subjectId: string }) {
   const router = useRouter();

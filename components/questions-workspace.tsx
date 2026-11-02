@@ -238,7 +238,7 @@ export function QuestionsWorkspace({
             <div className="flex flex-col gap-2">
               <h2 className="text-section">{concept.name}</h2>
               <p className="text-sm text-muted-foreground">
-                Este concepto aún no tiene preguntas. Usa «Generar preguntas», arriba: la IA propone hasta 4 por concepto
+                Este concepto aún no tiene preguntas. Usa «Generar preguntas», arriba: la IA propone hasta 6 por concepto
                 validado.
               </p>
             </div>

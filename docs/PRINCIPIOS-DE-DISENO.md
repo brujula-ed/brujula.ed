@@ -286,10 +286,8 @@ embeddings se guardan pero no se consultan, la IA ve solo el inicio del material
 El Anexo I pide además organizar por unidad y tema, comunicar incertidumbre y trazar hasta el material utilizado
 (sec. 4, 10 y 11). Propuesta en `docs/MOTOR-DE-CONOCIMIENTO.md`.
 
-**Inicio del estudiante:** por asignatura (su ruta en una asignatura, con selector) o general (lo que le toca en todas).
-Se decide con el piloto.
-
-**Lo que ve el estudiante:** si ve porcentajes o solo estados y conteos; cómo se nombran los estados sin etiquetarlo.
+**Diseño del estudiante y fase 3 del motor (02/11/2026):** `docs/DISENO-DEL-ESTUDIANTE.md`. Resuelve el inicio del
+estudiante (sin menú: Mis asignaturas → asignatura → concepto) y lo que ve (los mismos 4 estados, sin porcentajes).
 
 **Transparencia de las propuestas:** mostrar la cita y la página del material de donde sale cada concepto exige
 guardarlas al procesar el documento (hoy no se guardan).
@@ -307,4 +305,7 @@ guardarlas al procesar el documento (hoy no se guardan).
 | 30/10/2026 | El lenguaje visual vive en `components/ui` (ajustado) y pocas piezas propias | Un solo lugar para cambiar el estilo, sin una capa nueva que mantener |
 | 31/10/2026 | El docente no tiene menú: inicio + página de asignatura con pestañas "Contenido" y "Estudiantes" (2.10) | Su trabajo es corto y tiene dos momentos; las secciones globales separaban cada tarea de su asignatura |
 | 31/10/2026 | "Lista para estudiantes" = un tema validado y sus conceptos validados con 2 o más preguntas validadas (provisional) | Es lo mínimo para diagnosticar y comprobar; fichas y recursos suman pero no frenan abrir la clase |
+| 02/11/2026 | El estudiante tampoco tiene menú: Mis asignaturas → asignatura → concepto (`docs/DISENO-DEL-ESTUDIANTE.md`) | Su trabajo ocurre dentro de una asignatura; "Mi mapa" o "Logros" como destinos repetirían lo que ya está en ella |
+| 02/11/2026 | El estudiante ve los mismos 4 estados que el docente, sin porcentajes | Docente y estudiante hablan igual; los porcentajes parecen notas (regla 1.2) |
+| 02/11/2026 | La explicación de cada respuesta se ve al practicar, no al medir | Explicar durante el diagnóstico o una comprobación cambia lo que mide la pregunta siguiente |
 | 30/10/2026 | Movimiento con `<ViewTransition>` y CSS, sin librerías de animación (el Vol. 2 citaba Framer Motion) | Cubren los patrones de la sección 4 sin una dependencia más; si algún patrón no se pudiera hacer así, se reconsidera |

@@ -136,7 +136,8 @@ export async function StudentsStep({ subjectId }: { subjectId: string }) {
   return (
     <div className="flex flex-col gap-6">
       <p className="text-sm text-muted-foreground">
-        Estados según la evidencia más reciente de cada estudiante. Son orientativos: no son calificaciones.
+        Estados según las respuestas de cada estudiante (las recientes pesan más). Son orientativos: no son
+        calificaciones.
       </p>
 
       <div className="flex flex-col gap-2">

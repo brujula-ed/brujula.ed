@@ -405,8 +405,9 @@ Lo que se anotó al abrirla:
   `app/diagnostico/[subjectId]/page.tsx` (el `useEffect` de carga, sin `supabase` en sus dependencias; línea 124
   desde la fase 2). Es anterior a los
   cambios de octubre e inofensiva; si aparece otra, sí es nueva.
-- **Consultas de solo lectura a producción:** `npx supabase db query --linked "select ..."`. No requiere
-  Docker (`db dump` sí).
+- **Consultas de solo lectura a producción:** `npx supabase db query --linked --read-only "select ..."`. No requiere
+  Docker (`db dump` sí). Desde noviembre de 2026 la CLI exige `--read-only` para leer y `--yes` para cambiar
+  producción (`db push --linked --yes`, `NOTIFY`); sin ellos no hace nada y avisa.
 - **Max rows de la Data API = 1000:** cualquier consulta que pueda devolver más filas debe paginarse.
 - **Vercel Hobby con Fluid Compute:** máximo 300 s por función. Al pasar a Pro (obligatorio para uso
   comercial) se puede subir `maxDuration` hasta 800 s en `app/api/process-document/route.ts`.

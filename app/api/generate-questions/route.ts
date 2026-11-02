@@ -15,8 +15,9 @@ const HITS_PER_CONCEPT = 4;
 const CONCEPTS_PER_CALL = 3;
 const CONCURRENCY = 4;
 
-// Banco objetivo por concepto: alcanza para 2 en el diagnóstico y 2 en la microevaluación (lib/question-selection.ts)
-const QUESTIONS_PER_CONCEPT = 4;
+// Banco objetivo por concepto: alcanza para el diagnóstico, la comprobación inmediata y la diferida con preguntas no
+// vistas (docs/DISENO-DEL-ESTUDIANTE.md 3.5)
+const QUESTIONS_PER_CONCEPT = 6;
 
 // Forma mínima de cada pregunta de la IA. Lo que no cumpla se descarta antes de guardar
 // (la calidad pedagógica la sigue revisando el docente al validar). La cita es opcional: sin ella, la pregunta se

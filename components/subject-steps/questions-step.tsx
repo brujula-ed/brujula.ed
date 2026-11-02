@@ -77,7 +77,7 @@ export async function QuestionsStep({ subjectId }: { subjectId: string }) {
         <div>
           <GenerateQuestionsButton subjectId={subjectId} />
           <p className="mt-1 text-xs text-muted-foreground">
-            La IA completa hasta 4 preguntas por concepto validado, con la cita del material que respalda la respuesta
+            La IA completa hasta 6 preguntas por concepto validado, con la cita del material que respalda la respuesta
             cuando la encuentra. Tú decides cuáles publicar.
           </p>
         </div>

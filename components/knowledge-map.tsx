@@ -177,7 +177,7 @@ type ConceptDetails = {
   states?: Record<string, ConceptState>;
   fichas?: Record<string, MapFicha>;
   resources?: Record<string, MapResource[]>;
-  practiceBaseHref?: string; // solo en Mi Brújula: enlace a la práctica "Explica con tus palabras" (F-09)
+  conceptBaseHref?: string; // solo en Mi Brújula: enlace a la página del concepto, con su recorrido
 };
 
 // Mapa de conceptos con su panel. visible = lo que se dibuja (un tema y sus prerrequisitos de otros temas, o todo);
@@ -190,7 +190,7 @@ function ConceptLevel({
   states,
   fichas,
   resources,
-  practiceBaseHref,
+  conceptBaseHref,
 }: ConceptDetails & {
   visible: MapConcept[];
   universe: MapConcept[];
@@ -354,12 +354,12 @@ function ConceptLevel({
               {totalOpened > unlocks.length && (
                 <p className="text-xs text-muted-foreground">Abre {totalOpened} conceptos en total.</p>
               )}
-              {practiceBaseHref && (
+              {conceptBaseHref && (
                 <Link
-                  href={`${practiceBaseHref}/${selected.id}`}
+                  href={`${conceptBaseHref}/${selected.id}`}
                   className="inline-block mt-3 rounded-md bg-primary text-primary-foreground px-3 py-1.5 text-sm font-medium"
                 >
-                  Explica con tus palabras
+                  Abrir concepto
                 </Link>
               )}
             </>

@@ -129,7 +129,7 @@ export default async function MiBrujula({ params }: { params: Promise<{ subjectI
           states={states}
           fichas={fichas}
           resources={resources}
-          practiceBaseHref={`/estudiante/${subjectId}/practicar`}
+          conceptBaseHref={`/estudiante/${subjectId}/concepto`}
         />
       ) : (
         <p className="text-sm text-muted-foreground">

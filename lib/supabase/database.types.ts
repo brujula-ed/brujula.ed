@@ -337,37 +337,60 @@ export type Database = {
       diagnostic_attempts: {
         Row: {
           completed_at: string | null
+          concept_id: string | null
           created_at: string
           id: string
+          kind: string
           subject: string
           subject_id: string | null
           topic: string | null
+          topic_id: string | null
           user_id: string
         }
         Insert: {
           completed_at?: string | null
+          concept_id?: string | null
           created_at?: string
           id?: string
+          kind?: string
           subject: string
           subject_id?: string | null
           topic?: string | null
+          topic_id?: string | null
           user_id: string
         }
         Update: {
           completed_at?: string | null
+          concept_id?: string | null
           created_at?: string
           id?: string
+          kind?: string
           subject?: string
           subject_id?: string | null
           topic?: string | null
+          topic_id?: string | null
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "diagnostic_attempts_concept_id_fkey"
+            columns: ["concept_id"]
+            isOneToOne: false
+            referencedRelation: "concepts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "diagnostic_attempts_subject_id_fkey"
             columns: ["subject_id"]
             isOneToOne: false
             referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "diagnostic_attempts_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "topics"
             referencedColumns: ["id"]
           },
         ]
@@ -834,6 +857,20 @@ export type Database = {
     Functions: {
       consume_ai_quota: { Args: { p_route: string }; Returns: boolean }
       find_subject_id_by_code: { Args: { input_code: string }; Returns: string }
+      get_answer_review: {
+        Args: { p_attempt_id: string }
+        Returns: {
+          concept_id: string
+          correct_index: number
+          explanations: Json
+          is_correct: boolean
+          options: Json
+          prompt: string
+          question_id: string
+          selected_index: number
+          stage: string
+        }[]
+      }
       get_diagnostic_questions: {
         Args: { p_subject_id: string }
         Returns: {
@@ -913,6 +950,19 @@ export type Database = {
           p_stage: string
         }
         Returns: boolean
+      }
+      submit_practice_answer: {
+        Args: {
+          p_attempt_id: string
+          p_question_id: string
+          p_selected_index: number
+        }
+        Returns: {
+          correct_explanation: string
+          correct_index: number
+          is_correct: boolean
+          selected_explanation: string
+        }[]
       }
       submit_self_regulation: {
         Args: { p_answers: Json; p_version: string }
