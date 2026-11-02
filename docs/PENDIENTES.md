@@ -340,18 +340,17 @@ Pendiente:
 
 ### 14. Rediseño de la app — en preparación (30/10/2026)
 
-**"Actividad reciente" en el inicio del docente:** hoy es un espacio reservado, sin datos inventados (decisión de
-Sergio, 31/10/2026). Falta la función que traiga los eventos.
-- **Se podría sacar de lo que ya existe:**
-  - diagnósticos completados (`diagnostic_attempts.completed_at`);
-  - brechas cerradas (`newlyRecovered` de `lib/gap-closure.ts` por intento);
-  - material procesado (`subject_documents.uploaded_at` y sus fragmentos).
-- **Por decidir:** si se calcula al vuelo o con una tabla de eventos, y cuántos días se muestran.
+**"Actividad reciente" en el inicio del docente — hecha (01/11/2026):** se calcula al vuelo, sin tabla de eventos, con
+los últimos 7 días (decisiones de Sergio). `lib/recent-activity.ts` y `components/recent-activity.tsx`:
+- diagnósticos completados por asignatura (`diagnostic_attempts.completed_at`, solo inscritos);
+- brechas cerradas por estudiante e intento (`newlyRecovered`, mismo criterio que el LRR);
+- material subido por asignatura (`subject_documents.uploaded_at`: no se guarda cuándo se procesó).
 
-**Editar prerrequisitos (decisión del 31/10/2026: después de la mesa de Estructura):** hoy el docente solo cambia
-nombre, definición y tema de un concepto; los prerrequisitos los pone la IA. La maqueta de validación tiene "+ Añadir".
-Hacerlo en una entrega propia: quitar y añadir desde el detalle del concepto (`components/concept-detail.tsx`), con aviso
-si se forma un ciclo. El grafo es la base del diagnóstico.
+Se muestran los 6 más recientes. Si con clases grandes el inicio se vuelve lento, pasar a una tabla de eventos.
+
+**Editar prerrequisitos — hecho (01/11/2026):** en el detalle del concepto (`components/concept-detail.tsx`), chips con
+× para quitar y "+ Añadir" con los demás conceptos agrupados por tema. Se guarda al momento. Si añadir uno formaría un
+ciclo, no se guarda y se explica por qué (el grafo es la base del diagnóstico).
 
 **Migración pendiente tras desplegar:** cuando Vercel tenga el código que usa `subjects.description` (paso 2.1 de la
 fase 2, 31/10/2026), crear una migración que borre `subjects.topic`. Hasta entonces se mantiene opcional para no
@@ -378,7 +377,14 @@ hacer el diagnóstico global; el diagnóstico y la recuperación son mecánicos 
   5. resto.
   Una pantalla o un flujo por entrega, probado en el celular.
 
-### 15. Archivos huérfanos al eliminar una asignatura — no iniciado (31/10/2026)
+### 15. Archivos huérfanos al eliminar una asignatura — hecho (01/11/2026)
+
+Hecho: `components/subject-actions.tsx` borra del bucket los archivos de la asignatura antes de borrarla; si Storage
+falla, no la borra y avisa. Consulta a producción del 01/11/2026: ningún archivo del bucket sin su fila en
+`subject_documents`. Al subir material, si el registro falla se borra el archivo recién subido
+(`components/material-upload.tsx`).
+
+Lo que se anotó al abrirla:
 
 - **Qué pasa:** al eliminar una asignatura (`components/subject-actions.tsx`), la base borra en cascada sus filas
   (documentos, fragmentos, conceptos, preguntas, intentos, inscripciones, temas, fichas y recursos), pero los archivos

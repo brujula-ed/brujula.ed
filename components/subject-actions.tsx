@@ -57,6 +57,27 @@ export function SubjectActions({ subject }: { subject: Subject }) {
   async function handleDelete() {
     if (!confirm(`¿Eliminar «${subject.name}»? Se borran también su material, conceptos, preguntas y resultados. Esto no se puede deshacer.`)) return;
     setDeleteError("");
+
+    // La base borra en cascada las filas de la asignatura, pero no sus archivos de Storage: se borran antes. Si falla,
+    // no se borra la asignatura (mejor un error que archivos sin dueño). Un archivo que ya no estaba no cuenta como fallo.
+    const { data: docs, error: docsError } = await supabase
+      .from("subject_documents")
+      .select("storage_path")
+      .eq("subject_id", subject.id);
+    if (docsError) {
+      setDeleteError("No se pudo eliminar la asignatura. Inténtalo de nuevo.");
+      return;
+    }
+    if (docs.length > 0) {
+      const { error: storageError } = await supabase.storage
+        .from("course-documents")
+        .remove(docs.map((d) => d.storage_path));
+      if (storageError) {
+        setDeleteError("No se pudieron borrar los archivos del material, así que la asignatura no se eliminó. Inténtalo de nuevo.");
+        return;
+      }
+    }
+
     const { data, error: delError } = await supabase.from("subjects").delete().eq("id", subject.id).select("id");
     if (delError || !data?.length) {
       setDeleteError("No se pudo eliminar la asignatura. Inténtalo de nuevo.");

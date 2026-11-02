@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Check } from "lucide-react";
+import { ArrowRight, Check, Plus, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { computePrerequisites } from "@/lib/knowledge-graph";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,10 +25,12 @@ export type WorkspaceConcept = {
 // (docs/PRINCIPIOS-DE-DISENO.md 1.1), sin validar en bloque.
 export function ConceptDetail({
   concept,
+  allConcepts,
   topics,
   onDone,
 }: {
   concept: WorkspaceConcept;
+  allConcepts: WorkspaceConcept[]; // todos los de la asignatura, en el orden de la lista: para elegir prerrequisitos
   topics: { id: string; name: string }[];
   onDone: () => void; // tras validar o descartar: la mesa elige el siguiente pendiente
 }) {
@@ -38,6 +41,7 @@ export function ConceptDetail({
   const [description, setDescription] = useState(concept.description ?? "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [adding, setAdding] = useState(false);
 
   // Se piden de vuelta las filas modificadas: si la RLS bloquea la operación, Supabase no da error,
   // simplemente no modifica nada. 0 filas = no se guardó.
@@ -99,6 +103,43 @@ export function ConceptDetail({
       return;
     }
     router.refresh();
+  }
+
+  // Prerrequisitos: el docente los quita o añade; se guardan al momento. Un ciclo (A necesita a B y B a A, directa o
+  // indirectamente) no se guarda: el grafo es la base del diagnóstico y del orden de aprendizaje.
+  const byId = new Map(allConcepts.map((c) => [c.id, c]));
+  const prereqs = concept.prerequisite_ids.filter((id) => byId.has(id));
+  const candidates = allConcepts.filter((c) => c.id !== concept.id && !prereqs.includes(c.id));
+  // Tema de un concepto para agrupar la lista ("" = sin tema o con un tema que ya no existe)
+  const topicOf = (c: WorkspaceConcept) => (topics.some((t) => t.id === c.topic_id) ? c.topic_id! : "");
+
+  async function savePrerequisites(ids: string[]) {
+    setLoading(true);
+    setError("");
+    const { data, error: saveError } = await supabase
+      .from("concepts")
+      .update({ prerequisite_ids: ids })
+      .eq("id", concept.id)
+      .select("id");
+    setLoading(false);
+    if (saveError || !data?.length) {
+      setError("No se pudieron guardar los prerrequisitos. Inténtalo de nuevo.");
+      return false;
+    }
+    router.refresh();
+    return true;
+  }
+
+  async function handleAddPrerequisite(id: string) {
+    if (!id) return;
+    const candidate = byId.get(id)!;
+    if (computePrerequisites(allConcepts).get(id)?.has(concept.id)) {
+      setError(
+        `No se puede: «${candidate.name}» ya necesita a «${concept.name}» (directa o indirectamente), y se formaría un ciclo.`
+      );
+      return;
+    }
+    if (await savePrerequisites([...prereqs, id])) setAdding(false);
   }
 
   async function handleDiscard() {
@@ -164,6 +205,72 @@ export function ConceptDetail({
       <div className="flex flex-col gap-1.5">
         <p className="text-eyebrow text-muted-foreground">Definición</p>
         <p className="text-base">{concept.description || <span className="text-muted-foreground">Sin definición.</span>}</p>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-0.5">
+          <p className="text-eyebrow text-muted-foreground">Prerrequisitos</p>
+          <p className="text-sm text-muted-foreground">Lo que el estudiante necesita saber antes de este concepto.</p>
+        </div>
+        {prereqs.length > 0 ? (
+          <ul className="flex flex-wrap gap-2">
+            {prereqs.map((id) => (
+              <li
+                key={id}
+                className="flex items-center gap-1 rounded-full border border-border bg-secondary/60 py-0.5 pr-1 pl-3 text-sm"
+              >
+                {byId.get(id)!.name}
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  aria-label={`Quitar «${byId.get(id)!.name}» de los prerrequisitos`}
+                  disabled={loading}
+                  onClick={() => savePrerequisites(prereqs.filter((p) => p !== id))}
+                  className="rounded-full"
+                >
+                  <X />
+                </Button>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm">Ninguno: se puede aprender sin otro concepto de la asignatura.</p>
+        )}
+        {adding ? (
+          <div className="flex flex-wrap items-end gap-2">
+            <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+              <Label htmlFor="concept-prereq">Añadir prerrequisito</Label>
+              <select
+                id="concept-prereq"
+                value=""
+                onChange={(e) => handleAddPrerequisite(e.target.value)}
+                disabled={loading}
+                autoFocus
+                className="h-11 max-w-sm rounded-control border border-input bg-card px-3 text-base text-foreground"
+              >
+                <option value="">Elige un concepto…</option>
+                {[...topics, { id: "", name: "Sin tema" }].map((t) => {
+                  const options = candidates.filter((c) => topicOf(c) === t.id);
+                  return options.length > 0 ? (
+                    <optgroup key={t.id || "sin-tema"} label={t.name}>
+                      {options.map((c) => (
+                        <option key={c.id} value={c.id}>{c.name}</option>
+                      ))}
+                    </optgroup>
+                  ) : null;
+                })}
+              </select>
+            </div>
+            <Button variant="ghost" onClick={() => { setAdding(false); setError(""); }}>Cancelar</Button>
+          </div>
+        ) : (
+          candidates.length > 0 && (
+            <Button variant="ghost" size="sm" className="self-start" onClick={() => setAdding(true)}>
+              <Plus aria-hidden="true" />
+              Añadir
+            </Button>
+          )
+        )}
       </div>
 
       {topics.length > 0 && (

@@ -10,6 +10,8 @@ import { EmptyState } from "@/components/empty-state";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { loadSetup, type PendingReview, type SetupStatus } from "@/lib/subject-setup";
 import { loadClassProgress, type ClassProgress } from "@/lib/class-progress";
+import { loadRecentActivity } from "@/lib/recent-activity";
+import { RecentActivity } from "@/components/recent-activity";
 
 // Inicio del docente (docs/PRINCIPIOS-DE-DISENO.md 2.10): qué sigue, pendientes y estados de todas sus asignaturas.
 // Todas las cifras salen de datos reales; si todavía no hay datos, la sección no aparece.
@@ -42,6 +44,8 @@ export default async function Docente() {
       return { subject: s, setup, progress };
     })
   );
+
+  const activity = await loadRecentActivity(supabase, list);
 
   const pendingReview = overview.reduce((n, o) => n + o.setup.pendingReview, 0);
   const withProgress = overview.filter((o): o is typeof o & { progress: ClassProgress } => !!o.progress);
@@ -164,18 +168,7 @@ export default async function Docente() {
               </Card>
             )}
 
-            {/* Espacio reservado: hoy no se guarda un historial de eventos (docs/PENDIENTES.md). Sin datos inventados. */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Actividad reciente</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Muy pronto verás aquí lo que pasa en tus asignaturas: diagnósticos completados, brechas cerradas y
-                  material procesado.
-                </p>
-              </CardContent>
-            </Card>
+            <RecentActivity items={activity} />
           </aside>
         </div>
       )}

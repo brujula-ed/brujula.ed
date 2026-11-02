@@ -261,6 +261,7 @@ export function StructureWorkspace({
             {concept ? (
               <ConceptDetail
                 concept={concept}
+                allConcepts={ordered.map((id) => byId.get(id)!)}
                 topics={topics.map((t) => ({ id: t.id, name: t.name }))}
                 onDone={() => goToNextPending(concept.id)}
               />
