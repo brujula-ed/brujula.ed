@@ -99,8 +99,7 @@ detecta brechas de conocimiento, ve un mapa de conocimiento y recibe un siguient
 
 ## Datos
 Esquema completo en `supabase/migrations/` (cada cambio de esquema va como migración nueva).
-Tablas principales: `profiles` (rol), `subjects` (con código de clase y `description` opcional; `topic` queda solo hasta
-borrarlo), `topics` (temas de la asignatura: `position`, `status`, `unit_id` opcional; el estudiante solo lee los
+Tablas principales: `profiles` (rol), `subjects` (con código de clase y `description` opcional), `topics` (temas de la asignatura: `position`, `status`, `unit_id` opcional; el estudiante solo lee los
 validados), `units` (agrupan temas, opcionales), `enrollments`, `subject_documents`,
 `document_chunks` (con embedding, `page_start`/`page_end`, `section`, `position` y `content_tsv` en español),
 `concepts` (`prerequisite_ids`, `status`, `topic_id`: un concepto en un solo tema de su asignatura; `embedding`, que se

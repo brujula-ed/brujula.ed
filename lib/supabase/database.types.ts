@@ -728,7 +728,6 @@ export type Database = {
           id: string
           name: string
           teacher_id: string
-          topic: string | null
         }
         Insert: {
           class_code: string
@@ -737,7 +736,6 @@ export type Database = {
           id?: string
           name: string
           teacher_id: string
-          topic?: string | null
         }
         Update: {
           class_code?: string
@@ -746,7 +744,6 @@ export type Database = {
           id?: string
           name?: string
           teacher_id?: string
-          topic?: string | null
         }
         Relationships: []
       }

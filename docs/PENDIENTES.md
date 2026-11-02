@@ -352,9 +352,8 @@ Se muestran los 6 más recientes. Si con clases grandes el inicio se vuelve lent
 × para quitar y "+ Añadir" con los demás conceptos agrupados por tema. Se guarda al momento. Si añadir uno formaría un
 ciclo, no se guarda y se explica por qué (el grafo es la base del diagnóstico).
 
-**Migración pendiente tras desplegar:** cuando Vercel tenga el código que usa `subjects.description` (paso 2.1 de la
-fase 2, 31/10/2026), crear una migración que borre `subjects.topic`. Hasta entonces se mantiene opcional para no
-romper la versión desplegada.
+**`subjects.topic` borrada (02/11/2026):** migración `borrar_topic_de_asignaturas`, aplicada tras desplegar el código
+que usa `subjects.description`. Antes se comprobó que ninguna asignatura perdía texto.
 
 Motivo (Sergio): la app se ve plana y genérica, desordenada y poco intuitiva, sin prioridad visual ni una línea
 estética común. El docente va y vuelve entre páginas en lugar de seguir un proceso continuo; el estudiante solo puede
