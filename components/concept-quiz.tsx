@@ -22,12 +22,15 @@ type Feedback = { isCorrect: boolean; correctIndex: number; selected: string | n
 export function ConceptQuiz({
   mode,
   final = false,
+  firstMeasure = false,
   questions,
   session,
   onExit,
 }: {
   mode: Mode;
   final?: boolean; // comprobación final (diferida): cierra la brecha si se supera
+  // Primera medición del concepto (aún sin evidencia): se guarda como diagnóstico, para que sea la línea base del LRR
+  firstMeasure?: boolean;
   questions: QuizQuestion[];
   session: { userId: string; subjectId: string; subjectName: string; conceptId: string };
   onExit: () => void;
@@ -133,7 +136,7 @@ export function ConceptQuiz({
     const { data: isCorrect, error: rpcError } = await supabase.rpc("submit_answer", {
       p_attempt_id: id,
       p_question_id: q.id,
-      p_stage: final ? "comprobacion_diferida" : "comprobacion",
+      p_stage: final ? "comprobacion_diferida" : firstMeasure ? "diagnostico" : "comprobacion",
       p_selected_index: selected,
     });
     if (rpcError || isCorrect === null) {
@@ -176,7 +179,9 @@ export function ConceptQuiz({
             {mode === "practica"
               ? `Acertaste ${correctCount} de ${total}`
               : passed
-                ? final
+                ? firstMeasure
+                  ? "Vas bien"
+                  : final
                   ? "Superaste la comprobación final"
                   : "Superaste la comprobación"
                 : "Todavía no"}
@@ -185,10 +190,14 @@ export function ConceptQuiz({
             {mode === "practica"
               ? "La práctica no cambia el estado del concepto: es para aprender. Cuando te sientas listo, compruébalo."
               : passed
-                ? final
+                ? firstMeasure
+                  ? `Acertaste ${correctCount} de ${total}. Con unas respuestas más se confirma que lo dominas.`
+                  : final
                   ? `Acertaste ${correctCount} de ${total}, días después de repasarlo: eso demuestra que lo aprendiste.`
                   : `Acertaste ${correctCount} de ${total}. Para cerrar una brecha hace falta además una comprobación final, días después: recordar con el tiempo es lo que demuestra que lo aprendiste.`
-                : `Acertaste ${correctCount} de ${total}. Revisa tus respuestas, repasa el concepto y vuelve a intentarlo.`}
+                : firstMeasure
+                  ? `Acertaste ${correctCount} de ${total}. Hay una brecha aquí: revisa tus respuestas, sigue el recorrido y vuelve a comprobarlo.`
+                  : `Acertaste ${correctCount} de ${total}. Revisa tus respuestas, repasa el concepto y vuelve a intentarlo.`}
           </p>
         </div>
 

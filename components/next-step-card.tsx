@@ -91,7 +91,7 @@ export function NextStepCard({ step, subjectId }: { step: NextStep; subjectId: s
         <h2 className="text-section break-words">{title}</h2>
         <p className="text-sm text-primary-foreground/85">{why}</p>
         {cta && href && (
-          <Link href={href} className={`${buttonVariants({ variant: "sun", size: "lg" })} w-full sm:w-auto sm:self-start`}>
+          <Link href={href} className={`${buttonVariants({ variant: "sun", size: "lg" })} h-auto min-h-12 w-full py-2 text-center whitespace-normal sm:w-auto sm:self-start`}>
             {cta}
           </Link>
         )}

@@ -118,6 +118,9 @@ Implementado en `lib/topic-diagnosis.ts`, probado con 9 estudiantes simulados fu
 
 ### 3.3 Cerrar una brecha (provisional)
 
+- **Primera medición en la página del concepto:** si el concepto aún no tiene evidencia, "Ponte a prueba" guarda las
+  respuestas como diagnóstico, para que sean su línea base del LRR (sin esto, una brecha medida por primera vez ahí no
+  contaba como identificada).
 - **Comprobación inmediata:** 2 preguntas no vistas (o las respondidas hace más tiempo). Si se superan, el concepto
   pasa a "en desarrollo".
 - **Comprobación diferida:** se habilita 2 días después de superar la inmediata y se sugiere a los 3. Si se supera, la

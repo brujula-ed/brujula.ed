@@ -77,6 +77,7 @@ export function ConceptJourney({
       <ConceptQuiz
         mode={mode}
         final={mode === "comprobacion" && status.deferredReady}
+        firstMeasure={mode === "comprobacion" && status.state === "sin_evidencia"}
         questions={mode === "practica" ? practiceQuestions : checkQuestions}
         session={{ userId, subjectId: subject.id, subjectName: subject.name, conceptId: concept.id }}
         onExit={() => {

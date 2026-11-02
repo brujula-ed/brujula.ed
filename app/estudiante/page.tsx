@@ -195,7 +195,7 @@ function SuggestedCard({ progress: { subject, counts, step } }: { progress: Subj
         </p>
         <Link
           href={`/estudiante/${subject.id}`}
-          className={`${buttonVariants({ variant: "sun", size: "lg" })} w-full sm:w-auto sm:self-start`}
+          className={`${buttonVariants({ variant: "sun", size: "lg" })} h-auto min-h-12 w-full py-2 text-center whitespace-normal sm:w-auto sm:self-start`}
         >
           Ir a {subject.name}
         </Link>

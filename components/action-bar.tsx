@@ -5,7 +5,10 @@
 export function ActionBar({ children }: { children: React.ReactNode }) {
   return (
     <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-card/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-md md:static md:z-auto md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none">
-      <div className="flex gap-2 [&>*]:flex-1 md:justify-end md:[&>*]:flex-none">{children}</div>
+      {/* Textos largos ("Empieza por <concepto>"): el botón se encoge y el texto pasa a dos líneas, sin salirse */}
+      <div className="flex gap-2 [&>*]:h-auto [&>*]:min-h-11 [&>*]:min-w-0 [&>*]:flex-1 [&>*]:py-2 [&>*]:text-center [&>*]:whitespace-normal md:justify-end md:[&>*]:flex-none">
+        {children}
+      </div>
     </div>
   );
 }
