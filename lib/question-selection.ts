@@ -85,3 +85,9 @@ export function selectCheckQuestions<T extends BankQuestion>(bank: T[], conceptI
 export function selectPracticeQuestions<T extends BankQuestion>(bank: T[], conceptId: string): T[] {
   return byPreference(bank.filter((q) => q.conceptId === conceptId && q.lastAnsweredAt !== null));
 }
+
+// Diagnóstico de un tema (lib/topic-diagnosis.ts): todo el banco en orden de preferencia; el algoritmo toma de cada
+// concepto la primera que no usó
+export function preferenceOrder<T extends BankQuestion>(bank: T[]): T[] {
+  return byPreference(bank);
+}

@@ -2,8 +2,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import type { LRRResult } from "@/lib/lrr";
 
 const SEGMENTS = [
-  { key: "recovered", label: "Recuperadas", color: "var(--state-mastered)" },
-  { key: "inProgress", label: "En proceso", color: "var(--state-progress)" },
+  { key: "recovered", label: "Cerradas", color: "var(--state-mastered)" },
+  { key: "inProgress", label: "Falta la final", color: "var(--state-progress)" },
   { key: "noImprovement", label: "Sin mejora", color: "var(--state-gap)" },
   { key: "pending", label: "Sin practicar", color: "var(--state-none-soft)" },
 ] as const;
@@ -76,9 +76,9 @@ export function LRRCard({
         )}
 
         <p className="text-xs text-center text-muted-foreground">
-          Brecha = concepto bajo 70 % en el primer diagnóstico. Cerrada = la evaluación más reciente
-          (microevaluación o un diagnóstico posterior) llega a 70 % o más. Criterios sujetos a ajuste en el piloto
-          (Anexo I, sec. 12).
+          Brecha = concepto bajo 70 % en el primer diagnóstico. Cerrada = superaste la comprobación y, días
+          después, la comprobación final: recordarlo con el tiempo demuestra que lo aprendiste. Criterios sujetos a
+          ajuste en el piloto (Anexo I, sec. 12).
         </p>
       </CardContent>
     </Card>

@@ -164,8 +164,10 @@ export async function StudentsStep({ subjectId }: { subjectId: string }) {
           />
         </div>
         <p className="text-xs text-muted-foreground">
-          Brecha: concepto bajo 70 % en el primer diagnóstico. Cerrada: la evaluación más reciente (microevaluación o un
-          diagnóstico posterior) llega a 70 % o más. Criterios provisionales, a ajustar en el piloto.
+          Brecha: concepto bajo 70 % en el primer diagnóstico. Cerrada: superó la comprobación y, días después, la
+          comprobación final. Criterios provisionales, a ajustar en el piloto.
+          {progress.lrrLegacy.identified > 0 &&
+            ` Con la definición anterior (cerrada al llegar a 70 % en la evaluación más reciente) serían ${progress.lrrLegacy.recovered} de ${progress.lrrLegacy.identified}.`}
         </p>
       </div>
 

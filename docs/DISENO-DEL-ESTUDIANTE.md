@@ -96,11 +96,16 @@ La unidad de trabajo (principio 2.1).
 1. Se empieza por los conceptos del tema de los que no depende ningún otro del tema (los "de arriba"), con 1 pregunta
    cada uno.
 2. **Acierta:** no se gastan preguntas en sus prerrequisitos.
-3. **Falla:** una segunda pregunta del mismo concepto para descartar un descuido. Si se confirma, se baja a sus
-   prerrequisitos directos (también los de otros temas, un nivel).
-4. **Brecha raíz:** un concepto con brecha cuyos prerrequisitos no la tienen (o que no tiene prerrequisitos).
-5. Se termina a las 10 preguntas o cuando no queda nada por explorar. Con temas chicos pueden ser menos de 5.
-6. Las preguntas se eligen como hoy: primero las nunca respondidas.
+3. **Falla:** una segunda pregunta del mismo concepto para descartar un descuido. Si queda bajo 0,7 (1 de 2 o 0 de 2),
+   se baja a sus prerrequisitos directos (también los de otros temas, un nivel). Es el mismo criterio que el estado.
+4. **Sin preguntas:** un concepto que no tiene no se puede medir; se pasa a sus prerrequisitos del tema.
+5. **Mínimo:** si la búsqueda termina antes de 5 preguntas, sigue con los conceptos del tema que no se preguntaron, en
+   orden de aprendizaje. Sin esto, a quien sabe todo se le hacía una sola pregunta.
+6. **Brecha raíz:** un concepto con brecha cuyos prerrequisitos no la tienen (o que no tiene prerrequisitos).
+7. Se termina a las 10 preguntas o cuando no queda nada por explorar. Con temas chicos pueden ser menos de 5.
+8. Las preguntas se eligen como hoy: primero las nunca respondidas.
+
+Implementado en `lib/topic-diagnosis.ts`, probado con 9 estudiantes simulados fuera del proyecto.
 
 ### 3.3 Cerrar una brecha (provisional)
 
@@ -154,8 +159,16 @@ La unidad de trabajo (principio 2.1).
    `components/concept-quiz.tsx`. Lista de pasos con el recomendado abierto (decisión de Sergio); "Explícalo" dentro de
    la página (`/practicar` redirige). Se adelantó de la entrega 5 la comprobación final: cuando ya toca, el botón la
    ofrece y guarda `comprobacion_diferida`.
-4. **Diagnóstico de un tema** (adaptativo), con su resultado y la revisión de respuestas.
-5. **Momento de cierre** y LRR nuevo (la comprobación diferida ya se ofrece desde la entrega 3).
+4. **Diagnóstico de un tema** (adaptativo), con su resultado y la revisión de respuestas. Hecha el 02/11/2026:
+   `app/diagnostico/[subjectId]/tema/[topicId]`, `components/topic-diagnostic.tsx`, `lib/topic-diagnosis.ts` y piezas
+   comunes en `components/quiz-parts.tsx`. Sin el encabezado de la app en `/diagnostico/`. Entrada provisional en Mi
+   Brújula ("Ponte a prueba por tema") hasta la entrega 6.
+5. **Momento de cierre** y LRR nuevo (la comprobación diferida ya se ofrece desde la entrega 3). Hecha el
+   02/11/2026: `computeStudentGaps` en `lib/lrr.ts` usa la definición nueva (acordada con Adri) en toda la app; la
+   anterior queda como `computeStudentGapsLegacy` y se muestra en una línea de la pestaña Estudiantes. Para comparar,
+   la anterior cuenta las comprobaciones como la microevaluación que reemplazan. El momento de cierre
+   (`components/gap-closure-moment.tsx`) aparece al superar la comprobación final. Probado con 9 casos fuera del
+   proyecto.
 6. **Mi Brújula y Mis asignaturas** rediseñadas, con el siguiente paso.
 7. **Ubicación inicial** opcional.
 

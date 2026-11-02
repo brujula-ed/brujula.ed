@@ -121,6 +121,27 @@ export default async function MiBrujula({ params }: { params: Promise<{ subjectI
         </div>
       )}
 
+      {/* Provisional hasta el rediseño de Mi Brújula (docs/DISENO-DEL-ESTUDIANTE.md, entrega 6) */}
+      {(topics ?? []).some((t) => graphConcepts.some((c) => c.topic_id === t.id)) && (
+        <section aria-labelledby="topics-title" className="mb-8 flex flex-col gap-3">
+          <h2 id="topics-title" className="text-sm font-medium">Ponte a prueba por tema</h2>
+          <ul className="flex flex-wrap gap-2">
+            {(topics ?? [])
+              .filter((t) => graphConcepts.some((c) => c.topic_id === t.id))
+              .map((t) => (
+                <li key={t.id}>
+                  <Link
+                    href={`/diagnostico/${subjectId}/tema/${t.id}`}
+                    className="flex min-h-11 items-center rounded-control border border-border bg-card px-4 text-sm font-medium hover:border-primary/60"
+                  >
+                    {t.name}
+                  </Link>
+                </li>
+              ))}
+          </ul>
+        </section>
+      )}
+
       <h2 className="text-sm font-medium mb-3">Mapa de conocimiento</h2>
       {concepts && concepts.length > 0 ? (
         <KnowledgeMap

@@ -1,17 +1,18 @@
-// LRR (Anexo I, sec. 12): proporción de brechas identificadas que presentan
-// una mejora posterior a la intervención de nivelación.
-//
-// Criterios operativos (a validar con Adri para el piloto):
+// LRR (Anexo I, sec. 12): proporción de brechas identificadas que presentan una mejora posterior a la intervención de
+// nivelación. Definición de la fase 3 (docs/DISENO-DEL-ESTUDIANTE.md 3.3), acordada con Adri el 02/11/2026:
 //  - Brecha identificada: concepto bajo el umbral en el PRIMER diagnóstico.
-//  - Evidencia posterior: la más reciente después de la línea base, sea microevaluación o un diagnóstico
-//    de un intento posterior (desde la rotación de preguntas, los diagnósticos posteriores usan preguntas nuevas).
-//  - Recuperada: la evidencia posterior llega al umbral.
-//  - En proceso: mejoró respecto a la línea base pero sigue bajo el umbral.
-//  - Sin mejora: la evidencia posterior no supera la línea base.
-//  - Pendiente: aún no hay evidencia posterior.
+//  - Recuperada (cerrada): el modelo del estudiante (lib/concept-state.ts) la da por dominada, lo que exige superar la
+//    comprobación final, días después del repaso. Recordar con el tiempo es la evidencia de que se aprendió.
+//  - En proceso: superó la comprobación y falta la final.
+//  - Sin mejora: sigue en brecha aunque hubo comprobaciones o diagnósticos después de la línea base.
+//  - Pendiente: sigue en brecha y aún no hay evidencia posterior.
 //  - LRR = recuperadas / identificadas (las pendientes SÍ cuentan en el denominador).
+// La definición anterior (computeStudentGapsLegacy) se sigue calculando durante el piloto para comparar.
+
+import { computeConceptEvidence } from "@/lib/concept-state";
 
 export const LRR_THRESHOLD = 0.7;
+const CHECK_STAGES = new Set(["microevaluacion", "comprobacion", "comprobacion_diferida"]);
 
 type Attempt = { id: string; created_at: string };
 type Answer = { attempt_id: string; stage: string; concept_id: string | null; is_correct: boolean };
@@ -55,8 +56,10 @@ function orderAttempts(attempts: Attempt[]): string[] {
     .map((a) => a.id);
 }
 
-// Brechas de UN estudiante: attempts y answers deben ser solo suyos.
-export function computeStudentGaps(
+// Definición anterior a la fase 3, solo para comparar durante el piloto: recuperada = la evidencia posterior más
+// reciente (microevaluación o un diagnóstico posterior) llega al umbral; en proceso = mejoró sin llegar; sin mejora =
+// no superó la línea base. attempts y answers deben ser de UN estudiante.
+export function computeStudentGapsLegacy(
   concepts: Concept[],
   attempts: Attempt[],
   answers: Answer[]
@@ -84,7 +87,8 @@ export function computeStudentGaps(
     // diagnóstico. En el intento de la línea base solo cuenta la microevaluación (su diagnóstico ES la línea base).
     let post: number | null = null;
     for (const id of [...order].reverse()) {
-      const micro = mine.filter((a) => a.attempt_id === id && a.stage === "microevaluacion");
+      // Las comprobaciones de la fase 3 reemplazan a la microevaluación: para comparar, cuentan igual
+      const micro = mine.filter((a) => a.attempt_id === id && CHECK_STAGES.has(a.stage));
       if (micro.length > 0) {
         post = accuracy(micro);
         break;
@@ -104,6 +108,42 @@ export function computeStudentGaps(
       else status = "sin_mejora";
     }
     gaps.push({ conceptId: c.id, concept: c.name, baseline, post, status });
+  }
+  return gaps;
+}
+
+// Brechas de UN estudiante con la definición actual: attempts y answers deben ser solo suyos. now se puede fijar para
+// probar (el modelo da menos peso a las respuestas viejas).
+export function computeStudentGaps(
+  concepts: Concept[],
+  attempts: Attempt[],
+  answers: Answer[],
+  now: Date = new Date()
+): GapRecord[] {
+  const order = orderAttempts(attempts); // antiguo -> reciente
+  const evidence = computeConceptEvidence(concepts, attempts, answers, now);
+  const gaps: GapRecord[] = [];
+
+  for (const c of concepts) {
+    const mine = answers.filter((a) => a.concept_id === c.id);
+
+    // Línea base: el primer diagnóstico que preguntó el concepto (igual que la definición anterior)
+    const baselineAttempt = order.find((id) => mine.some((a) => a.attempt_id === id && a.stage === "diagnostico"));
+    if (!baselineAttempt) continue;
+    const baseline = accuracy(mine.filter((a) => a.attempt_id === baselineAttempt && a.stage === "diagnostico"))!;
+    if (baseline >= LRR_THRESHOLD) continue;
+
+    // ¿Hubo evidencia después de la línea base? (otro intento, o una comprobación en el mismo)
+    const after = mine.some(
+      (a) => a.stage !== "practica" && (a.attempt_id !== baselineAttempt || a.stage !== "diagnostico")
+    );
+    const e = evidence[c.id];
+    let status: GapStatus;
+    if (e.state === "dominado") status = "recuperada";
+    else if (e.state === "en_desarrollo") status = "en_proceso"; // superó la comprobación; falta la final
+    else status = after ? "sin_mejora" : "pendiente";
+
+    gaps.push({ conceptId: c.id, concept: c.name, baseline, post: after ? e.estimate : null, status });
   }
   return gaps;
 }
@@ -154,4 +194,11 @@ export function computeClassLRR(
     byConcept[c.id] = summarizeGaps(all.filter((g) => g.conceptId === c.id));
   }
   return { ...summarizeGaps(all), studentsWithGaps, studentsWithRecovery, byConcept };
+}
+// LRR de la clase con la definición anterior, solo para compararlo con el actual durante el piloto
+export function computeClassLRRLegacy(
+  concepts: Concept[],
+  students: { attempts: Attempt[]; answers: Answer[] }[]
+): LRRResult {
+  return summarizeGaps(students.flatMap((s) => computeStudentGapsLegacy(concepts, s.attempts, s.answers)));
 }

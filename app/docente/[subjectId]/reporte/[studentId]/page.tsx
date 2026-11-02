@@ -21,7 +21,7 @@ const pct = (x: number) => `${Math.round(x * 100)} %`;
 const GAP_ORDER: GapStatus[] = ["sin_mejora", "pendiente", "en_proceso", "recuperada"];
 const GAP_LABEL: Record<GapStatus, string> = {
   recuperada: "Cerrada",
-  en_proceso: "En proceso",
+  en_proceso: "Falta la comprobación final",
   sin_mejora: "Sin mejora",
   pendiente: "Sin evaluación posterior",
 };
@@ -185,7 +185,7 @@ export default async function EstudianteDetalle({
                       </span>
                       <span className="text-xs text-muted-foreground">
                         Primer diagnóstico {pct(g.baseline)}
-                        {g.post !== null && ` → evaluación más reciente ${pct(g.post)}`}
+                        {g.post !== null && ` → estimación de hoy ${pct(g.post)}`}
                       </span>
                     </li>
                   ))}
@@ -196,8 +196,8 @@ export default async function EstudianteDetalle({
                 </p>
               )}
               <p className="text-xs text-muted-foreground">
-                Brecha: concepto bajo 70 % en el primer diagnóstico. Cerrada: la evaluación más reciente llega a 70 % o
-                más. Criterios provisionales.
+                Brecha: concepto bajo 70 % en el primer diagnóstico. Cerrada: superó la comprobación y, días después, la
+                comprobación final. Criterios provisionales.
               </p>
             </section>
 

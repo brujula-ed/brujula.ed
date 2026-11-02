@@ -1,6 +1,6 @@
 import type { createClient } from "@/lib/supabase/server";
 import { computeConceptStates, type ConceptState } from "@/lib/concept-state";
-import { computeClassLRR, computeStudentGaps, type ClassLRRResult } from "@/lib/lrr";
+import { computeClassLRR, computeClassLRRLegacy, computeStudentGaps, type ClassLRRResult, type LRRResult } from "@/lib/lrr";
 
 // Progreso de la clase de una asignatura: estados por concepto y estudiante, y LRR grupal. La usan el inicio del docente
 // y la pestaña "Estudiantes" (components/subject-steps/students-step.tsx).
@@ -31,6 +31,7 @@ export type ClassProgress = {
   perConcept: Map<string, StateCounts>; // cuántos estudiantes hay en cada estado (los inactivos, sin evidencia)
   perStudent: StudentProgress[]; // todos los inscritos
   lrr: ClassLRRResult;
+  lrrLegacy: LRRResult; // definición anterior a la fase 3, solo para comparar durante el piloto
 };
 
 export async function loadClassProgress(supabase: SupabaseServer, subjectId: string): Promise<ClassProgress> {
@@ -108,5 +109,6 @@ export async function loadClassProgress(supabase: SupabaseServer, subjectId: str
     perConcept,
     perStudent,
     lrr: computeClassLRR(concepts, evidence),
+    lrrLegacy: computeClassLRRLegacy(concepts, evidence),
   };
 }

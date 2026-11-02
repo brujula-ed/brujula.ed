@@ -136,9 +136,10 @@ estudiante lee y borra las suyas, entran solo por la RPC `submit_self_regulation
   `docs/DISENO-DEL-ESTUDIANTE.md` 3.1). Aciertos ponderados (las respuestas pierden la mitad del peso cada 30 días; la
   práctica no cuenta) frente al umbral 0.7. Dominado exige 3 respuestas y, si fue brecha, la comprobación diferida;
   superar una comprobación estando en brecha hace que el estado se calcule desde ella.
-- LRR: brecha = concepto < 0.7 en el **primer** diagnóstico; recuperada = la evidencia **más reciente**
-  posterior (microevaluación, o diagnóstico de un intento posterior) ≥ 0.7; las pendientes cuentan en el
-  denominador. Los criterios se afinarán en el piloto.
+- LRR (fase 3, acordado con Adri el 02/11/2026): brecha = concepto < 0.7 en el **primer** diagnóstico; cerrada =
+  el modelo la da por dominada, lo que exige superar la **comprobación final** (diferida, 2 días después); las
+  pendientes cuentan en el denominador. La definición anterior (evidencia más reciente ≥ 0.7) se calcula en paralelo
+  durante el piloto (`computeStudentGapsLegacy`, línea en la pestaña Estudiantes).
 - Selección de preguntas (`lib/question-selection.ts`, provisional): diagnóstico con la mitad de las validadas
   de cada concepto (máx. 2; 1 si solo hay una); microevaluación con hasta 2 no vistas en el intento; se
   prefieren las nunca respondidas. Sin preguntas nuevas, la brecha queda pendiente. La IA genera 6 por concepto (desde la fase 3; antes 4).
