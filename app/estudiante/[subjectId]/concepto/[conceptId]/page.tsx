@@ -4,9 +4,9 @@ import { PageHeader } from "@/components/page-header";
 import { ConceptJourney } from "@/components/concept-journey";
 import { computeConceptEvidence, type ConceptEvidence } from "@/lib/concept-state";
 import { selectCheckQuestions, selectPracticeQuestions } from "@/lib/question-selection";
+import { deferredAvailableFrom } from "@/lib/next-step";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-const DEFERRED_DAYS = 2; // docs/MOTOR-DE-CONOCIMIENTO.md, decisión 3 (la base lo exige en submit_answer)
 const relative = new Intl.RelativeTimeFormat("es", { numeric: "auto" });
 const dayFormat = new Intl.DateTimeFormat("es", { weekday: "long", day: "numeric", month: "long" });
 
@@ -115,16 +115,10 @@ export default async function ConceptoPage({
   );
 }
 
-// Comprobación final: se habilita 2 días después de la comprobación más reciente del concepto. Se mide desde la hora de
-// la respuesta, igual que submit_answer, para no ofrecerla antes de que la base la acepte.
-function deferredStatus(answers: { stage: string; created_at: string | null }[]) {
-  const lastCheck = answers
-    .filter((a) => a.stage === "comprobacion" || a.stage === "microevaluacion")
-    .map((a) => a.created_at ?? "")
-    .sort()
-    .pop();
-  if (!lastCheck) return { deferredFrom: null, deferredReady: false };
-  const from = new Date(new Date(lastCheck).getTime() + DEFERRED_DAYS * DAY_MS);
+// Comprobación final: se habilita 2 días después de la comprobación más reciente del concepto (lib/next-step.ts)
+function deferredStatus(answers: { concept_id: string | null; stage: string; created_at: string | null }[]) {
+  const from = deferredAvailableFrom(answers);
+  if (!from) return { deferredFrom: null, deferredReady: false };
   return from.getTime() <= Date.now()
     ? { deferredFrom: null, deferredReady: true }
     : { deferredFrom: `el ${dayFormat.format(from)}`, deferredReady: false };

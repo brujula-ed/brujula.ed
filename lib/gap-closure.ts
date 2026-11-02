@@ -29,6 +29,23 @@ export function newlyRecovered(
   );
 }
 
+// Brechas que el estudiante cerró en sesiones terminadas desde `since` ("Esta semana cerraste N brechas"). Cada sesión
+// se evalúa como la más reciente de su momento, que es lo que newlyRecovered exige.
+export function recoveredSince(
+  concepts: { id: string; name: string }[],
+  attempts: (Attempt & { completed_at: string | null })[],
+  answers: Answer[],
+  since: string
+): GapRecord[] {
+  const ordered = [...attempts].sort((x, y) => x.created_at.localeCompare(y.created_at));
+  return ordered.flatMap((attempt, i) => {
+    if (!attempt.completed_at || attempt.completed_at < since) return [];
+    const upTo = ordered.slice(0, i + 1);
+    const ids = new Set(upTo.map((a) => a.id));
+    return newlyRecovered(concepts, upTo, answers.filter((a) => ids.has(a.attempt_id)), attempt.id);
+  });
+}
+
 // Conceptos que "se abren" al cerrar la brecha de conceptId: dependen de él directamente, aún no están dominados
 // y todos sus prerrequisitos directos ya lo están. Si otro prerrequisito sigue pendiente, no se abre.
 export function unlockedBy(

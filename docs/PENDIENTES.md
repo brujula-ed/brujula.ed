@@ -122,7 +122,7 @@ Cosas que no se pudieron probar desde el código; conviene comprobarlas en produ
 
 - `accuracy` y los tipos `Attempt`/`Answer` en `lib/lrr.ts` y `lib/concept-state.ts`.
 - Umbral 0.7 escrito a mano en `app/diagnostico/[subjectId]/page.tsx` (existen `LRR_THRESHOLD` y
-  `MASTERY_THRESHOLD`) y "70 %" en `components/lrr-card.tsx`.
+  `MASTERY_THRESHOLD`) y "70 %" en `components/gap-compass.tsx`.
 - Carga de intentos y respuestas repetida en `app/estudiante/[subjectId]/page.tsx`,
   `app/docente/[subjectId]/reporte/page.tsx` y `app/docente/[subjectId]/reporte/[studentId]/page.tsx`.
 - Bloque del límite de IA (`consume_ai_quota` + respuestas 500/429) repetido en las 3 rutas de `app/api/`.

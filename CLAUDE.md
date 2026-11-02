@@ -56,12 +56,17 @@ detecta brechas de conocimiento, ve un mapa de conocimiento y recibe un siguient
 - `app/docente/page.tsx` lista y creación de asignaturas.
 - `app/docente/[subjectId]/page.tsx` documentos de la asignatura (subir, procesar, eliminar) y accesos a lo demás.
 - `app/docente/[subjectId]/conceptos`, `/preguntas`, `/reporte` y `/reporte/[studentId]`: validación y reportes.
-- `app/estudiante/page.tsx` asignaturas del estudiante (unirse con código de clase).
-- `app/estudiante/[subjectId]` "Mi Brújula": mapa, brecha prioritaria, próximo desafío, LRR.
-- `app/estudiante/[subjectId]/practicar/[conceptId]` práctica "Explica con tus palabras" (F-09, `components/retrieval-practice.tsx`).
+- `app/estudiante/page.tsx` "Mis asignaturas", la principal del estudiante: "Por dónde seguir" (asignatura sugerida),
+  Tu brújula con las brechas de todas, una tarjeta por asignatura (barra de estados y siguiente paso) y unirse con código.
+- `app/estudiante/[subjectId]` "Mi Brújula": siguiente paso (`lib/next-step.ts`, `components/next-step-card.tsx`), brechas
+  cerradas esta semana, temas (`components/topic-list.tsx`, con el mapa aparte) y Tu brújula con el LRR.
+- `app/estudiante/[subjectId]/concepto/[conceptId]` página del concepto: recorrido de 5 pasos, práctica y comprobaciones
+  (`components/concept-journey.tsx`, `components/concept-quiz.tsx`; `/practicar` redirige aquí).
+- `app/diagnostico/[subjectId]/tema/[topicId]` diagnóstico adaptativo de un tema (`lib/topic-diagnosis.ts`).
 - `app/estudiante/autorregulacion` cuestionario "¿Cómo aprendes?" (F-08, preliminar; `components/self-regulation-questionnaire.tsx`).
 - `lib/self-regulation.ts` instrumento de autorregulación (MAI en español), medias, tramos provisionales y sugerencias.
-- `app/diagnostico/[subjectId]/page.tsx` diagnóstico, nivelación y microevaluación en una sola página (por etapas).
+- `app/diagnostico/[subjectId]/page.tsx` diagnóstico global anterior (diagnóstico, nivelación y microevaluación). Sin
+  enlaces desde la entrega 6; la entrega 7 (ubicación inicial) decide si se reutiliza.
 - `app/api/` `process-document`, `generate-concepts`, `generate-questions`, `generate-concept-cards`, `generate-resources`,
   `generate-evidence` (server-side).
 - Motor de conocimiento (`docs/MOTOR-DE-CONOCIMIENTO.md`, fase 1):

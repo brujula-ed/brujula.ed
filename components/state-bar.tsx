@@ -5,6 +5,13 @@ import { STATE_BG } from "@/components/state-chip";
 // (docs/PRINCIPIOS-DE-DISENO.md 3.9). Proporcional, con su leyenda en texto. El ancho de cada tramo se anima al cambiar.
 const ORDER: ConceptState[] = ["dominado", "en_desarrollo", "brecha", "sin_evidencia"];
 
+// La barra en una línea de texto, sin los estados en cero: "3 dominado · 1 brecha"
+export function stateSummary(counts: Partial<Record<ConceptState, number>>): string {
+  return ORDER.filter((s) => counts[s])
+    .map((s) => `${counts[s]} ${STATE_LABEL[s].toLowerCase()}`)
+    .join(" · ");
+}
+
 export function StateBar({
   counts,
   showLegend = true,

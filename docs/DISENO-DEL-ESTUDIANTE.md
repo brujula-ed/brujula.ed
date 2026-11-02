@@ -28,10 +28,16 @@ Ya decidido antes (`docs/MOTOR-DE-CONOCIMIENTO.md`, sección 7) y que este dise�
 
 ### 2.1 Mis asignaturas (`/estudiante`)
 
-- Una tarjeta por asignatura: nombre, su siguiente paso en una línea y las brechas cerradas.
-- "Unirme a una asignatura" con el código de clase.
-- "¿Cómo aprendes?" (F-08) sigue como acceso secundario.
-- Con una sola asignatura, entra directo a ella (el enlace "Mis asignaturas" de arriba sigue llevando aquí).
+La página principal del estudiante (rediseñada a pedido de Sergio, 02/11/2026). En orden:
+1. **Por dónde seguir:** la única tarjeta destacada; sugiere una asignatura. Primero, una con una comprobación final
+   que ya toca; después, la de más brechas abiertas; después, la que tiene algo nuevo que probar; al final, la que solo
+   pide repasar.
+2. **Tu brújula** con el total de brechas cerradas de todas las asignaturas (las cerradas, con lo que abrieron, se ven
+   en la brújula de cada asignatura).
+3. **Una tarjeta por asignatura:** barra de estados de toda la asignatura, su siguiente paso y las brechas cerradas.
+4. "Unirme a una asignatura" con el código de clase y "¿Cómo aprendes?" (F-08) como acceso secundario.
+
+Con una sola asignatura también se llega aquí (decisión de Sergio: todos ven la misma pantalla al iniciar sesión).
 
 ### 2.2 Asignatura: Mi Brújula (`/estudiante/[asignatura]`)
 
@@ -39,9 +45,11 @@ En orden:
 1. **Tu siguiente paso:** la única acción destacada de la pantalla (tarjeta verde azulado con el botón en amarillo,
    regla del amarillo de la sección 9 de los principios). Dice qué hacer y por qué, en una línea.
 2. **Esta semana cerraste N brechas** (o nada, si no cerró ninguna; sin días ni rachas).
-3. **Mapa por temas** (el de dos niveles que ya existe). Cada tema ofrece "Ponme a prueba en este tema"; cada
-   concepto lleva a su página.
-4. **Tu brújula** (F-13): brechas cerradas y lo que abrió cada una.
+3. **Tus temas:** lista en orden de aprendizaje, cada tema con su barra de estados; al abrirlo, sus conceptos (cada
+   uno lleva a su página) y "Ponme a prueba en este tema". "Ver como mapa" abre el mapa de dos niveles (decisión de
+   Sergio: en el celular, lista primero y mapa aparte).
+4. **Tu brújula** (F-13) con el LRR: brechas cerradas de las identificadas, cuántas esperan la final, cuáles se
+   cerraron y lo que abrió cada una (decisión de Sergio: una sola sección en vez de la tarjeta del LRR aparte).
 
 ### 2.3 Concepto (`/estudiante/[asignatura]/concepto/[concepto]`, nueva)
 
@@ -169,7 +177,14 @@ Implementado en `lib/topic-diagnosis.ts`, probado con 9 estudiantes simulados fu
    la anterior cuenta las comprobaciones como la microevaluación que reemplazan. El momento de cierre
    (`components/gap-closure-moment.tsx`) aparece al superar la comprobación final. Probado con 9 casos fuera del
    proyecto.
-6. **Mi Brújula y Mis asignaturas** rediseñadas, con el siguiente paso.
+6. **Mi Brújula y Mis asignaturas** rediseñadas, con el siguiente paso. Hecha el 02/11/2026: `lib/next-step.ts`
+   (probado con 12 casos fuera del proyecto), `components/next-step-card.tsx`, `components/topic-list.tsx`,
+   `components/map-disclosure.tsx` y `recoveredSince` en `lib/gap-closure.ts`. Decisiones de Sergio sobre el orden de
+   3.4: "hizo el repaso" = practicó preguntas del concepto (la explicación no se guarda), y los conceptos en desarrollo
+   con poca evidencia van entre la brecha prioritaria y el tema sin evidencia. Con todo al día y una final pendiente,
+   dice cuándo volver. Mis asignaturas sugiere una asignatura y suma las brechas de todas (2.1); no hay entrada directa
+   con una sola asignatura. Se borraron `components/next-steps.tsx`, `components/lrr-card.tsx` y
+   `computeNextChallenge`. El diagnóstico global se queda sin enlaces hasta la entrega 7.
 7. **Ubicación inicial** opcional.
 
 ## 6. Abierto

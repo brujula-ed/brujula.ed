@@ -55,6 +55,7 @@ export function JoinSubjectForm() {
             value={code}
             onChange={(e) => setCode(e.target.value)}
             placeholder="Código de clase (ej. 4X7KPQ)"
+            aria-label="Código de clase"
             className="font-mono uppercase"
           />
           <Button type="submit" disabled={loading}>

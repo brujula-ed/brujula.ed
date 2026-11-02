@@ -8,13 +8,6 @@ export type GraphConcept = {
 
 export type PriorityGap = { concept: GraphConcept; blocked: GraphConcept[] };
 
-export type NextChallenge =
-  | { kind: "ubicarse" }
-  | { kind: "nivelar"; concept: GraphConcept; blockedCount: number }
-  | { kind: "consolidar"; concept: GraphConcept }
-  | { kind: "diagnosticar"; concept: GraphConcept }
-  | { kind: "completo" };
-
 // Para cada concepto, el conjunto de conceptos que dependen de él, directa o indirectamente.
 // También servirá para el tamaño de los nodos en el rediseño del mapa.
 export function computeDependents(concepts: GraphConcept[]): Map<string, Set<string>> {
@@ -166,36 +159,4 @@ export function computePriorityGap(
       a.concept.name.localeCompare(b.concept.name)
   );
   return { concept: candidates[0].concept, blocked: candidates[0].blocked };
-}
-
-export function computeNextChallenge(
-  concepts: GraphConcept[],
-  states: Record<string, ConceptState>
-): NextChallenge {
-  if (concepts.length === 0) return { kind: "completo" };
-
-  const stateOf = (id: string): ConceptState => states[id] ?? "sin_evidencia";
-
-  if (concepts.every((c) => stateOf(c.id) === "sin_evidencia")) return { kind: "ubicarse" };
-
-  const gap = computePriorityGap(concepts, states);
-  if (gap) return { kind: "nivelar", concept: gap.concept, blockedCount: gap.blocked.length };
-
-  const dependents = computeDependents(concepts);
-  const size = (c: GraphConcept) => dependents.get(c.id)?.size ?? 0;
-  const bySize = (a: GraphConcept, b: GraphConcept) =>
-    size(b) - size(a) || a.name.localeCompare(b.name);
-
-  const developing = concepts.filter((c) => stateOf(c.id) === "en_desarrollo").sort(bySize);
-  if (developing.length > 0) return { kind: "consolidar", concept: developing[0] };
-
-  const ids = new Set(concepts.map((c) => c.id));
-  const untested = concepts.filter((c) => stateOf(c.id) === "sin_evidencia");
-  const ready = untested.filter((c) =>
-    c.prerequisite_ids.every((p) => !ids.has(p) || stateOf(p) === "dominado")
-  );
-  const pool = (ready.length > 0 ? ready : untested).sort(bySize);
-  if (pool.length > 0) return { kind: "diagnosticar", concept: pool[0] };
-
-  return { kind: "completo" };
 }
