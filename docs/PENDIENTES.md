@@ -1,8 +1,8 @@
 # BRÚJULA.ED — Estado del trabajo y pendientes
 
-Actualizado: 02/11/2026. Para retomar en una conversación nueva: leer este documento y `CLAUDE.md`.
+Actualizado: 03/11/2026. Para retomar en una conversación nueva: leer este documento y `CLAUDE.md`.
 
-## Estado al 02/11/2026
+## Estado al 03/11/2026
 
 - **Hecho:** F-01 a F-04, F-06, F-07 y F-10 (base del MVP); F-05 ficha de concepto (pendiente 7); F-09 recuperación
   activa v1 (pendiente 8); F-08 autorregulación, versión preliminar (pendiente 9); F-11 recursos abiertos
@@ -34,16 +34,30 @@ Actualizado: 02/11/2026. Para retomar en una conversación nueva: leer este docu
      - Diagnóstico por tema.
      - LRR nuevo con comprobación final y momento de cierre.
      - Mi Brújula y Mis asignaturas con el siguiente paso.
-- **Siguiente:**
+- **Después del rediseño (02 y 03/11/2026):**
+  - "¿Cómo aprendes?" rediseñada: una frase por pantalla, con borrador en el navegador;
+  - pantallas de carga, de error y de página no encontrada;
+  - inicio del docente con desglose por asignatura (hasta 2) en las tres cifras;
+  - entrar y crear cuenta rediseñadas, confirmación de correo y recuperación de contraseña con Resend (pendiente 11);
+  - compartir el código de clase desde el paso Invitar;
+  - verificación del rol docente con códigos de invitación (pendiente 1).
+- **Siguiente** (orden acordado el 02/11/2026):
+  1. entrar con Google (Facebook descartado por ahora: pide revisión de la app y verificación del negocio en Meta),
+     junto con la pantalla "Tengo un código de docente" para cuentas que ya existen (pendiente 1);
+  2. "Reportar errores" (formulario a una tabla, aviso con Resend).
+
+  Además, sin fecha:
   - prueba de punta a punta en el celular con una cuenta de estudiante: falta la comprobación final, el momento de
     cierre, Tu brújula y "Esta semana cerraste N brechas" con datos reales;
   - entrega 7 (ubicación inicial, opcional), con decisiones pendientes: reutilizar o no el diagnóstico global (hoy sin
     enlaces), cuántas preguntas y si se puede saltar;
+  - aviso por correo del formulario de piloto (pendiente 12) y enlace de invitación con el código (pendiente 16);
   - F-13 sigue pausada (pendiente 13).
+  - Superadmin para universidades = F-30 (multi-institución, XL): no hace falta para un piloto con una universidad.
 - **Esperando a terceros:** Ilse (encabezado y uso del amarillo de marca, pendiente 6); Adri (fichas con
   conocimiento general y corrección con IA de F-09, pendientes 7 y 8); autores del MAI (permiso y lista de 19 ítems,
   pendiente 9; Sergio guarda el borrador del correo); experto en educación (validar F-08).
-- **Antes del piloto:** verificación del rol docente (pendiente 1), aviso de privacidad y consentimiento, diseño
+- **Antes del piloto:** aviso de privacidad y consentimiento, diseño
   responsive y pruebas automáticas (ver `docs/ROADMAP.md`, "Requisitos antes de un piloto").
 - **Base de datos vaciada el 30/10/2026** para empezar la fase 1 del motor de conocimiento desde cero:
   - se borraron las filas de las 15 tablas públicas y los 13 usuarios de prueba;
@@ -97,7 +111,26 @@ Cosas que no se pudieron probar desde el código; conviene comprobarlas en produ
 
 ## Pendientes
 
-### 1. Seguridad: el usuario puede cambiarse el rol a docente (hallazgo 17) — aplazado
+### 1. Seguridad: el usuario puede cambiarse el rol a docente (hallazgo 17) — hecho (03/11/2026)
+
+Hecho y probado por Sergio en producción (migración `codigos_de_docente`):
+- **Códigos de invitación, uno por docente:** tabla `teacher_invites` (`code` `DOC-XXXXX-XXXXX`, `note`, `used_by`,
+  `used_at`), con RLS sin políticas y sin permisos para la app. Sergio los crea en el SQL Editor del panel con
+  `select create_teacher_invite('a quién se lo da');` y los revisa en Table Editor → `teacher_invites`. Nadie desde
+  la app puede ejecutar esa función.
+- **Registro:** al elegir "Docente" pide el código; `check_teacher_code` avisa en el campo antes de crear la cuenta.
+  El formulario ya no manda el rol. `handle_new_user` crea siempre `estudiante`, salvo con un código válido y sin
+  usar, que gasta en la misma operación; un código inválido o usado impide crear la cuenta.
+- **Rol fijo:** los usuarios solo pueden actualizar `full_name` de `profiles` (permiso por columna).
+- **Solo docentes crean asignaturas** (`is_teacher()` en la política de insert de `subjects`). Las rutas de IA exigen
+  ser dueño de la asignatura, así que quedan solo para docentes sin tocarlas.
+- Las cuentas que ya existían (2 docentes, 3 estudiantes) no cambiaron.
+
+Pendiente:
+- **"Tengo un código de docente"** para una cuenta que ya existe (una RPC que gaste el código y cambie el rol): se
+  hace junto con entrar con Google, porque el registro con Google no puede mandar el código.
+
+Lo que se anotó al abrirlo:
 
 - **Qué pasa:** la política "Los usuarios actualizan su propio perfil" de `profiles` permite actualizar
   cualquier columna, incluida `role` (`GRANT UPDATE` sobre toda la tabla). Desde el navegador, un estudiante
@@ -289,19 +322,32 @@ Pendiente:
 - **Qué recursos ayudan a cerrar brechas** (para F-20, motor de evidencias): registrar qué recursos abre cada
   estudiante y cruzarlo con el LRR. Son datos personales nuevos: requiere aviso de privacidad.
 
-### 11. Cuentas: confirmación de correo y recuperación de contraseña — no iniciado (28/10/2026)
+### 11. Cuentas: confirmación de correo y recuperación de contraseña — hecho (03/11/2026)
 
-Hoy no hay confirmación de cuenta, recuperación de contraseña ni verificación de correos. En el panel de Supabase
-(Authentication → URL Configuration) la Site URL es `http://localhost:3000` y Redirect URLs está vacía.
+Hecho y probado por Sergio en producción:
+- **Pantallas:** entrar y crear cuenta rediseñadas con la marca (dos mitades, ver contraseña, confirmación,
+  validación por campo, errores de Supabase en español); "Revisa tu correo" con reenvío; `/recuperar` (responde igual
+  exista o no la cuenta) y `/nueva-contrasena` (al guardar cierra la sesión y se vuelve a entrar).
+- **Ruta del enlace:** `app/auth/confirm/route.ts` con `token_hash` + `verifyOtp` en lugar de PKCE, para que el
+  enlace funcione aunque se abra en otro dispositivo. Solo redirige a rutas propias.
+- **Correos:** Resend como SMTP de Supabase (`no-responder@brujulaed.com`; registros DNS en Vercel, sin tocar los de
+  Zoho). Plantillas en español en `supabase/templates/` (confirmación y recuperación), pegadas a mano en el panel:
+  si se cambian en el repositorio, hay que volver a pegarlas.
+- **Panel de Supabase** (comprobado con `npx supabase config diff` el 03/11/2026):
+  - Site URL `https://www.brujulaed.com` (el dominio sin www redirige ahí);
+  - Redirect URLs `https://www.brujulaed.com/**`, `https://brujula-ed.vercel.app/**` y `http://localhost:3000/**`;
+  - "Confirm email" activo;
+  - contraseña mínima: el panel estaba en 6; se sube a 8 para que coincida con `lib/password.ts`.
+- **`supabase/config.toml` no refleja producción** (sigue con los valores locales por defecto: Site URL de localhost,
+  confirmación apagada, sin SMTP). No usar `npx supabase config push` sin igualarlo antes: apagaría la confirmación
+  de correo y cambiaría la Site URL. Por eso las plantillas se pegan a mano.
 
-Plan (decisión de Sergio): activarlo cuando la app esté lista para presentar, y en ese momento borrar la base de
-datos para empezar de cero. Entonces:
-- Activar "Confirm email" y la recuperación de contraseña (pantalla nueva para elegir la contraseña).
-- Site URL = `https://brujulaed.com`; Redirect URLs = `http://localhost:3000/**` y `https://brujulaed.com/**`
-  (antes, comprobar que el dominio esté asignado al proyecto en Vercel). Se puede hacer ya, sin esperar al resto.
-- Crear una ruta de retorno (p. ej. `/auth/callback`) para que el enlace del correo abra la sesión; sin ella cae
-  en la landing (`/`) sin sesión.
-- Va junto con la verificación del rol docente (pendiente 1).
+Notas:
+- Los enlaces de los correos usan la Site URL: aunque uno se registre en `localhost`, el enlace lleva a producción
+  (misma base de datos, funciona igual).
+- Con Resend como SMTP, Supabase limita los correos por hora (Authentication → Rate Limits). Revisarlo si una clase
+  entera se registra a la vez.
+- No se borró la base de datos al activarlo (el plan del 28/10 lo proponía); se puede vaciar antes de presentar.
 
 ### 12. Landing y formulario "Pedir un piloto" — hecho (29/10/2026)
 
@@ -318,10 +364,10 @@ Hecho, según `docs/LANDING-PARA-CODE.md` (vista previa en `docs/landing.html`):
   "Para universidades" en la sección docente/estudiante para no saltar de h1 a h3.
 
 Pendiente:
-- **Aviso por correo de cada solicitud:** pospuesto por Sergio (29/10/2026). Hoy se revisan en Supabase, Table
-  Editor → `pilot_requests`. Opción propuesta: Resend (registros DNS en un subdominio, `RESEND_API_KEY` y
-  `PILOT_NOTIFY_TO`, avisar después del insert sin bloquear el envío). Los datos pasarían por un servicio externo:
-  mencionarlo en el aviso de privacidad.
+- **Aviso por correo de cada solicitud:** pospuesto otra vez por Sergio (03/11/2026). Hoy se revisan en Supabase,
+  Table Editor → `pilot_requests`. Resend ya está configurado con el dominio (pendiente 11); falta una clave propia
+  (`RESEND_API_KEY`, solo servidor, también en Vercel) y `PILOT_NOTIFY_TO`, y avisar después del insert sin bloquear
+  el envío. Los datos pasarían por un servicio externo: mencionarlo en el aviso de privacidad.
 - **Sin límite de envíos por IP:** solo validación y campo trampa. El proyecto no tiene mecanismo por IP
   (`consume_ai_quota` es por usuario). Revisar si llega spam.
 - **Política de privacidad:** la frase "Usaremos estos datos solo para contactarte." debe enlazarla cuando exista.
@@ -412,6 +458,13 @@ Lo que se anotó al abrirla:
   del bucket, como ya hace `components/delete-document-button.tsx` con un documento suelto. Si falla Storage, no borrar
   la asignatura (mejor un error que archivos sin dueño).
 - **Además:** revisar en el panel de Supabase si ya quedaron archivos sin fila en `subject_documents`.
+
+### 16. Enlace de invitación con el código — idea (03/11/2026)
+
+Hoy el docente comparte un mensaje con el enlace a `/login` y el código (`components/share-code.tsx`), y el estudiante
+lo escribe en "Código de clase". Mejora posible: que el enlace lleve el código y el estudiante quede inscrito al
+entrar. Exige que el código sobreviva al registro y a la confirmación del correo (p. ej. en el `next` del enlace o
+guardado en el navegador). Sin decidir.
 
 ## Notas de operación (aprendidas en la auditoría)
 

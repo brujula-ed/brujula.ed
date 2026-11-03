@@ -24,7 +24,7 @@ Reglas: la IA propone y el docente valida; estados orientativos (Anexo I, sec. 1
 |---|---|---|---|---|---|---|
 | Ajustes | Semana 1 |  | Botón «Gestionar» visible en cada asignatura | 1 | Terminado | Surge de las dudas de Adri: la carga estaba escondida |
 | Ajustes | Semana 1 |  | Rotación de preguntas entre intentos | 2 | Terminado | `lib/question-selection.ts` prefiere las nunca respondidas. Balancear por concepto más adelante |
-| Ajustes | Semana 1 |  | Verificación del rol docente (código de invitación o aprobación) | 4 | No iniciado | Hoy cualquiera puede registrarse como docente |
+| Ajustes | Semana 1 |  | Verificación del rol docente (código de invitación o aprobación) | 4 | Terminado | 03/11/2026: código de invitación, uno por docente (`docs/PENDIENTES.md`, pendiente 1). Falta usar un código desde una cuenta existente, junto con entrar con Google |
 | Ajustes | Semana 1 |  | Navegación: link a «Mis asignaturas» en el header y salida del diagnóstico | 2 | Terminado |  |
 | Bloque A | Semanas 1–2 | F-01 | Mapa de conocimiento interactivo (conceptos y prerrequisitos) | 14 | Terminado | Librería de grafos (React Flow). Los datos ya existen |
 | Bloque A | Semanas 1–2 | F-02 | Estado del nodo por estudiante (sin evidencia, brecha, en desarrollo, dominado) | 8 | Terminado | Cuatro estados; el «dorado» del Vol. 2 queda fuera |
@@ -114,7 +114,7 @@ Esfuerzo: S = días · M = 1–2 semanas · L = 3–6 semanas · XL = meses o in
 ## Requisitos antes de un piloto con estudiantes reales
 
 - Aviso de privacidad y consentimiento (más si hay menores).
-- Verificación del rol docente.
+- ~~Verificación del rol docente.~~ Hecha el 03/11/2026 (códigos de invitación).
 - Pruebas automáticas y entorno de desarrollo separado.
 - Diseño móvil (responsive).
 - Política de retención y borrado de datos.

@@ -39,7 +39,10 @@ detecta brechas de conocimiento, ve un mapa de conocimiento y recibe un siguient
 - Imagen corporativa (`docs/IMAGEN-CORPORATIVA.md`): colores como tokens en `app/globals.css` (paleta de marca y
   estados `--state-*`); no escribir colores a mano en los componentes. Tipografías Figtree (texto) y Onest (títulos),
   cargadas en `app/layout.tsx`. Archivos de la marca en `public/brand/`.
-- Supabase: Auth, Postgres con RLS, Storage (bucket privado), pgvector.
+- Supabase: Auth, Postgres con RLS, Storage (bucket privado), pgvector. Auth con confirmación de correo y
+  recuperación de contraseña; envía los correos por SMTP de Resend (`no-responder@brujulaed.com`, dominio verificado
+  con registros DNS en Vercel). Site URL `https://www.brujulaed.com` (el dominio sin www redirige ahí). La configuración vive en el panel de Supabase, no
+  en el repositorio.
 - OpenAI: embeddings `text-embedding-3-small` (1536); generación con salida `json_object`.
 - React Flow (`@xyflow/react`) + `@dagrejs/dagre` para el mapa de conocimiento.
 - Despliegue: GitHub → Vercel. Las variables de entorno deben existir también en Vercel.
@@ -49,9 +52,17 @@ detecta brechas de conocimiento, ve un mapa de conocimiento y recibe un siguient
 - `app/page.tsx`: sin sesión muestra la landing para universidades; con sesión redirige al panel según el rol.
   `app/inicio` muestra siempre la landing ("Ir a mi panel" si hay sesión). Landing en `components/landing/`
   (textos y diseño según `docs/LANDING-PARA-CODE.md` y `docs/landing.html`); `components/header-gate.tsx` oculta la
-  cabecera de la app en `/` e `/inicio`.
-- `app/login` (con sesión redirige a `/`, en `app/login/layout.tsx`) y `app/registro` para la autenticación. Cerrar
-  sesión lleva a `/login`, no a la landing. Los enlaces que se comparten con estudiantes van a `/login`.
+  cabecera de la app en `/`, `/inicio` y las pantallas de cuenta.
+- Cuenta (marco común `components/auth-shell.tsx`, contraseña con ojo `components/password-input.tsx`, mínimo en
+  `lib/password.ts`):
+  - `app/login` (con sesión redirige a `/`, en `app/login/layout.tsx`; avisos por `?aviso=`) y `app/registro` (rol; el
+    docente necesita un código de invitación, ver Datos), confirmación de contraseña, validación por campo y "Revisa tu correo", `components/check-email.tsx`);
+  - `app/recuperar` (pedir el enlace) y `app/nueva-contrasena` (solo con la sesión del enlace);
+  - `app/auth/confirm/route.ts` recibe los enlaces de los correos con `token_hash` + `verifyOtp` (no PKCE: funciona
+    aunque se abra en otro dispositivo). Plantillas de los correos en `supabase/templates/`, copiadas a mano al panel.
+  - Cerrar sesión lleva a `/login`, no a la landing. Los enlaces que se comparten con estudiantes van a `/login`.
+- `app/not-found.tsx`, `app/error.tsx` (en Next 16 recibe `retry`, no `reset`) y `loading.tsx` en `estudiante`,
+  `docente` y `diagnostico` con `components/page-skeleton.tsx`.
 - `app/actions/pilot-request.ts` envío del formulario "Pedir un piloto" (zod, campo trampa `sitio_web`).
 - `app/docente/page.tsx` lista y creación de asignaturas.
 - `app/docente/[subjectId]/page.tsx` documentos de la asignatura (subir, procesar, eliminar) y accesos a lo demás.
@@ -96,7 +107,8 @@ detecta brechas de conocimiento, ve un mapa de conocimiento y recibe un siguient
 - `lib/lrr.ts` cálculo del LRR (por estudiante, concepto y clase).
 - `lib/extract-text.ts`, `lib/chunk-text.ts` extracción por página (PDF) o por título (Word), sin encabezados ni pies
   repetidos, y fragmentación por oraciones con página, sección y orden.
-- `lib/data.ts` banco de preguntas de demostración; `lib/class-code.ts` códigos de clase.
+- `lib/data.ts` banco de preguntas de demostración; `lib/class-code.ts` códigos de clase; `components/share-code.tsx`
+  comparte el código desde el paso Invitar (menú del celular, WhatsApp, correo, copiar mensaje).
 - `lib/supabase/` clientes de servidor y cliente; `admin.ts` cliente con `service_role` (salta la RLS; solo servidor,
   hoy solo para `pilot_requests`).
 - `proxy.ts` refresca la sesión de Supabase en cada petición (en Next 16 sustituye a `middleware.ts`; corre en Node.js).
@@ -123,7 +135,12 @@ estudiante lee y borra las suyas, entran solo por la RPC `submit_self_regulation
 `link_check`: `verificado` | `no_verificable` | `docente`, `status`; mismas reglas de acceso que las fichas),
 `pilot_requests` (solicitudes de piloto de la landing: `name`, `university`, `email`, `message`, `status` =
 `nuevo`; RLS sin políticas y sin permisos para `anon` ni `authenticated`: entran solo por la Server Action con
-`service_role` y se revisan en el panel de Supabase).
+`service_role` y se revisan en el panel de Supabase), `teacher_invites` (códigos de invitación de docente, uno
+por docente: `code` `DOC-XXXXX-XXXXX`, `note`, `used_by`, `used_at`; RLS sin políticas y sin permisos para la app).
+- Rol docente: `handle_new_user` crea siempre `estudiante`, salvo que el registro traiga `teacher_code` válido y sin
+  usar (lo gasta; uno inválido impide crear la cuenta). Los usuarios solo actualizan `full_name` de `profiles`. Solo
+  los docentes crean asignaturas (`is_teacher()`). Los códigos se crean en el SQL Editor con
+  `select create_teacher_invite('nota');`; `check_teacher_code` es lo único que la app puede consultar.
 - Recursos: el servidor solo visita enlaces con `checkLink` de `lib/link-check.ts` (https, dominio con IP públicas,
   comprobado en cada redirección). No hacer `fetch` a URLs de la IA o del usuario por otro camino.
 - Autorregulación: el docente nunca lee respuestas individuales. Ve un resumen de clase
@@ -161,7 +178,7 @@ estudiante lee y borra las suyas, entran solo por la RPC `submit_self_regulation
 
 ## Deuda técnica reconocida (no ocultar; priorizar con el desarrollador)
 Sin pruebas ni CI · sin entorno de desarrollo separado · sin validación de esquema de la salida de la IA ·
-sin rate limiting · autorregistro de docentes sin verificación · diseño no responsive para móvil.
+sin rate limiting · diseño no responsive para móvil.
 
 ## Pendiente (orden previsto)
 Rediseño de la app (`docs/PRINCIPIOS-DE-DISENO.md`, `docs/PENDIENTES.md` pendiente 14), en este orden:

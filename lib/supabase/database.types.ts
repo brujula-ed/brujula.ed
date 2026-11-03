@@ -770,6 +770,30 @@ export type Database = {
         }
         Relationships: []
       }
+      teacher_invites: {
+        Row: {
+          code: string
+          created_at: string
+          note: string | null
+          used_at: string | null
+          used_by: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          note?: string | null
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          note?: string | null
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Relationships: []
+      }
       topics: {
         Row: {
           created_at: string
@@ -855,7 +879,9 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_teacher_code: { Args: { p_code: string }; Returns: boolean }
       consume_ai_quota: { Args: { p_route: string }; Returns: boolean }
+      create_teacher_invite: { Args: { p_note: string }; Returns: string }
       find_subject_id_by_code: { Args: { input_code: string }; Returns: string }
       get_answer_review: {
         Args: { p_attempt_id: string }
@@ -889,6 +915,7 @@ export type Database = {
         Args: { target_subject_id: string }
         Returns: boolean
       }
+      is_teacher: { Args: never; Returns: boolean }
       normalize_quote_text: { Args: { t: string }; Returns: string }
       search_chunks: {
         Args: {
