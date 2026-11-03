@@ -11,11 +11,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AuthShell } from "@/components/auth-shell";
 import { PasswordInput } from "@/components/password-input";
+import { CheckEmail } from "@/components/check-email";
+import { MIN_PASSWORD } from "@/lib/password";
 
 type Role = "estudiante" | "docente";
 type Field = "fullName" | "email" | "password" | "confirm";
 
-const MIN_PASSWORD = 8; // largo antes que reglas de símbolos (guía NIST); Supabase exige 6 en el servidor
 // Forma de un correo: algo@dominio.algo, sin espacios. Que el correo exista se comprobará al confirmar la cuenta.
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
@@ -54,6 +55,7 @@ export default function Registro() {
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [sentTo, setSentTo] = useState<string | null>(null); // correo al que se envió la confirmación
 
   const errors = validate(values);
   // Un error se muestra al salir del campo o al intentar enviar; la confirmación avisa en vivo si ya escribió algo
@@ -79,7 +81,7 @@ export default function Registro() {
     setError("");
     if (Object.keys(errors).length > 0) return;
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email: values.email.trim(),
       password: values.password,
       options: { data: { full_name: values.fullName.trim(), role } },
@@ -89,8 +91,22 @@ export default function Registro() {
       setError(signUpError(error.message));
       return;
     }
+    // Con "Confirm email" activo no hay sesión hasta abrir el enlace del correo. Si el correo ya tenía cuenta, Supabase
+    // responde igual (para no revelar quién está registrado): también se muestra "Revisa tu correo".
+    if (!data.session) {
+      setSentTo(values.email.trim());
+      return;
+    }
     router.push("/");
     router.refresh();
+  }
+
+  if (sentTo) {
+    return (
+      <AuthShell title="Revisa tu correo" intro="Falta un paso para usar tu cuenta.">
+        <CheckEmail email={sentTo} text="Te enviamos un enlace para confirmar tu cuenta." />
+      </AuthShell>
+    );
   }
 
   return (

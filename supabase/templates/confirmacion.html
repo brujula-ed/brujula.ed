@@ -1,0 +1,22 @@
+<!-- Plantilla "Confirm signup" de Supabase (Authentication → Emails → Templates). Asunto: Confirma tu cuenta de brújula.ed
+     El enlace pasa por app/auth/confirm/route.ts (token_hash: funciona aunque se abra en otro dispositivo). -->
+<div style="background:#EFF8F8;padding:32px 16px;font-family:Arial,Helvetica,sans-serif;color:#0B2E33">
+  <div style="max-width:480px;margin:0 auto;background:#FFFFFF;border-radius:20px;overflow:hidden">
+    <div style="background:#0B2E33;padding:20px 28px;font-size:22px;font-weight:bold;letter-spacing:-0.5px">
+      <span style="color:#FFFFFF">brújula</span><span style="color:#FFC93C">.ed</span>
+    </div>
+    <div style="padding:28px">
+      <h1 style="margin:0 0 12px;font-size:22px">Confirma tu cuenta</h1>
+      <p style="margin:0 0 24px;font-size:16px;line-height:1.5">
+        Hola. Para empezar a usar brújula.ed con <strong>{{ .Email }}</strong>, confirma que este correo es tuyo.
+      </p>
+      <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email&next=/"
+         style="display:inline-block;background:#17757B;color:#FFFFFF;text-decoration:none;font-weight:bold;font-size:16px;padding:14px 24px;border-radius:12px">
+        Confirmar mi cuenta
+      </a>
+      <p style="margin:24px 0 0;font-size:13px;line-height:1.5;color:#4A6468">
+        Si no creaste una cuenta en brújula.ed, ignora este correo: no pasará nada.
+      </p>
+    </div>
+  </div>
+</div>

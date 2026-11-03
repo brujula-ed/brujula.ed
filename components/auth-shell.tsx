@@ -27,7 +27,7 @@ export function AuthShell({
             Aprende con rumbo
           </p>
           <p className="hidden max-w-md text-lg text-primary-foreground/80 lg:block">
-            Descubre qué base te falta, ciérrala paso a paso y sigue avanzando. La IA propone; tu docente valida.
+            Aprender también es encontrar el camino.
           </p>
         </div>
         <p className="hidden text-sm text-primary-foreground/60 lg:block">brujulaed.com</p>
