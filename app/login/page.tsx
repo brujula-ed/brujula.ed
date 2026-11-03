@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { CircleAlert } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
-import Link from "next/link";
+import { AuthShell } from "@/components/auth-shell";
+import { PasswordInput } from "@/components/password-input";
 
 export default function Login() {
   const router = useRouter();
@@ -20,8 +22,12 @@ export default function Login() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    if (!email.trim() || !password) {
+      setError("Escribe tu correo y tu contraseña.");
+      return;
+    }
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     setLoading(false);
     if (error) {
       setError("Correo o contraseña incorrectos.");
@@ -32,33 +38,49 @@ export default function Login() {
   }
 
   return (
-    <main className="max-w-sm mx-auto p-8">
-      <h1 className="text-lg font-medium mb-6">Iniciar sesión</h1>
-      <Card>
-        <CardContent className="pt-6">
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="email">Correo</Label>
-              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="password">Contraseña</Label>
-              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-            </div>
-            {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
-            <Button type="submit" disabled={loading}>
-              {loading ? "Entrando..." : "Entrar"}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-      <p className="text-sm text-muted-foreground mt-4">
-        ¿No tienes cuenta?{" "}
-        <Link href="/registro" className="text-primary hover:underline">
-          Regístrate aquí
-        </Link>
-      
-      </p>
-    </main>
+    <AuthShell
+      title="Entrar"
+      intro="Con el correo y la contraseña de tu cuenta."
+      footer={
+        <>
+          ¿No tienes cuenta?{" "}
+          <Link href="/registro" className="font-medium text-primary hover:underline">
+            Crea una
+          </Link>
+        </>
+      }
+    >
+      <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="email">Correo</Label>
+          <Input
+            id="email"
+            type="email"
+            autoComplete="email"
+            inputMode="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="password">Contraseña</Label>
+          <PasswordInput
+            id="password"
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </div>
+        {error && (
+          <p role="alert" className="flex items-center gap-2 text-sm text-destructive">
+            <CircleAlert aria-hidden="true" className="size-4 shrink-0" />
+            {error}
+          </p>
+        )}
+        <Button type="submit" size="lg" disabled={loading} className="mt-2 w-full">
+          {loading ? "Entrando..." : "Entrar"}
+        </Button>
+      </form>
+    </AuthShell>
   );
 }
