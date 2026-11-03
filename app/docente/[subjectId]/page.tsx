@@ -110,7 +110,7 @@ export default async function SubjectPage({
               {step === "fichas" && <CardsStep subjectId={subjectId} />}
               {step === "preguntas" && <QuestionsStep subjectId={subjectId} />}
               {step === "invitar" && (
-                <InviteStep classCode={subject.class_code} students={students ?? 0} ready={setup.ready} />
+                <InviteStep classCode={subject.class_code} subjectName={subject.name} students={students ?? 0} ready={setup.ready} />
               )}
             </div>
           </section>
