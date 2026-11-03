@@ -81,11 +81,18 @@ export default async function Docente() {
       {list.length > 0 && (pendingReview > 0 || students > 0) && (
         <div className="mb-8 grid grid-cols-2 gap-4 md:grid-cols-3">
           {pendingReview > 0 && (
-            <StatTile tone="featured" label="Por validar" value={pendingReview} context="propuestas de la IA esperando tu revisión">
+            <StatTile
+              tone="featured"
+              label="Por validar"
+              value={pendingReview}
+              context="propuestas de la IA esperando tu revisión"
+              className="col-span-2 md:col-span-1"
+            >
               <ul className="mt-1 flex flex-col gap-1 border-t border-primary-foreground/25 pt-3 text-sm">
                 {overview
                   .filter((o) => o.setup.pendingReview > 0)
                   .sort((a, b) => b.setup.pendingReview - a.setup.pendingReview)
+                  .slice(0, BREAKDOWN_ROWS)
                   .map((o) => (
                     <li key={o.subject.id}>
                       <Link
@@ -105,14 +112,36 @@ export default async function Docente() {
             </StatTile>
           )}
           {students > 0 && (
-            <StatTile label="Estudiantes con brechas" value={studentsWithGaps} context={`de ${students} inscritos`} />
+            <StatTile label="Estudiantes con brechas" value={studentsWithGaps} context={`de ${students} inscritos`}>
+              <SubjectBreakdown
+                rows={withProgress
+                  .filter((o) => o.progress.students > 0)
+                  .sort((a, b) => b.progress.studentsWithGaps - a.progress.studentsWithGaps)
+                  .map((o) => ({
+                    id: o.subject.id,
+                    name: o.subject.name,
+                    value: `${o.progress.studentsWithGaps} de ${o.progress.students}`,
+                  }))}
+              />
+            </StatTile>
           )}
           {gapsIdentified > 0 && (
             <StatTile
               label="Brechas cerradas (LRR)"
               value={`${gapsRecovered} de ${gapsIdentified}`}
               context={`${Math.round((gapsRecovered / gapsIdentified) * 100)} % de las brechas detectadas`}
-            />
+            >
+              <SubjectBreakdown
+                rows={withProgress
+                  .filter((o) => o.progress.lrr.identified > 0)
+                  .sort((a, b) => b.progress.lrr.identified - a.progress.lrr.identified)
+                  .map((o) => ({
+                    id: o.subject.id,
+                    name: o.subject.name,
+                    value: `${o.progress.lrr.recovered} de ${o.progress.lrr.identified}`,
+                  }))}
+              />
+            </StatTile>
           )}
         </div>
       )}
@@ -207,6 +236,32 @@ function nextLine(overview: { subject: { name: string }; setup: SetupStatus }[])
 function reviewHref(subjectId: string, p: PendingReview): string {
   const step = p.concepts + p.topics > 0 ? "estructura" : p.cards + p.resources > 0 ? "fichas" : "preguntas";
   return `/docente/${subjectId}?paso=${step}`;
+}
+
+// Asignaturas que muestra el desglose de cada cifra clave (las de cifra más alta): más filas cargan la tarjeta
+const BREAKDOWN_ROWS = 2;
+
+// Desglose por asignatura bajo una cifra clave, como el de "Por validar": cada fila abre la pestaña Estudiantes
+function SubjectBreakdown({ rows }: { rows: { id: string; name: string; value: string }[] }) {
+  return (
+    <ul className="mt-1 flex flex-col gap-1 border-t border-border pt-3 text-sm">
+      {rows.slice(0, BREAKDOWN_ROWS).map((r) => (
+        <li key={r.id}>
+          <Link
+            href={`/docente/${r.id}?vista=estudiantes`}
+            className="flex items-center justify-between gap-2 rounded-control py-1 hover:underline"
+          >
+            <span className="min-w-0 truncate">
+              {r.name} · <span className="text-muted-foreground">{r.value}</span>
+            </span>
+            <span className="flex shrink-0 items-center gap-1 text-muted-foreground">
+              Ver <ArrowRight aria-hidden="true" className="size-4" />
+            </span>
+          </Link>
+        </li>
+      ))}
+    </ul>
+  );
 }
 
 // Estados de toda la clase en una sola barra: suma de los estados de cada concepto validado

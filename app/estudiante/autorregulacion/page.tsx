@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { PageHeader } from "@/components/page-header";
 import { SelfRegulationQuestionnaire } from "@/components/self-regulation-questionnaire";
 import { INSTRUMENT_VERSION, type SrlAnswers } from "@/lib/self-regulation";
 
@@ -30,10 +30,12 @@ export default async function Autorregulacion() {
   const { data: shares } = await supabase.from("self_regulation_shares").select("subject_id");
 
   return (
-    <main className="max-w-2xl mx-auto p-8">
-      <Link href="/estudiante" className="text-sm text-muted-foreground hover:underline mb-4 inline-block">
-        ← Volver a mis asignaturas
-      </Link>
+    <main className="mx-auto w-full max-w-2xl px-4 py-6 md:px-8 md:py-8">
+      <PageHeader
+        crumbs={[{ label: "Mis asignaturas", href: "/estudiante" }, { label: "¿Cómo aprendes?" }]}
+        title="¿Cómo aprendes?"
+        next="Versión preliminar, en revisión por especialistas. Es orientativo: no es una nota ni un diagnóstico."
+      />
       <SelfRegulationQuestionnaire
         userId={user.id}
         latest={latest ? { answers: latest.answers as SrlAnswers, createdAt: latest.created_at } : null}

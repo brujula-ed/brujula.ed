@@ -1,8 +1,8 @@
 # BRÚJULA.ED — Estado del trabajo y pendientes
 
-Actualizado: 30/10/2026. Para retomar en una conversación nueva: leer este documento y `CLAUDE.md`.
+Actualizado: 02/11/2026. Para retomar en una conversación nueva: leer este documento y `CLAUDE.md`.
 
-## Estado al 30/10/2026
+## Estado al 02/11/2026
 
 - **Hecho:** F-01 a F-04, F-06, F-07 y F-10 (base del MVP); F-05 ficha de concepto (pendiente 7); F-09 recuperación
   activa v1 (pendiente 8); F-08 autorregulación, versión preliminar (pendiente 9); F-11 recursos abiertos
@@ -17,12 +17,29 @@ Actualizado: 30/10/2026. Para retomar en una conversación nueva: leer este docu
   - Preguntas con explicación por opción.
   - Fichas con el material de su concepto.
   - Costo de todas las pruebas: unos 0,03 USD.
-- **Siguiente:** rediseño de la app según `docs/PRINCIPIOS-DE-DISENO.md` (pendiente 14). F-13 quedó pausada a mitad
-  (pendiente 13). Orden (decisión del 30/10/2026: así cada pantalla se rehace una sola vez):
-  1. base visual (tokens y componentes);
-  2. motor fase 2 (unidades y temas);
-  3. navegación y validación rediseñadas;
-  4. motor fase 3.
+- **Rediseño de la app** (`docs/PRINCIPIOS-DE-DISENO.md`, pendiente 14), en el orden decidido el 30/10/2026:
+  1. base visual (tokens y componentes): hecha el 30/10/2026;
+  2. motor fase 2: hecha el 30 y 31/10/2026. Temas y unidades, organizar en temas, relaciones en orden de
+     aprendizaje, posibles duplicados y mapa en dos niveles;
+  3. flujo docente rediseñado: hecho del 31/10 al 02/11/2026.
+     - Inicio con pendientes y actividad reciente.
+     - Asignatura con pestañas y pasos.
+     - Mesas de trabajo de Estructura, Preguntas y Fichas y recursos.
+     - Material con varios archivos.
+     - Estudiantes y página de cada estudiante.
+     - Encabezado con la marca de la landing (el diseño final sigue abierto, pendiente 6).
+  4. motor fase 3, el lado del estudiante (`docs/DISENO-DEL-ESTUDIANTE.md`): entregas 1 a 6 hechas el 02/11/2026.
+     - Modelo por concepto.
+     - Página del concepto con su recorrido.
+     - Diagnóstico por tema.
+     - LRR nuevo con comprobación final y momento de cierre.
+     - Mi Brújula y Mis asignaturas con el siguiente paso.
+- **Siguiente:**
+  - prueba de punta a punta en el celular con una cuenta de estudiante: falta la comprobación final, el momento de
+    cierre, Tu brújula y "Esta semana cerraste N brechas" con datos reales;
+  - entrega 7 (ubicación inicial, opcional), con decisiones pendientes: reutilizar o no el diagnóstico global (hoy sin
+    enlaces), cuántas preguntas y si se puede saltar;
+  - F-13 sigue pausada (pendiente 13).
 - **Esperando a terceros:** Ilse (encabezado y uso del amarillo de marca, pendiente 6); Adri (fichas con
   conocimiento general y corrección con IA de F-09, pendientes 7 y 8); autores del MAI (permiso y lista de 19 ítems,
   pendiente 9; Sergio guarda el borrador del correo); experto en educación (validar F-08).

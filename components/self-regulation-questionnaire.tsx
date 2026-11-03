@@ -2,10 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ArrowLeft, ArrowRight, CircleAlert, EyeOff, Lightbulb, Save, Share2, Trash2, Users } from "lucide-react";
+import { cn } from "cn";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { ActionBar } from "@/components/action-bar";
 import {
   BAND_LABEL,
   INSTRUMENT_VERSION,
@@ -26,14 +28,30 @@ type Stage = "intro" | "questions" | "result";
 
 const VALUES = Array.from({ length: RESPONSE_MAX - RESPONSE_MIN + 1 }, (_, i) => RESPONSE_MIN + i);
 const SCALES: SrlScale[] = ["conocimiento", "regulacion"];
+const ADVANCE_MS = 220; // al elegir, se ve la opción marcada un instante antes de pasar a la siguiente frase
 
-const preliminaryBanner = (
-  <div className="bg-amber-50 border border-amber-200 text-amber-800 text-xs rounded-md px-3 py-2 mb-4">
-    Versión preliminar en revisión por especialistas. Los resultados son orientativos: no son una nota ni un
-    diagnóstico.
-  </div>
-);
+// Borrador en el navegador: si el estudiante sale a mitad, retoma donde quedó. Es solo una comodidad: puede no estar
+// (navegación privada, datos borrados) y nunca llega a la base de datos hasta que envía todas las respuestas.
+const draftKey = (userId: string) => `srl-draft:${INSTRUMENT_VERSION}:${userId}`;
+function readDraft(userId: string): SrlAnswers {
+  try {
+    const raw = localStorage.getItem(draftKey(userId));
+    return raw ? (JSON.parse(raw) as SrlAnswers) : {};
+  } catch {
+    return {};
+  }
+}
+function writeDraft(userId: string, answers: SrlAnswers | null) {
+  try {
+    if (answers) localStorage.setItem(draftKey(userId), JSON.stringify(answers));
+    else localStorage.removeItem(draftKey(userId));
+  } catch {
+    // Sin almacenamiento disponible: el cuestionario funciona igual, sin retomar
+  }
+}
 
+// "¿Cómo aprendes?" (F-08, versión preliminar). Presentación → una frase por pantalla → resultado orientativo, con la
+// opción de compartirlo con el docente de cada asignatura y de borrar las respuestas.
 export function SelfRegulationQuestionnaire({
   userId,
   latest,
@@ -49,25 +67,50 @@ export function SelfRegulationQuestionnaire({
   const supabase = createClient();
   const [stage, setStage] = useState<Stage>(latest ? "result" : "intro");
   const [answers, setAnswers] = useState<SrlAnswers>({});
+  const [current, setCurrent] = useState(0);
   const [result, setResult] = useState(latest);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [shared, setShared] = useState<Set<string>>(new Set(sharedSubjectIds));
   const [shareError, setShareError] = useState("");
-  const titleRef = useRef<HTMLHeadingElement>(null);
+  const heading = useRef<HTMLHeadingElement>(null);
+  const advance = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Al cambiar de etapa el foco va al título, para que teclado y lectores de pantalla sigan el paso
+  // Al cambiar de etapa o de frase el foco va al título: teclado y lectores de pantalla siguen el paso
   useEffect(() => {
-    titleRef.current?.focus();
-  }, [stage]);
+    heading.current?.focus();
+  }, [stage, current]);
+
+  useEffect(() => () => {
+    if (advance.current) clearTimeout(advance.current);
+  }, []);
 
   const answeredCount = ITEMS.filter((item) => answers[String(item.id)] !== undefined).length;
   const complete = answeredCount === ITEMS.length;
+  const item = ITEMS[current];
+  const isLast = current === ITEMS.length - 1;
 
+  // Empieza o retoma: con borrador, va a la primera frase sin responder
   function start() {
-    setAnswers({});
+    const draft = readDraft(userId);
+    const firstOpen = ITEMS.findIndex((i) => draft[String(i.id)] === undefined);
+    setAnswers(draft);
+    setCurrent(firstOpen === -1 ? ITEMS.length - 1 : firstOpen);
     setError("");
     setStage("questions");
+  }
+
+  function choose(value: number) {
+    const next = { ...answers, [String(item.id)]: value };
+    setAnswers(next);
+    writeDraft(userId, next);
+    if (advance.current) clearTimeout(advance.current);
+    if (!isLast) advance.current = setTimeout(() => setCurrent((i) => Math.min(i + 1, ITEMS.length - 1)), ADVANCE_MS);
+  }
+
+  function go(step: -1 | 1) {
+    if (advance.current) clearTimeout(advance.current);
+    setCurrent((i) => Math.max(0, Math.min(ITEMS.length - 1, i + step)));
   }
 
   async function handleSubmit() {
@@ -84,6 +127,7 @@ export function SelfRegulationQuestionnaire({
       setError("No se pudieron guardar tus respuestas. Inténtalo de nuevo.");
       return;
     }
+    writeDraft(userId, null);
     setResult({ answers, createdAt: new Date().toISOString() });
     setStage("result");
     router.refresh();
@@ -129,177 +173,239 @@ export function SelfRegulationQuestionnaire({
       setError("No se pudieron borrar tus respuestas. Inténtalo de nuevo.");
       return;
     }
+    writeDraft(userId, null);
     setShared(new Set());
     setResult(null);
     setStage("intro");
     router.refresh();
   }
 
-  const errorMessage = error && <p role="alert" className="text-sm text-destructive mb-4">{error}</p>;
+  const errorMessage = error && (
+    <p role="alert" className="flex items-center gap-2 text-sm text-destructive">
+      <CircleAlert aria-hidden="true" className="size-4 shrink-0" />
+      {error}
+    </p>
+  );
 
   if (stage === "intro") {
     return (
-      <div>
-        <h1 ref={titleRef} tabIndex={-1} className="text-lg font-medium mb-2 outline-none">
-          ¿Cómo aprendes?
-        </h1>
-        {preliminaryBanner}
-        <div className="text-sm flex flex-col gap-3 mb-6">
-          <p>
-            Son {ITEMS.length} frases sobre cómo estudias. Indica en qué medida cada una te describe, del 1 (
-            {RESPONSE_ENDS.min.toLowerCase()}) al 5 ({RESPONSE_ENDS.max.toLowerCase()}). Te llevará unos 10 a 15
-            minutos. No hay respuestas buenas ni malas.
+      <section aria-labelledby="srl-title" className="flex flex-col gap-5 pb-28 md:pb-0">
+        <div className="flex flex-col gap-2">
+          <h2 id="srl-title" ref={heading} tabIndex={-1} className="text-section outline-none">
+            Antes de empezar
+          </h2>
+          <p className="text-base">
+            Son {ITEMS.length} frases sobre cómo estudias. En cada una, elige cuánto te describe, del 1 (
+            {RESPONSE_ENDS.min.toLowerCase()}) al 5 ({RESPONSE_ENDS.max.toLowerCase()}). No hay respuestas buenas ni
+            malas, y te llevará unos 10 a 15 minutos.
           </p>
-          <p>
+          <p className="text-sm text-muted-foreground">
             Al terminar verás cómo te va en dos aspectos de tu forma de aprender, con sugerencias para mejorar.
           </p>
-          <div className="rounded-md border bg-card p-3">
-            <p className="font-medium mb-1">Qué pasa con tus respuestas</p>
-            <ul className="list-disc list-inside text-muted-foreground flex flex-col gap-1">
-              <li>Se guardan para que puedas volver a ver tu resultado.</li>
-              <li>
-                Tus docentes solo ven un resumen de toda la clase, y solo si respondieron al menos 5 personas.
-                Nunca ven tus respuestas.
-              </li>
-              <li>
-                Si quieres, después podrás compartir tu resultado (no tus respuestas) con el docente de cada
-                asignatura.
-              </li>
-              <li>Es voluntario. Puedes borrar tus respuestas cuando quieras.</li>
-            </ul>
-          </div>
         </div>
-        <Button onClick={start}>Empezar</Button>
-      </div>
+
+        <Card>
+          <CardContent className="flex flex-col gap-3">
+            <h3 className="font-medium">Qué pasa con tus respuestas</h3>
+            <ul className="flex flex-col gap-3 text-sm">
+              <Fact icon={Save}>Se guardan para que puedas volver a ver tu resultado.</Fact>
+              <Fact icon={EyeOff}>
+                Tus docentes nunca ven tus respuestas. Solo ven un resumen de toda la clase, y solo si respondieron
+                al menos 5 personas.
+              </Fact>
+              <Fact icon={Share2}>
+                Si quieres, después puedes compartir tu resultado (no tus respuestas) con el docente de cada
+                asignatura.
+              </Fact>
+              <Fact icon={Trash2}>Es voluntario. Puedes borrar tus respuestas cuando quieras.</Fact>
+            </ul>
+          </CardContent>
+        </Card>
+
+        <ActionBar>
+          <Button onClick={start}>Empezar</Button>
+        </ActionBar>
+      </section>
     );
   }
 
   if (stage === "questions") {
+    const value = answers[String(item.id)];
     return (
-      <div>
-        <h1 ref={titleRef} tabIndex={-1} className="text-lg font-medium mb-2 outline-none">
-          ¿Cómo aprendes?
-        </h1>
-        {preliminaryBanner}
-        <p className="text-sm text-muted-foreground mb-4">
-          1 = {RESPONSE_ENDS.min.toLowerCase()} · 5 = {RESPONSE_ENDS.max.toLowerCase()}
-        </p>
-        <ol className="flex flex-col gap-3 mb-6">
-          {ITEMS.map((item, index) => {
-            const labelId = `srl-item-${item.id}`;
+      <section aria-labelledby="srl-title" className="flex flex-col gap-5 pb-28 md:pb-0">
+        <div className="flex items-center justify-between gap-3">
+          <p role="status" className="text-sm text-muted-foreground">
+            Frase {current + 1} de {ITEMS.length}
+          </p>
+          <Button variant="ghost" size="sm" onClick={() => setStage(result ? "result" : "intro")}>
+            Salir
+          </Button>
+        </div>
+        <div aria-hidden="true" className="h-1.5 overflow-hidden rounded-full bg-muted">
+          <div
+            className="h-full rounded-full bg-primary transition-[width] duration-(--duration-medium) ease-out-soft"
+            style={{ width: `${(answeredCount / ITEMS.length) * 100}%` }}
+          />
+        </div>
+
+        <h2 id="srl-title" ref={heading} tabIndex={-1} className="text-subsection outline-none">
+          {item.text}
+        </h2>
+
+        <div role="radiogroup" aria-labelledby="srl-title" className="flex flex-col gap-2">
+          {VALUES.map((v) => {
+            const end = v === RESPONSE_MIN ? RESPONSE_ENDS.min : v === RESPONSE_MAX ? RESPONSE_ENDS.max : null;
+            const isSelected = value === v;
             return (
-              <li key={item.id}>
-                <Card>
-                  <CardContent className="pt-4">
-                    <p id={labelId} className="text-sm mb-3">
-                      {index + 1}. {item.text}
-                    </p>
-                    <RadioGroup
-                      aria-labelledby={labelId}
-                      value={answers[String(item.id)] !== undefined ? String(answers[String(item.id)]) : ""}
-                      onValueChange={(value) =>
-                        setAnswers((prev) => ({ ...prev, [String(item.id)]: Number(value) }))
-                      }
-                      className="flex gap-6"
-                    >
-                      {VALUES.map((v) => (
-                        <label key={v} className="flex items-center gap-2 text-sm cursor-pointer">
-                          <RadioGroupItem
-                            value={String(v)}
-                            aria-label={
-                              v === RESPONSE_MIN
-                                ? `${v}, ${RESPONSE_ENDS.min}`
-                                : v === RESPONSE_MAX
-                                  ? `${v}, ${RESPONSE_ENDS.max}`
-                                  : String(v)
-                            }
-                          />
-                          {v}
-                        </label>
-                      ))}
-                    </RadioGroup>
-                  </CardContent>
-                </Card>
-              </li>
+              <button
+                key={v}
+                role="radio"
+                aria-checked={isSelected}
+                aria-label={end ? `${v}, ${end}` : String(v)}
+                onClick={() => choose(v)}
+                className={cn(
+                  "flex min-h-12 items-center gap-3 rounded-control border bg-card px-4 py-3 text-left text-base transition-colors duration-(--duration-instant) hover:border-primary/60",
+                  isSelected ? "border-primary bg-secondary/60" : "border-border"
+                )}
+              >
+                <span
+                  aria-hidden="true"
+                  className={cn(
+                    "flex size-7 shrink-0 items-center justify-center rounded-full border text-sm font-semibold",
+                    isSelected ? "border-primary bg-primary text-primary-foreground" : "border-border"
+                  )}
+                >
+                  {v}
+                </span>
+                {end && <span className="text-sm text-muted-foreground">{end}</span>}
+              </button>
             );
           })}
-        </ol>
-        {errorMessage}
-        <div className="flex items-center gap-3">
-          <Button onClick={handleSubmit} disabled={!complete || loading}>
-            {loading ? "Guardando..." : "Ver mi resultado"}
-          </Button>
-          <span role="status" className="text-xs text-muted-foreground">
-            Respondiste {answeredCount} de {ITEMS.length}
-          </span>
         </div>
-      </div>
+
+        {errorMessage}
+
+        <ActionBar>
+          <Button variant="outline" onClick={() => go(-1)} disabled={current === 0 || loading}>
+            <ArrowLeft aria-hidden="true" />
+            Anterior
+          </Button>
+          {isLast || complete ? (
+            <Button onClick={handleSubmit} disabled={!complete || loading}>
+              {loading ? "Guardando..." : complete ? "Ver mi resultado" : `Faltan ${ITEMS.length - answeredCount}`}
+            </Button>
+          ) : (
+            <Button onClick={() => go(1)} disabled={value === undefined}>
+              Siguiente
+              <ArrowRight aria-hidden="true" />
+            </Button>
+          )}
+        </ActionBar>
+      </section>
     );
   }
 
   const scores = result ? computeScores(result.answers) : null;
   return (
-    <div>
-      <h1 ref={titleRef} tabIndex={-1} className="text-lg font-medium mb-2 outline-none">
-        Tu forma de aprender
-      </h1>
-      {preliminaryBanner}
-      {result && (
-        <p className="text-xs text-muted-foreground mb-4">
-          Respondido el {new Date(result.createdAt).toLocaleDateString("es")}
-        </p>
-      )}
+    <section aria-labelledby="srl-title" className="flex flex-col gap-6">
+      <div className="flex flex-col gap-1">
+        <h2 id="srl-title" ref={heading} tabIndex={-1} className="text-section outline-none">
+          Tu forma de aprender
+        </h2>
+        {result && (
+          <p className="text-sm text-muted-foreground">
+            Respondiste el {new Date(result.createdAt).toLocaleDateString("es", { day: "numeric", month: "long" })}.
+            Es orientativo: describe cómo dices que estudias, no cuánto sabes.
+          </p>
+        )}
+      </div>
+
       {scores && (
-        <div className="flex flex-col gap-4 mb-6">
+        <div className="flex flex-col gap-4">
           {SCALES.map((scale) => {
             const band = bandFor(scores[scale]);
             return (
               <Card key={scale}>
-                <CardContent className="pt-6 text-sm">
-                  <div className="flex items-baseline justify-between gap-2 mb-1">
-                    <p className="font-medium">{SCALE_LABEL[scale]}</p>
-                    <p className="text-xs text-muted-foreground shrink-0">
-                      {BAND_LABEL[band]} · promedio {scores[scale].toFixed(1).replace(".", ",")} de {RESPONSE_MAX}
-                    </p>
+                <CardContent className="flex flex-col gap-3">
+                  <div className="flex flex-col gap-1">
+                    <h3 className="text-subsection">{SCALE_LABEL[scale]}</h3>
+                    <p className="text-sm text-muted-foreground">{SCALE_DESCRIPTION[scale]}</p>
                   </div>
-                  <p className="text-muted-foreground mb-3">{SCALE_DESCRIPTION[scale]}</p>
-                  <p>{SUGGESTIONS[scale][band]}</p>
+                  <p className="text-sm">
+                    <span className="font-medium">{BAND_LABEL[band]}</span>
+                    <span className="text-muted-foreground">
+                      {" "}
+                      · promedio {scores[scale].toFixed(1).replace(".", ",")} de {RESPONSE_MAX}
+                    </span>
+                  </p>
+                  <p className="flex items-start gap-2 rounded-control bg-secondary/60 p-3 text-sm">
+                    <Lightbulb aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-primary" />
+                    {SUGGESTIONS[scale][band]}
+                  </p>
                 </CardContent>
               </Card>
             );
           })}
         </div>
       )}
+
       {result && subjects.length > 0 && (
-        <Card className="mb-6">
-          <CardContent className="pt-6 text-sm">
-            <p className="font-medium mb-1">Compartir con tus docentes</p>
-            <p className="text-muted-foreground mb-3">
-              Tu docente verá tus dos resultados (tramo y promedio), no tus respuestas. Puedes dejar de compartir
-              cuando quieras.
-            </p>
-            <div className="flex flex-col gap-2">
-              {subjects.map((s) => (
-                <label key={s.id} className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={shared.has(s.id)}
-                    onChange={(e) => toggleShare(s.id, e.target.checked)}
-                    className="size-4 accent-primary"
-                  />
-                  {s.name}
-                </label>
-              ))}
+        <Card>
+          <CardContent className="flex flex-col gap-3">
+            <div className="flex flex-col gap-1">
+              <h3 className="flex items-center gap-2 font-medium">
+                <Users aria-hidden="true" className="size-4 text-primary" />
+                Compartir con tus docentes
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Tu docente verá tus dos resultados (tramo y promedio), no tus respuestas. Puedes dejar de compartir
+                cuando quieras.
+              </p>
             </div>
-            {shareError && <p role="alert" className="text-xs text-destructive mt-2">{shareError}</p>}
+            <ul className="flex flex-col gap-1">
+              {subjects.map((s) => (
+                <li key={s.id}>
+                  <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-control px-1 text-sm hover:bg-muted">
+                    <input
+                      type="checkbox"
+                      checked={shared.has(s.id)}
+                      onChange={(e) => toggleShare(s.id, e.target.checked)}
+                      className="size-5 shrink-0 accent-primary"
+                    />
+                    <span className="min-w-0 break-words">{s.name}</span>
+                  </label>
+                </li>
+              ))}
+            </ul>
+            {shareError && (
+              <p role="alert" className="flex items-center gap-2 text-sm text-destructive">
+                <CircleAlert aria-hidden="true" className="size-4 shrink-0" />
+                {shareError}
+              </p>
+            )}
           </CardContent>
         </Card>
       )}
+
       {errorMessage}
-      <div className="flex flex-wrap gap-2">
-        <Button onClick={start} disabled={loading}>Responder de nuevo</Button>
-        <Button variant="ghost" onClick={handleDelete} disabled={loading}>Borrar mis respuestas</Button>
+
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <Button variant="outline" onClick={start} disabled={loading}>
+          Responder de nuevo
+        </Button>
+        <Button variant="ghost" onClick={handleDelete} disabled={loading}>
+          Borrar mis respuestas
+        </Button>
       </div>
-    </div>
+    </section>
+  );
+}
+
+function Fact({ icon: Icon, children }: { icon: typeof Save; children: React.ReactNode }) {
+  return (
+    <li className="flex items-start gap-3">
+      <Icon aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-primary" />
+      <span>{children}</span>
+    </li>
   );
 }

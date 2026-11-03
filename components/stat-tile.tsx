@@ -7,16 +7,18 @@ export function StatTile({
   value,
   context,
   tone = "default",
+  className,
   children,
 }: {
   label: string;
   value: string | number;
   context?: string;
   tone?: "default" | "featured";
+  className?: string; // p. ej. cuántas columnas ocupa en la cuadrícula
   children?: React.ReactNode; // p. ej. accesos directos a lo que cuenta la cifra
 }) {
   return (
-    <Card tone={tone}>
+    <Card tone={tone} className={className}>
       <CardContent className="flex flex-col gap-2">
         <p className="text-sm font-medium">{label}</p>
         <p className="font-heading text-figure">{value}</p>
