@@ -111,6 +111,9 @@ export function LandingPage({ loggedIn = false }: { loggedIn?: boolean }) {
                 <br />
                 con rumbo
               </h1>
+              <p className="mb-4 max-w-[26em] text-balance font-heading text-xl font-semibold leading-snug text-foreground min-[561px]:text-2xl">
+                Del aprendizaje consciente a la confianza, de la confianza a tu propósito.
+              </p>
               <p className="max-w-[33em] text-lg text-muted-foreground min-[561px]:text-[21px]">
                 Una herramienta asistida por IA que muestra qué base le falta a cada estudiante y cuál es su
                 siguiente paso. La IA propone; el docente valida.

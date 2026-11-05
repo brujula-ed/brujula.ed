@@ -27,7 +27,7 @@ export function AuthShell({
             Aprende con rumbo
           </p>
           <p className="hidden max-w-md text-lg text-primary-foreground/80 lg:block">
-            Aprender también es encontrar el camino.
+            Del aprendizaje consciente a la confianza, de la confianza a tu propósito.
           </p>
         </div>
         <p className="hidden text-sm text-primary-foreground/60 lg:block">brujulaed.com</p>

@@ -11,7 +11,7 @@ Documento para Claude Code. La imagen corporativa (paleta A) fue aprobada por Il
 
 ## Identidad en una línea
 
-Marca: rosa de ocho rayos asimétrica. Siete rayos en el color base y el octavo, separado, en amarillo (el rayo que falta, la brecha). Nombre en minúsculas: `brújula.ed`. Lema: "Aprende con rumbo".
+Marca: rosa de ocho rayos asimétrica. Siete rayos en el color base y el octavo, separado, en amarillo (el rayo que falta, la brecha). Nombre en minúsculas: `brújula.ed`. Slogan: "Aprende con rumbo". Lema: "Del aprendizaje consciente a la confianza, de la confianza a tu propósito."
 
 ## Paleta (paleta A)
 
