@@ -2,7 +2,7 @@
 
 Versión del 2026-11-05 · Aplicación en funcionamiento: https://www.brujulaed.com
 
-- **Diseño original de la arquitectura y la aplicación:** Sergio Ríos y Adriana Rivera.
+- **Diseño original de la arquitectura y la aplicación:** Sergio Ríos e Ilse Adriana Rivera.
 - **Desarrollo:** Sergio Ríos.
 
 Este manual describe la arquitectura, los algoritmos, el modelo de datos y la seguridad de BRÚJULA.ED, y explica

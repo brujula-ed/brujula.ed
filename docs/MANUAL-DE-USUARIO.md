@@ -1,6 +1,9 @@
 # BRÚJULA.ED · Manual de usuario
 
-Versión del 2026-11-05 · Autor: Sergio Ríos · Dirección: https://www.brujulaed.com
+Versión del 2026-11-05 · Dirección: https://www.brujulaed.com
+
+- **Diseño original de la arquitectura y la aplicación:** Sergio Ríos e Ilse Adriana Rivera.
+- **Desarrollo:** Sergio Ríos.
 
 BRÚJULA.ED te ayuda a encontrar qué te falta para entender una asignatura y a cerrar esas brechas. La usan dos tipos
 de personas:
@@ -172,8 +175,8 @@ paso que quieras.
 5. **Practica:** preguntas que ya viste, con la explicación de cada respuesta.
 6. **Comprueba:**
    - **comprobación inmediata:** 2 preguntas nuevas. Si las superas, el concepto pasa a **En desarrollo**;
-   - **comprobación final:** se habilita 2 días después. Si la superas, **cerraste la brecha** y lo ves en pantalla
-    . Si no, puedes repetir la ruta.
+   - **comprobación final:** se habilita 2 días después. Si la superas, **cerraste la brecha** y lo ves en pantalla.
+     Si no, puedes repetir la ruta.
 
 ¿Por qué esperar 2 días? Porque recordar algo días después demuestra que lo aprendiste, y no solo que lo acabas de
 leer.
